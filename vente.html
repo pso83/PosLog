@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Encaissement Glacier</title>
+  <meta name="viewport" content="width=1024, height=768">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      width: 1024px;
+      height: 768px;
+      overflow: hidden;
+    }
+    .container-fluid {
+      height: 100vh;
+      display: flex;
+    }
+    .left-panel {
+      width: 624px;
+      display: flex;
+      flex-direction: column;
+    }
+    .ticket {
+      height: 300px;
+      background: #f8f9fa;
+      overflow-y: auto;
+      padding: 10px;
+      border: 1px solid #ccc;
+    }
+    .bottom-panels {
+      display: flex;
+      flex-grow: 1;
+    }
+    .payment-pad, .function-pad {
+      width: 50%;
+      padding: 10px;
+    }
+    .right-panel {
+      width: 400px;
+      border-left: 2px solid #dee2e6;
+      padding: 10px;
+      overflow-y: auto;
+    }
+    .btn-product, .btn-action {
+      width: 113px;
+      height: 55px;
+      margin-bottom: 10px;
+      font-size: calc(10px + 0.3vw);
+      white-space: normal;
+      word-wrap: break-word;
+      text-align: center;
+      line-height: 1.2;
+    }
+  </style>
+</head>
+<body>
+  <div class="container-fluid">
+    <div class="left-panel">
+      <div class="ticket" id="ticket">
+        <h5>Ticket</h5>
+        <ul id="ticket-list" class="list-unstyled mb-0"></ul>
+      </div>
+      <div class="bottom-panels">
+        <div class="payment-pad">
+          <button class="btn btn-success btn-action">Espèces</button>
+          <button class="btn btn-primary btn-action">Carte</button>
+          <button class="btn btn-secondary btn-action">Montant exact</button>
+          <button class="btn btn-dark btn-action">Total</button>
+        </div>
+        <div class="function-pad">
+          <button class="btn btn-danger btn-action">Annuler Ligne</button>
+          <button class="btn btn-warning btn-action">Annuler Ticket</button>
+          <button class="btn btn-info btn-action">Remise</button>
+          <button class="btn btn-light btn-action">Réduction promo</button>
+        </div>
+      </div>
+    </div>
+    <div class="right-panel">
+      <h5>Produits</h5>
+      <button class="btn btn-outline-primary btn-product" onclick="addToTicket('1 boule vanille')">1 boule vanille</button>
+      <button class="btn btn-outline-primary btn-product" onclick="addToTicket('2 boules chocolat')">2 boules chocolat</button>
+      <button class="btn btn-outline-primary btn-product" onclick="addToTicket('3 boules mix')">3 boules mix</button>
+      <button class="btn btn-outline-success btn-product" onclick="addToTicket('Chantilly')">Chantilly</button>
+      <button class="btn btn-outline-success btn-product" onclick="addToTicket('Coulis fraise')">Coulis fraise</button>
+      <button class="btn btn-outline-danger btn-product" onclick="addToTicket('Boisson froide')">Boisson froide</button>
+    </div>
+  </div>
+  <script>
+    function addToTicket(itemName) {
+      const ul = document.getElementById('ticket-list');
+      const li = document.createElement('li');
+      li.textContent = itemName;
+      ul.appendChild(li);
+    }
+  </script>
+</body>
+</html>

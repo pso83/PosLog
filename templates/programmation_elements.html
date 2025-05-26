@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Programmation des éléments</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="p-4">
+  <div class="container">
+    <h2 class="mb-4">Programmation des Eléments</h2>
+    <div class="row">
+      <div class="col-md-4 mb-4">
+        <h5>Claviers</h5>
+        <form action="/programmation/claviers" method="post">
+          <input type="text" class="form-control mb-2" name="nom" placeholder="Nom du clavier">
+          <button type="submit" class="btn btn-primary">Ajouter</button>
+        </form>
+      </div>
+      <div class="col-md-4 mb-4">
+        <h5>TVA</h5>
+        <form action="/programmation/tva" method="post">
+          <input type="text" class="form-control mb-2" name="label" placeholder="Libellé TVA">
+          <input type="number" step="0.01" class="form-control mb-2" name="taux" placeholder="Taux %">
+          <button type="submit" class="btn btn-primary">Ajouter</button>
+        </form>
+      </div>
+      <div class="col-md-4 mb-4">
+        <h5>Groupes</h5>
+        <form action="/programmation/groupes" method="post">
+          <input type="text" class="form-control mb-2" name="nom" placeholder="Nom du groupe">
+          <button type="submit" class="btn btn-primary">Ajouter</button>
+        </form>
+      </div>
+      <div class="col-md-4 mb-4">
+        <h5>Familles</h5>
+        <form action="/programmation/familles" method="post">
+          <input type="text" class="form-control mb-2" name="nom" placeholder="Nom de la famille">
+          <button type="submit" class="btn btn-primary">Ajouter</button>
+        </form>
+      </div>
+      <div class="col-md-4 mb-4">
+        <h5>Sous-familles</h5>
+        <form action="/programmation/sousfamilles" method="post">
+          <input type="text" class="form-control mb-2" name="nom" placeholder="Nom de la sous-famille">
+          <button type="submit" class="btn btn-primary">Ajouter</button>
+        </form>
+      </div>
+      <div class="col-md-4 mb-4">
+        <h5>Règlements</h5>
+        <form action="/programmation/reglements" method="post">
+          <input type="text" class="form-control mb-2" name="mode" placeholder="Mode de règlement">
+          <button type="submit" class="btn btn-primary">Ajouter</button>
+        </form>
+      </div>
+      <div class="col-md-4 mb-4">
+        <h5>Commentaires</h5>
+        <form action="/programmation/commentaires" method="post">
+          <input type="text" class="form-control mb-2" name="texte" placeholder="Texte du commentaire">
+          <button type="submit" class="btn btn-primary">Ajouter</button>
+        </form>
+      </div>
+      <div class="col-md-4 mb-4">
+        <h5>Menus</h5>
+        <form action="/programmation/menus" method="post">
+          <input type="text" class="form-control mb-2" name="nom" placeholder="Nom du menu">
+          <button type="submit" class="btn btn-primary">Ajouter</button>
+        </form>
+      </div>
+      <div class="col-md-4 mb-4">
+        <h5>Formules</h5>
+        <form action="/programmation/formules" method="post">
+          <input type="text" class="form-control mb-2" name="nom" placeholder="Nom de la formule">
+          <button type="submit" class="btn btn-primary">Ajouter</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

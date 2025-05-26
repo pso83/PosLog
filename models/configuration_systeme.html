@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Configuration du système</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="p-4">
+  <div class="container">
+    <h2 class="mb-4">Configuration du système</h2>
+    <div class="row">
+      <div class="col-md-6 mb-4">
+        <h5>Fonctions de caisse</h5>
+        <form action="/configuration/fonctions" method="post">
+          <input type="text" class="form-control mb-2" name="fonction" placeholder="Fonction de caisse">
+          <button type="submit" class="btn btn-primary">Ajouter</button>
+        </form>
+      </div>
+      <div class="col-md-6 mb-4">
+        <h5>Utilisateurs</h5>
+        <form action="/configuration/utilisateurs" method="post">
+          <input type="text" class="form-control mb-2" name="nom" placeholder="Nom d'utilisateur">
+          <input type="password" class="form-control mb-2" name="mot_de_passe" placeholder="Mot de passe">
+          <select class="form-control mb-2" name="profil_id">
+            <option value="">Sélectionner un profil</option>
+            <!-- Options dynamiques depuis la base -->
+          </select>
+          <button type="submit" class="btn btn-primary">Ajouter</button>
+        </form>
+      </div>
+      <div class="col-md-6 mb-4">
+        <h5>Profils</h5>
+        <form action="/configuration/profils" method="post">
+          <input type="text" class="form-control mb-2" name="nom" placeholder="Nom du profil">
+          <button type="submit" class="btn btn-primary">Ajouter</button>
+        </form>
+      </div>
+      <div class="col-md-6 mb-4">
+        <h5>Périphériques</h5>
+        <form action="/configuration/peripheriques" method="post">
+          <input type="text" class="form-control mb-2" name="nom" placeholder="Nom du périphérique">
+          <input type="text" class="form-control mb-2" name="type" placeholder="Type (ex: imprimante)">
+          <button type="submit" class="btn btn-primary">Ajouter</button>
+        </form>
+      </div>
+      <div class="col-md-6 mb-4">
+        <h5>Réseau de caisse</h5>
+        <form action="/configuration/reseau" method="post">
+          <input type="text" class="form-control mb-2" name="param" placeholder="Adresse IP / Port / etc.">
+          <button type="submit" class="btn btn-primary">Enregistrer</button>
+        </form>
+      </div>
+      <div class="col-md-6 mb-4">
+        <h5>Ticket de caisse</h5>
+        <form action="/configuration/ticket" method="post">
+          <textarea class="form-control mb-2" name="template" placeholder="Modèle du ticket (entête, pied, etc.)" rows="4"></textarea>
+          <button type="submit" class="btn btn-primary">Enregistrer</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

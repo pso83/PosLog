@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Gestion des Stocks</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="p-4">
+  <div class="container">
+    <h2 class="mb-4">Gestion des Stocks</h2>
+    <div class="row">
+      <div class="col-md-6 mb-4">
+        <h5>Entrée en stock</h5>
+        <form action="/stocks/entree" method="post">
+          <div class="mb-2">
+            <label class="form-label">Article</label>
+            <input type="text" class="form-control" name="article">
+          </div>
+          <div class="mb-2">
+            <label class="form-label">Quantité</label>
+            <input type="number" class="form-control" name="quantite">
+          </div>
+          <button type="submit" class="btn btn-success">Entrée</button>
+        </form>
+      </div>
+      <div class="col-md-6 mb-4">
+        <h5>Sortie de stock</h5>
+        <form action="/stocks/sortie" method="post">
+          <div class="mb-2">
+            <label class="form-label">Article</label>
+            <input type="text" class="form-control" name="article">
+          </div>
+          <div class="mb-2">
+            <label class="form-label">Quantité</label>
+            <input type="number" class="form-control" name="quantite">
+          </div>
+          <button type="submit" class="btn btn-danger">Sortie</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

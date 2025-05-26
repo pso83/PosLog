@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Ticket de Caisse</title>
+  <style>
+    body {
+      font-family: monospace;
+      width: 300px;
+      margin: auto;
+      background-color: white;
+      padding: 20px;
+    }
+    .text-center {
+      text-align: center;
+    }
+    .total {
+      font-weight: bold;
+      margin-top: 10px;
+    }
+    hr {
+      margin: 8px 0;
+    }
+    .btn-print {
+      margin-top: 20px;
+      width: 100%;
+    }
+    @media print {
+      .btn-print {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="ticket">
+    <div class="text-center">
+      <h3>{{ commerce.nom }}</h3>
+      <p>{{ commerce.adresse }}<br>{{ commerce.telephone }}</p>
+    </div>
+    <hr>
+    <p>Date : {{ vente.date.strftime('%d/%m/%Y %H:%M') }}</p>
+    <ul>
+      {% for item in vente.articles %}
+      <li>{{ item.nom }} x{{ item.quantite }} - {{ item.prix_total }} €</li>
+      {% endfor %}
+    </ul>
+    <hr>
+    <p class="total">Total : {{ vente.montant_total }} €</p>
+    <p>Mode de paiement : {{ vente.mode }}</p>
+    <div class="text-center mt-3">Merci de votre visite !</div>
+  </div>
+  <button class="btn btn-dark btn-print" onclick="window.print()">Imprimer</button>
+</body>
+</html>

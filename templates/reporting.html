@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Reporting des Ventes</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="p-4 bg-light">
+  <div class="container">
+    <h2 class="mb-4">Reporting des Ventes</h2>
+    <form method="get" action="/reporting">
+      <div class="row mb-4">
+        <div class="col-md-3">
+          <label class="form-label">Date de début</label>
+          <input type="date" class="form-control" name="date_debut">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Date de fin</label>
+          <input type="date" class="form-control" name="date_fin">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Mode de paiement</label>
+          <select name="mode" class="form-select">
+            <option value="">Tous</option>
+            <option value="especes">Espèces</option>
+            <option value="carte">Carte</option>
+          </select>
+        </div>
+        <div class="col-md-3 d-flex align-items-end">
+          <button class="btn btn-primary w-100">Afficher</button>
+        </div>
+      </div>
+    </form>
+
+    <table class="table table-bordered">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Montant</th>
+          <th>Mode de paiement</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for vente in ventes %}
+        <tr>
+          <td>{{ vente.date.strftime('%d/%m/%Y %H:%M') }}</td>
+          <td>{{ vente.montant }} €</td>
+          <td>{{ vente.mode }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <div class="mt-3">
+      <a href="/reporting/export?date_debut={{ request.args.get('date_debut') }}&date_fin={{ request.args.get('date_fin') }}&mode={{ request.args.get('mode') }}" class="btn btn-success">
+        Exporter en CSV
+      </a>
+    </div>
+  </div>
+</body>
+</html>

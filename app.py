@@ -1,6 +1,8 @@
 from flask import Flask
 from config import Config
 from models.article import db
+
+# Importation explicite de tous les modèles (obligatoire pour db.create_all)
 from models.article import Article
 from models.clavier import Clavier
 from models.tva import Tva
@@ -23,6 +25,7 @@ from models.stock import MouvementStock
 from models.vente import Vente
 from models.vente_detail import VenteDetail
 
+# Enregistrement des routes
 from routes.routes_programmation import register_routes
 from routes.routes_configuration import register_configuration_routes
 from routes.routes_gestion import register_gestion_routes
@@ -35,7 +38,7 @@ app = Flask(__name__)
 app.config.from_object(Config)
 db.init_app(app)
 
-# Enregistrement des routes
+# Routes d’enregistrement
 register_routes(app)
 register_configuration_routes(app)
 register_gestion_routes(app)
@@ -50,5 +53,7 @@ def index():
 
 if __name__ == '__main__':
     with app.app_context():
+        print("🔁 Création des tables si elles n’existent pas...")
         db.create_all()
+        print("📋 Tables existantes :", db.inspect(db.engine).get_table_names())
     app.run(debug=True)

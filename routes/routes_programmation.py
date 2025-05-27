@@ -1,5 +1,7 @@
 from flask import Flask, render_template, request, redirect
+from models import db
 from models.article import db
+from models.article import Article
 from models.clavier import Clavier
 from models.tva import Tva
 from models.groupe import Groupe
@@ -10,7 +12,14 @@ from models.commentaire import Commentaire
 from models.menu import Menu
 from models.formule import Formule
 
+
 def register_routes(app):
+    @app.route('/programmation/articles', methods=['GET'])
+    def programmer_articles():
+        articles = Article.query.all()
+        tva_options = [str(t.taux) for t in Tva.query.all()]
+        return render_template('programmation_articles.html', articles=articles, tva_options=tva_options)
+
     @app.route('/programmation/elements', methods=['GET'])
     def show_programmation_elements():
         return render_template('programmation_elements.html')

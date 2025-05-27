@@ -14,11 +14,6 @@ from models.formule import Formule
 
 
 def register_routes(app):
-    @app.route('/programmation/articles', methods=['GET'])
-    def programmer_articles():
-        articles = Article.query.all()
-        tva_options = [str(t.taux) for t in Tva.query.all()]
-        return render_template('programmation_articles.html', articles=articles, tva_options=tva_options)
 
     @app.route('/programmation/elements', methods=['GET'])
     def show_programmation_elements():
@@ -96,3 +91,11 @@ def register_routes(app):
             db.session.add(Formule(nom=nom))
             db.session.commit()
         return redirect('/programmation/elements')
+
+def register_programmation_routes(app):
+    @app.route('/programmer/articles', methods=['GET'])
+    def programmer_articles():
+        print("📍 Route /programmer/articles appelée")
+        articles = Article.query.all()
+        tva_options = [str(t.taux) for t in Tva.query.all()]
+        return render_template('programmation_articles.html', articles=articles, tva_options=tva_options)

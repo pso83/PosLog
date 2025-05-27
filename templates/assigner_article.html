@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Assigner un article à un bouton</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light p-4">
+  <div class="container">
+    <h2 class="mb-4">Assigner un article au bouton n°{{ position }}</h2>
+    <form method="post" action="/programmer/claviers/assign/save">
+      <input type="hidden" name="position" value="{{ position }}">
+      <input type="hidden" name="clavier_id" value="{{ clavier_id }}">
+      <div class="mb-3">
+        <label for="article_id" class="form-label">Choisir un article</label>
+        <select name="article_id" id="article_id" class="form-select" required>
+          {% for article in articles %}
+          <option value="{{ article.id }}">{{ article.nom_article }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <button type="submit" class="btn btn-success">Enregistrer</button>
+      <a href="/programmer/claviers" class="btn btn-secondary ms-2">Annuler</a>
+    </form>
+  </div>
+</body>
+</html>

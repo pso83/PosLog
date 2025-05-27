@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Programmation des claviers</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    .btn-grid {
+      width: 100%;
+      height: 70px;
+      font-size: 14px;
+      white-space: normal;
+    }
+    .grid-container {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 5px;
+    }
+  </style>
+</head>
+<body class="bg-light p-4">
+  <div class="container-fluid">
+    <h2 class="mb-4">Programmation des claviers</h2>
+
+    <!-- Sélection ou création de clavier -->
+    <form method="post" action="/programmer/claviers/save" class="mb-4">
+      <div class="row">
+        <div class="col-md-4">
+          <label for="nom_clavier" class="form-label">Nom du clavier</label>
+          <input type="text" id="nom_clavier" name="nom_clavier" class="form-control" value="{{ clavier.nom if clavier else '' }}">
+        </div>
+        <div class="col-md-2 d-flex align-items-end">
+          <button type="submit" class="btn btn-primary">Enregistrer</button>
+        </div>
+      </div>
+    </form>
+
+    <!-- Grille de boutons -->
+    <div class="grid-container">
+      {% for i in range(1, 25) %}
+      <form method="post" action="/programmer/claviers/assign" class="d-inline">
+        <input type="hidden" name="position" value="{{ i }}">
+        <button type="submit" class="btn btn-secondary btn-grid">
+          {% if boutons[i] %}
+            {{ boutons[i].nom_article }}
+          {% else %}
+            Vide ({{ i }})
+          {% endif %}
+        </button>
+      </form>
+      {% endfor %}
+    </div>
+
+    <!-- Retour -->
+    <div class="mt-4">
+      <a href="/programmer" class="btn btn-secondary">Retour</a>
+    </div>
+  </div>
+</body>
+</html>

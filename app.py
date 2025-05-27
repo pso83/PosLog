@@ -35,6 +35,8 @@ from routes.routes_stock import register_stock_routes
 from routes.routes_dashboard import register_dashboard_routes
 from routes.routes_reporting import register_reporting_routes
 from routes.routes_ticket import register_ticket_routes
+from routes.routes_programmation import register_programmation_routes
+
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -49,6 +51,7 @@ register_stock_routes(app)
 register_dashboard_routes(app)
 register_reporting_routes(app)
 register_ticket_routes(app)
+register_programmation_routes(app)
 
 @app.route('/')
 def index():

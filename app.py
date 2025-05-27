@@ -1,6 +1,8 @@
 from flask import Flask
 from config import Config
 from models.article import db
+from routes_static_pages import register_static_pages
+
 
 # Importation explicite de tous les modèles (obligatoire pour db.create_all)
 from models.article import Article
@@ -36,6 +38,7 @@ from routes.routes_ticket import register_ticket_routes
 
 app = Flask(__name__)
 app.config.from_object(Config)
+register_static_pages(app)
 db.init_app(app)
 
 # Routes d’enregistrement

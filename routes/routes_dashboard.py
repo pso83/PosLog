@@ -1,8 +1,8 @@
 from flask import render_template
 from models.vente import Vente
 from models.stock import MouvementStock
-from models.article import db
-from sqlalchemy import func, desc
+from models import db
+from sqlalchemy import func, desc, case
 from datetime import date
 
 def register_dashboard_routes(app):
@@ -19,10 +19,14 @@ def register_dashboard_routes(app):
             func.sum(MouvementStock.quantite).label('quantite')
         ).filter(MouvementStock.type_mouvement == 'sortie').group_by(MouvementStock.article).order_by(desc('quantite')).limit(5).all()
 
-        articles_bas_stock = db.session.query(MouvementStock.article).group_by(MouvementStock.article).having(func.sum(
-            func.case([(MouvementStock.type_mouvement == 'entree', MouvementStock.quantite)],
-                      else_=-MouvementStock.quantite)
-        ) < 5).count()
+        articles_bas_stock = db.session.query(MouvementStock.article).group_by(MouvementStock.article).having(
+            func.sum(
+                case(
+                    (MouvementStock.type_mouvement == 'entree', MouvementStock.quantite),
+                    else_=-MouvementStock.quantite
+                )
+            ) < 5
+        ).count()
 
         dernieres_ventes = db.session.query(Vente).order_by(Vente.date.desc()).limit(5).all()
 

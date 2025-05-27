@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Choisir une affectation</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    .choice-btn {
+      width: 200px;
+      height: 100px;
+      font-size: 1.2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+    }
+    .icon {
+      font-size: 2rem;
+    }
+  </style>
+</head>
+<body class="bg-light p-4">
+  <div class="container text-center">
+    <h2 class="mb-4">Affecter un type d'élément</h2>
+    <div class="row justify-content-center g-3">
+      <div class="col-md-4">
+        <a href="/clavier/affecter/article/{{ bouton_id }}" class="btn btn-outline-primary choice-btn">
+          <div class="icon">🛒</div>
+          Article
+        </a>
+      </div>
+      <div class="col-md-4">
+        <a href="/clavier/affecter/commentaire/{{ bouton_id }}" class="btn btn-outline-secondary choice-btn">
+          <div class="icon">💬</div>
+          Commentaire
+        </a>
+      </div>
+      <div class="col-md-4">
+        <a href="/clavier/affecter/menu/{{ bouton_id }}" class="btn btn-outline-success choice-btn">
+          <div class="icon">🍽️</div>
+          Menu
+        </a>
+      </div>
+      <div class="col-md-4">
+        <a href="/clavier/affecter/formule/{{ bouton_id }}" class="btn btn-outline-warning choice-btn">
+          <div class="icon">📋</div>
+          Formule
+        </a>
+      </div>
+      <div class="col-md-4">
+        <a href="/clavier/affecter/fonction/{{ bouton_id }}" class="btn btn-outline-danger choice-btn">
+          <div class="icon">⚙️</div>
+          Fonction
+        </a>
+      </div>
+      <div class="col-md-4">
+        <a href="/clavier/affecter/clavier/{{ bouton_id }}" class="btn btn-outline-dark choice-btn">
+          <div class="icon">🎛️</div>
+          Clavier
+        </a>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

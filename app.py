@@ -3,7 +3,6 @@ from config import Config
 from models.article import db
 from routes_static_pages import register_static_pages
 
-
 # Importation explicite de tous les modèles (obligatoire pour db.create_all)
 from models.article import Article
 from models.clavier import Clavier
@@ -36,12 +35,14 @@ from routes.routes_dashboard import register_dashboard_routes
 from routes.routes_reporting import register_reporting_routes
 from routes.routes_ticket import register_ticket_routes
 from routes.routes_programmation import register_programmation_routes
+from routes.routes_clavier import register_clavier_routes
 
 
 app = Flask(__name__)
 app.config.from_object(Config)
 register_static_pages(app)
 db.init_app(app)
+register_clavier_routes(app)
 
 # Routes d’enregistrement
 register_routes(app)

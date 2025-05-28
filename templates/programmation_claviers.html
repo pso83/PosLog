@@ -5,52 +5,159 @@
   <title>Programmation des claviers</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
+    .keyboard-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 124px);
+      grid-template-rows: repeat(11, 65px);
+      gap: 8px;
+      justify-content: center;
+    }
     .keyboard-button {
       width: 124px;
       height: 65px;
-      margin: 4px;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      padding: 0;
+      font-size: 0.85rem;
     }
   </style>
 </head>
 <body class="bg-light p-4">
-  <div class="container-fluid">
-    <h2 class="mb-4">Programmation des claviers</h2>
-    <div class="row">
-      <div class="col-md-8">
-        <div class="card">
-          <div class="card-header bg-dark text-white">Clavier</div>
-          <div class="card-body">
-            <div class="d-flex flex-wrap">
-              {% for i in range(55) %}
-              <form method="get" action="/programmer/clavier/affectation">
-                <input type="hidden" name="bouton" value="{{ i }}">
-                <button type="submit" class="btn btn-outline-primary keyboard-button">{{ i + 1 }}</button>
-              </form>
-              {% endfor %}
-            </div>
-          </div>
-        </div>
-      </div>
+<div class="container-fluid">
+  <h2 class="mb-4">Programmation des claviers</h2>
 
-      <div class="col-md-4">
-        <div class="card">
-          <div class="card-header bg-secondary text-white">Sélection du clavier</div>
-          <div class="card-body">
-            <form method="get" action="/programmer/clavier">
-              <div class="mb-3">
-                <label class="form-label">Clavier</label>
-                <select name="clavier_id" class="form-select">
-                  {% for clavier in claviers %}
-                  <option value="{{ clavier.id }}">{{ clavier.nom }}</option>
-                  {% endfor %}
-                </select>
-              </div>
-              <button type="submit" class="btn btn-primary">Afficher</button>
-            </form>
+  <div class="keyboard-grid">
+    {% for i in range(1, 56) %}
+    {% set bouton = boutons.get(i, {}) %}
+    <button type="button"
+        class="btn keyboard-button
+               {% if not bouton.type %} btn-outline-secondary {% endif %}"
+        onclick="ouvrirModale({{ i }}, {{ bouton | tojson | safe }})"
+        style="
+          background-color: {{ bouton.couleur or '#e0e0e0' }};
+          {% if bouton.image %} background-image: url('{{ bouton.image }}'); background-size: cover; {% endif %}
+          color: {{ 'transparent' if bouton.masquer_texte else 'black' }};
+        ">
+      {% if not bouton.masquer_texte %}
+        {{ bouton.label or 'Vide (' ~ i ~ ')' }}
+      {% endif %}
+    </button>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- Modale de configuration -->
+<div class="modal fade" id="modaleBouton" tabindex="-1" aria-labelledby="modaleLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="formBouton">
+        <div class="modal-header">
+          <h5 class="modal-title" id="modaleLabel">Configurer le bouton <span id="numeroBouton"></span></h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" name="position" id="positionInput">
+          <div class="mb-3">
+            <label for="type" class="form-label">Type d’élément</label>
+            <select class="form-select" id="type" name="type">
+              <option value="article">Article</option>
+              <option value="clavier">Clavier</option>
+              <option value="fonction">Fonction</option>
+              <option value="menu">Menu</option>
+              <option value="formule">Formule</option>
+              <option value="utilisateur">Utilisateur</option>
+              <option value="reglement">Règlement</option>
+              <option value="commentaire">Commentaire</option>
+            </select>
+          </div>
+          <div class="mb-3">
+              <label for="element_id" class="form-label">Élément à affecter</label>
+              <select class="form-select" id="element_id" name="element_id"></select>
+            </div>
+            <div class="mb-3">
+              <label for="label" class="form-label">Texte du bouton</label>
+              <input type="text" class="form-control" id="label" name="label">
+            </div>
+          <div class="mb-3">
+            <label for="couleur" class="form-label">Couleur</label>
+            <input type="color" class="form-control form-control-color" id="couleur" name="couleur">
+          </div>
+          <div class="mb-3">
+            <label for="image" class="form-label">Image de fond (URL)</label>
+            <input type="text" class="form-control" id="image" name="image">
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="masquer_texte" name="masquer_texte">
+            <label class="form-check-label" for="masquer_texte">Masquer le texte si image</label>
           </div>
         </div>
-      </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">Enregistrer</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+        </div>
+      </form>
     </div>
   </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  const modal = new bootstrap.Modal(document.getElementById('modaleBouton'));
+
+  function ouvrirModale(position, bouton) {
+    document.getElementById('numeroBouton').innerText = position;
+    document.getElementById('positionInput').value = position;
+    document.getElementById('type').value = bouton.type || 'article';
+    document.getElementById('label').value = bouton.label || '';
+    document.getElementById('couleur').value = bouton.couleur || '#e0e0e0';
+    document.getElementById('image').value = bouton.image || '';
+    document.getElementById('masquer_texte').checked = bouton.masquer_texte || false;
+
+    chargerElements(bouton.type, bouton.element_id); // <== ici
+    modal.show();
+  }
+
+  document.getElementById('type').addEventListener('change', () => {
+    const selectedType = document.getElementById('type').value;
+    chargerElements(selectedType, null);
+  });
+
+  function chargerElements(type, selectedId) {
+    fetch(`/clavier/elements?type=${type}`)
+      .then(res => res.json())
+      .then(elements => {
+        const select = document.getElementById('element_id');
+        select.innerHTML = '';
+        elements.forEach(el => {
+          const option = document.createElement('option');
+          option.value = el.id;
+          option.textContent = el.nom;
+          if (selectedId && el.id === selectedId) option.selected = true;
+          select.appendChild(option);
+        });
+
+        if (elements.length > 0) {
+          document.getElementById('label').value = elements.find(el => el.id == selectedId)?.nom || elements[0].nom;
+        }
+      });
+  }
+
+  document.getElementById('formBouton').addEventListener('submit', function (e) {
+    e.preventDefault();
+    const data = Object.fromEntries(new FormData(this).entries());
+    data.masquer_texte = document.getElementById('masquer_texte').checked;
+
+    fetch('/clavier/save_bouton', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(data)
+    }).then(res => res.json()).then(resp => {
+      if (resp.status === 'ok') {
+        location.reload();
+      }
+    });
+  });
+</script>
 </body>
 </html>

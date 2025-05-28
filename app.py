@@ -25,6 +25,7 @@ from models.cloture import Cloture
 from models.stock import MouvementStock
 from models.vente import Vente
 from models.vente_detail import VenteDetail
+from models.bouton_clavier import BoutonClavier
 
 # Enregistrement des routes
 from routes.routes_programmation import register_routes

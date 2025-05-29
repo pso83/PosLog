@@ -4,98 +4,120 @@
   <meta charset="UTF-8">
   <title>Programmation des articles</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script>
+    function confirmerSuppression(nom, url) {
+      if (confirm(`Supprimer l'article "${nom}" ?`)) {
+        window.location.href = url;
+      }
+    }
+  </script>
 </head>
 <body class="bg-light p-4">
-<div class="container-fluid">
-  <h2 class="mb-4">Programmation des articles</h2>
-  <div class="row">
-    <!-- Liste des articles -->
-    <div class="col-md-6">
-      <div class="card">
-        <div class="card-header bg-dark text-white">Articles enregistrés</div>
-        <div class="card-body" style="max-height: 600px; overflow-y: auto;">
-          <table class="table table-sm table-striped">
-            <thead>
-              <tr>
-                <th>Nom</th>
-                <th>Prix 1</th>
-                <th>TVA</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for article in articles %}
-              <tr>
-                <td>{{ article.nom_article }}</td>
-                <td>{{ article.prix_1 }} €</td>
-                <td>{{ article.tva_id }}</td>
-                <td>
-                  <a href="/programmer/articles?id={{ article.id }}" class="btn btn-sm btn-primary">Modifier</a>
-                </td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
+<div class="container">
+  <h2>Programmation des articles</h2>
+
+  <!-- Formulaire -->
+  <form method="post" action="{{ url_for('save_article') }}" class="card p-3 mb-4">
+    {% if article %}<input type="hidden" name="id" value="{{ article.id }}">{% endif %}
+
+    <div class="row">
+      <div class="col-md-4">
+        <label class="form-label">Nom</label>
+        <input type="text" class="form-control" name="nom_article" value="{{ article.nom_article if article else '' }}">
+      </div>
+      {% for i in range(1, 5) %}
+      <div class="col-md-2">
+        <label class="form-label">Prix {{ i }}</label>
+        <input type="number" step="0.01" class="form-control" name="prix_{{ i }}" value="{{ article['prix_' ~ i] if article else '' }}">
+      </div>
+      {% endfor %}
+    </div>
+
+    <div class="row mt-3">
+      <div class="col-md-3">
+        <label class="form-label">TVA</label>
+        <select class="form-select" name="tva_id">
+          {% for option in tva_options %}
+            <option value="{{ option.id }}" {% if article and article.tva_id == option.id %}selected{% endif %}>{{ option.taux }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Groupe</label>
+        <select class="form-select" name="groupe_id">
+          <option value="">--</option>
+          {% for g in groupes %}<option value="{{ g.id }}" {% if article and article.groupe_id == g.id %}selected{% endif %}>{{ g.nom }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Famille</label>
+        <select class="form-select" name="famille_id">
+          <option value="">--</option>
+          {% for f in familles %}<option value="{{ f.id }}" {% if article and article.famille_id == f.id %}selected{% endif %}>{{ f.nom }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Sous-famille</label>
+        <select class="form-select" name="sous_famille_id">
+          <option value="">--</option>
+          {% for sf in sous_familles %}<option value="{{ sf.id }}" {% if article and article.sous_famille_id == sf.id %}selected{% endif %}>{{ sf.nom }}</option>{% endfor %}
+        </select>
       </div>
     </div>
 
-    <!-- Formulaire d'ajout/modif -->
-    <div class="col-md-6">
-      <div class="card">
-        <div class="card-header bg-secondary text-white">
-          {% if article %}Modifier l’article{% else %}Ajouter un article{% endif %}
-        </div>
-        <div class="card-body">
-          <form method="post" action="/programmer/articles/save">
-            {% if article %}
-              <input type="hidden" name="id" value="{{ article.id }}">
-            {% endif %}
-            <div class="mb-3">
-              <label class="form-label">Nom de l'article</label>
-              <input type="text" class="form-control" name="nom_article" value="{{ article.nom_article if article else '' }}">
-            </div>
-            <div class="row">
-              <div class="col"><label class="form-label">Prix 1</label><input type="number" step="0.01" class="form-control" name="prix_1" value="{{ article.prix_1 if article else '' }}"></div>
-              <div class="col"><label class="form-label">Prix 2</label><input type="number" step="0.01" class="form-control" name="prix_2" value="{{ article.prix_2 if article else '' }}"></div>
-            </div>
-            <div class="row mt-2">
-              <div class="col"><label class="form-label">Prix 3</label><input type="number" step="0.01" class="form-control" name="prix_3" value="{{ article.prix_3 if article else '' }}"></div>
-              <div class="col"><label class="form-label">Prix 4</label><input type="number" step="0.01" class="form-control" name="prix_4" value="{{ article.prix_4 if article else '' }}"></div>
-            </div>
-            <div class="mt-3">
-              <label class="form-label">TVA</label>
-              <select class="form-select" name="tva_id">
-                {% for taux in tva_options %}
-                  <option value="{{ taux }}" {% if article and article.tva_id == taux|string %}selected{% endif %}>{{ taux }}%</option>
-                {% endfor %}
-              </select>
-            </div>
-            <hr>
-            <div class="row">
-              {% set flags = ['prix_manuel', 'vendu_au_poids', 'avec_code_barre', 'eligible_fidelite',
-                              'retour_autorise', 'avoir_autorise', 'gere_stock', 'vendu_en_negatif',
-                              'hors_ca', 'est_menu', 'est_formule', 'composant_menu', 'composant_formulaire',
-                              'appel_commentaire', 'imprimable_preparation', 'invisible_telecommande',
-                              'vente_a_distance', 'gere_heure', 'depot_vente', 'gere_sav'] %}
-              {% for flag in flags %}
-                <div class="col-6">
-                  <div class="form-check">
-                    <input class="form-check-input" type="checkbox" id="{{ flag }}" name="{{ flag }}" {% if article and article[flag] %}checked{% endif %}>
-                    <label class="form-check-label" for="{{ flag }}">{{ flag.replace('_', ' ')|capitalize }}</label>
-                  </div>
-                </div>
-              {% endfor %}
-            </div>
-            <div class="mt-4">
-              <button type="submit" class="btn btn-success">Enregistrer</button>
-              <a href="/programmer" class="btn btn-secondary ms-2">Retour</a>
-            </div>
-          </form>
+    <div class="row mt-3">
+      {% set flags = ['prix_manuel', 'vendu_au_poids', 'avec_code_barre', 'eligible_fidelite', 'retour_autorise', 'avoir_autorise', 'gere_stock', 'vendu_en_negatif', 'hors_ca', 'est_menu', 'est_formule', 'composant_menu', 'composant_formulaire', 'appel_commentaire', 'imprimable_preparation', 'invisible_telecommande', 'vente_a_distance', 'gere_heure', 'depot_vente', 'gere_sav'] %}
+      {% for flag in flags %}
+      <div class="col-md-3">
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" id="{{ flag }}" name="{{ flag }}" {% if article and article[flag] %}checked{% endif %}>
+          <label class="form-check-label" for="{{ flag }}">{{ flag.replace('_', ' ').capitalize() }}</label>
         </div>
       </div>
+      {% endfor %}
     </div>
-  </div>
+    <button type="submit" class="btn btn-primary mt-4">Enregistrer</button>
+  </form>
+
+  <!-- Filtres -->
+  <form method="get" class="row mb-4">
+    {% for field, items in {'groupe': groupes, 'famille': familles, 'sous_famille': sous_familles}.items() %}
+    <div class="col-md-3">
+      <select name="{{ field }}" class="form-select">
+        <option value="">{{ field.capitalize() }}</option>
+        {% for item in items %}<option value="{{ item.id }}" {% if request.args.get(field) == item.id|string %}selected{% endif %}>{{ item.nom }}</option>{% endfor %}
+      </select>
+    </div>
+    {% endfor %}
+    <div class="col-md-2">
+      <button type="submit" class="btn btn-outline-primary">Filtrer</button>
+    </div>
+  </form>
+
+  <!-- Table -->
+  <table class="table table-bordered table-striped">
+    <thead class="table-dark">
+      <tr>
+        <th>Nom</th><th>Prix</th><th>TVA</th><th>Groupe</th><th>Famille</th><th>Sous-famille</th><th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for a in articles %}
+      <tr>
+        <td>{{ a.nom_article }}</td>
+        <td>{{ a.prix_1 }}</td>
+        <td>{{ a.tva_id }}</td>
+        <td>{{ a.groupe.nom if a.groupe else '' }}</td>
+        <td>{{ a.famille.nom if a.famille else '' }}</td>
+        <td>{{ a.sous_famille.nom if a.sous_famille else '' }}</td>
+        <td>
+          <a href="{{ url_for('programmation_articles', id=a.id) }}" class="btn btn-sm btn-secondary">Modifier</a>
+          <button class="btn btn-sm btn-danger" onclick="confirmerSuppression('{{ a.nom_article }}', '{{ url_for('delete_article', id=a.id) }}')">Supprimer</button>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
 </div>
 </body>
 </html>

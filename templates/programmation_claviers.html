@@ -1,163 +1,212 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-  <meta charset="UTF-8">
-  <title>Programmation des claviers</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <style>
-    .keyboard-grid {
-      display: grid;
-      grid-template-columns: repeat(5, 124px);
-      grid-template-rows: repeat(11, 65px);
-      gap: 8px;
-      justify-content: center;
-    }
-    .keyboard-button {
-      width: 124px;
-      height: 65px;
-      overflow: hidden;
-      white-space: nowrap;
-      text-overflow: ellipsis;
-      padding: 0;
-      font-size: 0.85rem;
-    }
-  </style>
-</head>
-<body class="bg-light p-4">
+{% extends 'base.html' %}
+{% block content %}
 <div class="container-fluid">
-  <h2 class="mb-4">Programmation des claviers</h2>
+  <div class="row">
 
-  <div class="keyboard-grid">
-    {% for i in range(1, 56) %}
-    {% set bouton = boutons.get(i, {}) %}
-    <button type="button"
-        class="btn keyboard-button
-               {% if not bouton.type %} btn-outline-secondary {% endif %}"
-        onclick="ouvrirModale({{ i }}, {{ bouton | tojson | safe }})"
-        style="
-          background-color: {{ bouton.couleur or '#e0e0e0' }};
-          {% if bouton.image %} background-image: url('{{ bouton.image }}'); background-size: cover; {% endif %}
-          color: {{ 'transparent' if bouton.masquer_texte else 'black' }};
-        ">
-      {% if not bouton.masquer_texte %}
-        {{ bouton.label or 'Vide (' ~ i ~ ')' }}
-      {% endif %}
-    </button>
-    {% endfor %}
+    <!-- Grille des boutons -->
+    <div class="col-md-9">
+      <h4 class="mb-3">Programmation du clavier : {{ clavier.nom if clavier else 'Aucun clavier sélectionné' }}</h4>
+
+      <div class="d-flex flex-wrap" style="width: 624px; height: 715px;">
+        {% for row in range(11) %}
+          <div class="d-flex" style="width: 100%;">
+            {% for col in range(5) %}
+              {% set pos = row * 5 + col + 1 %}
+              {% set b = boutons.get(pos, {}) %}
+              <button
+                class="btn me-1 mb-1"
+                style="width: 124px; height: 65px; background-color: {{ b.get('couleur', '#e0e0e0') }};"
+                onclick="openButtonModal({{ pos }}, {{ b | tojson | safe }})">
+                {% if b.get('image') %}
+                  <img src="{{ url_for('static', filename=b.image) }}" alt="" style="width: 100%; height: 100%;">
+                {% else %}
+                  {{ b.get('label') or 'Vide ' ~ pos }}
+                {% endif %}
+              </button>
+            {% endfor %}
+          </div>
+        {% endfor %}
+      </div>
+
+      <p class="text-success mt-3">{{ message }}</p>
+    </div>
+
+    <!-- Outils de gestion à droite -->
+    <div class="col-md-3">
+      <div class="card mb-3">
+        <div class="card-header">Créer un clavier</div>
+        <div class="card-body">
+          <form method="post" action="{{ url_for('creer_clavier') }}">
+            <input type="text" name="nom" class="form-control mb-2" placeholder="Nom du clavier" required>
+            <button type="submit" class="btn btn-primary btn-sm w-100">Créer</button>
+          </form>
+        </div>
+      </div>
+
+      <div class="card mb-3">
+        <div class="card-header">Claviers disponibles</div>
+        <div class="card-body">
+          <form method="get" action="{{ url_for('programmation_claviers') }}">
+            <select name="clavier_id" class="form-select mb-2" onchange="this.form.submit()">
+              {% for c in claviers %}
+                <option value="{{ c.id }}" {% if clavier and clavier.id == c.id %}selected{% endif %}>{{ c.nom }}</option>
+              {% else %}
+                <option>Aucun clavier disponible</option>
+              {% endfor %}
+            </select>
+          </form>
+          <a href="{{ url_for('reset_clavier', clavier_id=clavier.id if clavier else 0) }}" class="btn btn-warning btn-sm w-100 mb-2">Réinitialiser</a>
+          <a href="{{ url_for('dupliquer_clavier', id=clavier.id if clavier else 0) }}" class="btn btn-secondary btn-sm w-100 mb-2">Dupliquer</a>
+          <form method="post" action="{{ url_for('import_clavier', id=clavier.id if clavier else 0) }}">
+            <input type="file" name="file" class="form-control form-control-sm mb-2" accept=".json">
+            <button type="submit" class="btn btn-info btn-sm w-100">Importer</button>
+          </form>
+          <a href="{{ url_for('export_clavier', id=clavier.id if clavier else 0) }}" class="btn btn-success btn-sm w-100">Exporter</a>
+        </div>
+      </div>
+
+      <div class="card mb-3">
+        <div class="card-header">Effacer bouton / ligne</div>
+        <div class="card-body">
+          <form class="mb-2" method="post" action="/clavier/effacer_bouton/">
+            <div class="input-group">
+              <span class="input-group-text">Pos</span>
+              <input type="number" name="effacerPosition" min="1" max="55" class="form-control" placeholder="1-55">
+              <button type="submit" class="btn btn-danger">❌</button>
+            </div>
+          </form>
+          <form method="post" action="/clavier/effacer_ligne/">
+            <div class="input-group">
+              <span class="input-group-text">Ligne</span>
+              <input type="number" name="effacerLigne" min="1" max="11" class="form-control" placeholder="1-11">
+              <button type="submit" class="btn btn-danger">🧹</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
 
-<!-- Modale de configuration -->
-<div class="modal fade" id="modaleBouton" tabindex="-1" aria-labelledby="modaleLabel" aria-hidden="true">
-  <div class="modal-dialog">
+<!-- Modale pour configuration des boutons -->
+<div class="modal fade" id="buttonModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
-      <form id="formBouton">
-        <div class="modal-header">
-          <h5 class="modal-title" id="modaleLabel">Configurer le bouton <span id="numeroBouton"></span></h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-        </div>
-        <div class="modal-body">
+      <div class="modal-header">
+        <h5 class="modal-title">Configurer le bouton</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="buttonForm">
           <input type="hidden" name="position" id="positionInput">
-          <div class="mb-3">
-            <label for="type" class="form-label">Type d’élément</label>
-            <select class="form-select" id="type" name="type">
+          <input type="hidden" name="clavier_id" id="clavierIdInput" value="{{ clavier.id if clavier }}">
+          <div class="mb-2">
+            <label for="typeInput">Type</label>
+            <select name="type" id="typeInput" class="form-select">
               <option value="article">Article</option>
               <option value="clavier">Clavier</option>
               <option value="fonction">Fonction</option>
               <option value="menu">Menu</option>
               <option value="formule">Formule</option>
-              <option value="utilisateur">Utilisateur</option>
-              <option value="reglement">Règlement</option>
-              <option value="commentaire">Commentaire</option>
             </select>
           </div>
-          <div class="mb-3">
-              <label for="element_id" class="form-label">Élément à affecter</label>
-              <select class="form-select" id="element_id" name="element_id"></select>
-            </div>
-            <div class="mb-3">
-              <label for="label" class="form-label">Texte du bouton</label>
-              <input type="text" class="form-control" id="label" name="label">
-            </div>
-          <div class="mb-3">
-            <label for="couleur" class="form-label">Couleur</label>
-            <input type="color" class="form-control form-control-color" id="couleur" name="couleur">
+          <div class="mb-2">
+            <label for="elementInput">Élément</label>
+            <select name="element_id" id="elementInput" class="form-select"></select>
           </div>
-          <div class="mb-3">
-            <label for="image" class="form-label">Image de fond (URL)</label>
-            <input type="text" class="form-control" id="image" name="image">
+          <div class="mb-2">
+            <label for="labelInput">Label</label>
+            <input type="text" name="label" id="labelInput" class="form-control">
           </div>
-          <div class="form-check">
-            <input class="form-check-input" type="checkbox" id="masquer_texte" name="masquer_texte">
-            <label class="form-check-label" for="masquer_texte">Masquer le texte si image</label>
+          <div class="mb-2">
+            <label for="couleurInput">Couleur</label>
+            <input type="color" name="couleur" id="couleurInput" class="form-control form-control-color">
           </div>
-        </div>
-        <div class="modal-footer">
-          <button type="submit" class="btn btn-primary">Enregistrer</button>
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-        </div>
-      </form>
+          <div class="mb-2">
+            <label for="imageInput">Image (facultatif)</label>
+            <input type="text" name="image" id="imageInput" class="form-control">
+          </div>
+          <div class="form-check mb-2">
+            <input class="form-check-input" type="checkbox" id="masquerTexteInput" name="masquer_texte">
+            <label class="form-check-label" for="masquerTexteInput">Masquer le texte</label>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+        <button type="button" class="btn btn-primary" onclick="saveButtonConfig()">Enregistrer</button>
+      </div>
     </div>
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-  const modal = new bootstrap.Modal(document.getElementById('modaleBouton'));
+  function openButtonModal(pos, bouton) {
+    document.getElementById('positionInput').value = pos;
+    document.getElementById('typeInput').value = bouton.type || 'article';
+    document.getElementById('labelInput').value = bouton.label || '';
+    document.getElementById('couleurInput').value = bouton.couleur || '#e0e0e0';
+    document.getElementById('imageInput').value = bouton.image || '';
+    document.getElementById('masquerTexteInput').checked = bouton.masquer_texte || false;
 
-  function ouvrirModale(position, bouton) {
-    document.getElementById('numeroBouton').innerText = position;
-    document.getElementById('positionInput').value = position;
-    document.getElementById('type').value = bouton.type || 'article';
-    document.getElementById('label').value = bouton.label || '';
-    document.getElementById('couleur').value = bouton.couleur || '#e0e0e0';
-    document.getElementById('image').value = bouton.image || '';
-    document.getElementById('masquer_texte').checked = bouton.masquer_texte || false;
-
-    chargerElements(bouton.type, bouton.element_id); // <== ici
-    modal.show();
-  }
-
-  document.getElementById('type').addEventListener('change', () => {
-    const selectedType = document.getElementById('type').value;
-    chargerElements(selectedType, null);
-  });
-
-  function chargerElements(type, selectedId) {
+    const type = bouton.type || 'article';
     fetch(`/clavier/elements?type=${type}`)
       .then(res => res.json())
-      .then(elements => {
-        const select = document.getElementById('element_id');
-        select.innerHTML = '';
-        elements.forEach(el => {
-          const option = document.createElement('option');
-          option.value = el.id;
-          option.textContent = el.nom;
-          if (selectedId && el.id === selectedId) option.selected = true;
-          select.appendChild(option);
+      .then(data => {
+        const elementInput = document.getElementById('elementInput');
+        elementInput.innerHTML = '';
+
+        data.forEach(e => {
+          const opt = document.createElement('option');
+          opt.value = e.id;
+          opt.textContent = e.nom;
+          if (e.id == bouton.element_id) opt.selected = true;
+          elementInput.appendChild(opt);
         });
 
-        if (elements.length > 0) {
-          document.getElementById('label').value = elements.find(el => el.id == selectedId)?.nom || elements[0].nom;
+        const selectedInitial = elementInput.options[elementInput.selectedIndex];
+        if (!bouton.label && selectedInitial) {
+          document.getElementById('labelInput').value = selectedInitial.textContent;
         }
+
+        elementInput.addEventListener('change', () => {
+          const selectedOption = elementInput.options[elementInput.selectedIndex];
+          if (selectedOption) {
+            document.getElementById('labelInput').value = selectedOption.textContent;
+          }
+        });
+
+        new bootstrap.Modal(document.getElementById('buttonModal')).show();
+      })
+      .catch(error => {
+        console.error('Erreur lors du chargement des éléments :', error);
+        alert("Erreur lors du chargement des éléments pour ce type.");
       });
   }
 
-  document.getElementById('formBouton').addEventListener('submit', function (e) {
-    e.preventDefault();
-    const data = Object.fromEntries(new FormData(this).entries());
-    data.masquer_texte = document.getElementById('masquer_texte').checked;
+  function saveButtonConfig() {
+    const form = document.getElementById('buttonForm');
+    const data = Object.fromEntries(new FormData(form).entries());
+    data.masquer_texte = document.getElementById('masquerTexteInput').checked;
 
     fetch('/clavier/save_bouton', {
       method: 'POST',
-      headers: {'Content-Type': 'application/json'},
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
-    }).then(res => res.json()).then(resp => {
+    })
+    .then(res => res.json())
+    .then(resp => {
       if (resp.status === 'ok') {
-        location.reload();
+        window.location.reload();
+      } else {
+        alert("Erreur lors de l'enregistrement");
       }
+    })
+    .catch(err => {
+      console.error('Erreur lors de la sauvegarde :', err);
+      alert("Une erreur est survenue");
     });
-  });
+  }
 </script>
-</body>
-</html>
+{% endblock %}

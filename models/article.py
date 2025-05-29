@@ -32,3 +32,11 @@ class Article(db.Model):
     depot_vente = db.Column(db.Boolean, default=False)
     gere_sav = db.Column(db.Boolean, default=False)
 
+    groupe_id = db.Column(db.Integer, db.ForeignKey('groupes.id'))
+    famille_id = db.Column(db.Integer, db.ForeignKey('familles.id'))
+    sous_famille_id = db.Column(db.Integer, db.ForeignKey('sous_familles.id'))
+
+    groupe = db.relationship('Groupe')
+    famille = db.relationship('Famille')
+    sous_famille = db.relationship('SousFamille')
+

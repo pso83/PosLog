@@ -1,17 +1,22 @@
-from flask import Flask, render_template, request, redirect, url_for
-from models import db
+from flask import Flask, render_template, request, redirect, url_for, jsonify, send_file
+from models import db, article, Groupe, Famille, SousFamille, tva
 from models.article import db
 from models.article import Article
 from models.clavier import Clavier
+from models.bouton_clavier import BoutonClavier
 from models.tva import Tva
-from models.groupe import Groupe
-from models.famille import Famille
-from models.sous_famille import SousFamille
+from models.Groupe import Groupe
+from models.Famille import Famille
+from models.SousFamille import SousFamille
 from models.reglement import Reglement
 from models.commentaire import Commentaire
 from models.menu import Menu
 from models.formule import Formule
-
+from models.fonction import Fonction
+from models.utilisateur import Utilisateur
+import json
+from datetime import datetime
+from io import BytesIO
 
 def register_routes(app):
 
@@ -19,13 +24,162 @@ def register_routes(app):
     def show_programmation_elements():
         return render_template('programmation_elements.html')
 
-    @app.route('/programmation/claviers', methods=['POST'])
-    def add_clavier():
+    # Route pour afficher la programmation des claviers
+    @app.route('/programmer/claviers')
+    def programmation_claviers():
+        claviers = Clavier.query.all()
+        clavier_id = request.args.get('clavier_id', type=int)
+        clavier = Clavier.query.get(clavier_id) if clavier_id else claviers[0] if claviers else None
+
+        boutons = {
+            b.position: {
+                'type': b.type,
+                'element_id': b.element_id,
+                'label': b.label,
+                'couleur': b.couleur,
+                'image': b.image,
+                'masquer_texte': b.masquer_texte
+            } for b in clavier.boutons
+        } if clavier else {}
+
+        return render_template('programmation_claviers.html', claviers=claviers, clavier=clavier, boutons=boutons)
+
+    # Route pour créer un clavier
+    @app.route('/clavier/creer', methods=['POST'])
+    def creer_clavier():
         nom = request.form.get('nom')
         if nom:
-            db.session.add(Clavier(nom=nom))
+            clavier = Clavier(nom=nom)
+            db.session.add(clavier)
             db.session.commit()
-        return redirect('/programmation/elements')
+        return redirect(url_for('programmation_claviers', message='Clavier créé'))
+
+    # Route pour réinitialiser tous les boutons d'un clavier
+    @app.route('/clavier/reset')
+    def reset_clavier():
+        clavier_id = request.args.get('clavier_id', type=int)
+        clavier = Clavier.query.get(clavier_id)
+        if clavier:
+            BoutonClavier.query.filter_by(clavier_id=clavier.id).delete()
+            db.session.commit()
+        return redirect(url_for('programmation_claviers', message='Clavier réinitialisé', clavier_id=clavier_id))
+
+    # Route pour dupliquer un clavier
+    @app.route('/clavier/dupliquer/<int:id>')
+    def dupliquer_clavier(id):
+        original = Clavier.query.get_or_404(id)
+        nouveau = Clavier(nom=original.nom + " (copie)")
+        db.session.add(nouveau)
+        db.session.flush()
+
+        for bouton in original.boutons:
+            copie = BoutonClavier(
+                clavier_id=nouveau.id,
+                position=bouton.position,
+                type=bouton.type,
+                element_id=bouton.element_id,
+                label=bouton.label,
+                couleur=bouton.couleur,
+                image=bouton.image,
+                masquer_texte=bouton.masquer_texte
+            )
+            db.session.add(copie)
+
+        db.session.commit()
+        return redirect(url_for('programmation_claviers', message='Clavier dupliqué', clavier_id=nouveau.id))
+
+    # Route pour exporter les boutons d'un clavier
+    @app.route('/clavier/export/<int:id>')
+    def export_clavier(id):
+        clavier = Clavier.query.get_or_404(id)
+        boutons = [
+            {
+                'position': b.position,
+                'type': b.type,
+                'element_id': b.element_id,
+                'label': b.label,
+                'couleur': b.couleur,
+                'image': b.image,
+                'masquer_texte': b.masquer_texte
+            } for b in clavier.nom
+        ]
+        export_json = json.dumps(boutons, ensure_ascii=False, indent=2)
+        return send_file(
+            BytesIO(export_json.encode('utf-8')),
+            mimetype='application/json',
+            as_attachment=True,
+            download_name=f'clavier_{id}_export.json'
+        )
+
+    # Route pour importer des boutons dans un clavier
+    @app.route('/clavier/import/<int:id>', methods=['POST'])
+    def import_clavier(id):
+        clavier = Clavier.query.get_or_404(id)
+        boutons_data = request.get_json()
+
+        for b in boutons_data:
+            bouton = BoutonClavier.query.filter_by(clavier_id=clavier.id, position=b['position']).first()
+            if not bouton:
+                bouton = BoutonClavier(clavier_id=clavier.id, position=b['position'])
+
+            bouton.type = b['type']
+            bouton.element_id = b['element_id']
+            bouton.label = b['label']
+            bouton.couleur = b['couleur']
+            bouton.image = b['image']
+            bouton.masquer_texte = b['masquer_texte']
+
+            db.session.add(bouton)
+
+        db.session.commit()
+        return redirect(url_for('programmation_claviers', message='Importation réussie', clavier_id=clavier.id))
+
+    # Route pour supprimer un bouton spécifique d'un clavier
+    @app.route('/clavier/effacer_bouton/<int:position>', methods=['POST'])
+    def effacer_bouton(position):
+        clavier_id = request.form.get('clavier_id', type=int)
+        clavier = Clavier.query.get(clavier_id)
+        if clavier:
+            bouton = BoutonClavier.query.filter_by(clavier_id=clavier.id, position=position).first()
+            if bouton:
+                db.session.delete(bouton)
+                db.session.commit()
+        return redirect(url_for('programmation_claviers', message=f'Bouton {position} supprimé', clavier_id=clavier_id))
+
+    # Route pour supprimer tous les boutons d'une ligne donnée
+    @app.route('/clavier/effacer_ligne/<int:ligne>', methods=['POST'])
+    def effacer_ligne(ligne):
+        if ligne < 1 or ligne > 11:
+            return redirect(url_for('programmation_claviers', message='Ligne invalide'))
+
+        clavier_id = request.form.get('clavier_id', type=int)
+        clavier = Clavier.query.get(clavier_id)
+        if clavier:
+            debut = (ligne - 1) * 5 + 1
+            fin = ligne * 5
+            BoutonClavier.query.filter(BoutonClavier.clavier_id == clavier.id,
+                                       BoutonClavier.position.between(debut, fin)).delete(synchronize_session=False)
+            db.session.commit()
+        return redirect(url_for('programmation_claviers', message=f'Ligne {ligne} effacée', clavier_id=clavier_id))
+
+    @app.route('/clavier/elements')
+    def get_elements():
+        type_map = {
+            'article': Article,
+            'fonction': Fonction,
+            'menu': Menu,
+            'formule': Formule,
+            'utilisateur': Utilisateur,
+            'reglement': Reglement,
+            'commentaire': Commentaire,
+            'clavier': Clavier
+        }
+        element_type = request.args.get('type')
+        model = type_map.get(element_type)
+        if not model:
+            return jsonify([])
+        results = model.query.with_entities(model.id, model.nom).all()
+        return jsonify([{'id': r.id, 'nom': r.nom} for r in results])
 
     @app.route('/programmation/tva', methods=['POST'])
     def add_tva():
@@ -94,65 +248,66 @@ def register_routes(app):
 
     @app.route('/programmer/articles/save', methods=['POST'])
     def save_article():
-        nom = request.form.get('nom_article', '')
-        prix1 = float(request.form.get('prix_1') or 0)
-        prix2 = float(request.form.get('prix_2') or 0)
-        prix3 = float(request.form.get('prix_3') or 0)
-        prix4 = float(request.form.get('prix_4') or 0)
-        tva_id = request.form.get('tva_id') or ''
+        form = request.form
+        article_id = form.get('id')
+        article = Article.query.get(article_id) if article_id else Article()
 
-        def checkbox(name): return name in request.form
+        article.nom_article = form.get('nom_article')
+        for i in range(1, 5):
+            setattr(article, f'prix_{i}', float(form.get(f'prix_{i}', 0) or 0))
+        article.tva_id = form.get('tva_id')
+        article.groupe_id = form.get('groupe_id') or None
+        article.famille_id = form.get('famille_id') or None
+        article.sous_famille_id = form.get('sous_famille_id') or None
 
-        article = Article(
-            nom_article=nom,
-            prix_1=prix1,
-            prix_2=prix2,
-            prix_3=prix3,
-            prix_4=prix4,
-            tva_id=tva_id,
-            prix_manuel=checkbox('prix_manuel'),
-            vendu_au_poids=checkbox('vendu_au_poids'),
-            avec_code_barre=checkbox('avec_code_barre'),
-            eligible_fidelite=checkbox('eligible_fidelite'),
-            retour_autorise=checkbox('retour_autorise'),
-            avoir_autorise=checkbox('avoir_autorise'),
-            gere_stock=checkbox('gere_stock'),
-            vendu_en_negatif=checkbox('vendu_en_negatif'),
-            hors_ca=checkbox('hors_ca'),
-            est_menu=checkbox('est_menu'),
-            est_formule=checkbox('est_formule'),
-            composant_menu=checkbox('composant_menu'),
-            composant_formulaire=checkbox('composant_formulaire'),
-            appel_commentaire=checkbox('appel_commentaire'),
-            imprimable_preparation=checkbox('imprimable_preparation'),
-            invisible_telecommande=checkbox('invisible_telecommande'),
-            vente_a_distance=checkbox('vente_a_distance'),
-            gere_heure=checkbox('gere_heure'),
-            depot_vente=checkbox('depot_vente'),
-            gere_sav=checkbox('gere_sav')
-        )
+        # Champs booléens
+        flags = ['prix_manuel', 'vendu_au_poids', 'avec_code_barre', 'eligible_fidelite',
+                 'retour_autorise', 'avoir_autorise', 'gere_stock', 'vendu_en_negatif', 'hors_ca',
+                 'est_menu', 'est_formule', 'composant_menu', 'composant_formulaire',
+                 'appel_commentaire', 'imprimable_preparation', 'invisible_telecommande',
+                 'vente_a_distance', 'gere_heure', 'depot_vente', 'gere_sav']
+        for flag in flags:
+            setattr(article, flag, flag in form)
 
         db.session.add(article)
         db.session.commit()
-
         return redirect(url_for('programmation_articles'))
 
-    @app.route('/programmer/articles')
-    def programmation_articles():
-        from models.article import Article
-        from models.tva import Tva
-        article_id = request.args.get('id')
-        article = Article.query.get(article_id) if article_id else None
-        articles = Article.query.all()
-        tva_options = ['5.5', '10', '20']
-        return render_template('programmation_articles.html', articles=articles, article=article,
-                               tva_options=tva_options)
+    @app.route('/programmer/articles/delete/<int:id>')
+    def delete_article(id):
+        article = Article.query.get_or_404(id)
+        db.session.delete(article)
+        db.session.commit()
+        return redirect(url_for('programmation_articles'))
+
 def register_programmation_routes(app):
     @app.route('/programmer/articles', methods=['GET'])
-    def programmer_articles():
-        print("📍 Route /programmer/articles appelée")
-        articles = Article.query.all()
-        tva_options = [str(t.taux) for t in Tva.query.all()]
-        return render_template('programmation_articles.html', articles=articles, tva_options=tva_options)
+    def programmation_articles():
 
+        article_id = request.args.get('id')
+        filtre_groupe = request.args.get('groupe')
+        filtre_famille = request.args.get('famille')
+        filtre_sous_famille = request.args.get('sous_famille')
+
+        article = Article.query.get(article_id) if article_id else None
+
+        query = Article.query
+        if filtre_groupe:
+            query = query.filter_by(groupe_id=filtre_groupe)
+        if filtre_famille:
+            query = query.filter_by(famille_id=filtre_famille)
+        if filtre_sous_famille:
+            query = query.filter_by(sous_famille_id=filtre_sous_famille)
+
+        articles = query.all()
+
+        return render_template(
+            'programmation_articles.html',
+            articles=articles,
+            article=article,
+            tva_options=Tva.query.all(),
+            groupes=Groupe.query.all(),
+            familles=Famille.query.all(),
+            sous_familles=SousFamille.query.all()
+        )
 

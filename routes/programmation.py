@@ -3,9 +3,9 @@ from flask import Flask
 from models.article import db  # déjà en place
 from models.clavier import Clavier
 from models.tva import Tva
-from models.groupe import Groupe
-from models.famille import Famille
-from models.sous_famille import SousFamille
+from models.Groupe import Groupe
+from models.Famille import Famille
+from models.SousFamille import SousFamille
 from models.reglement import Reglement
 from models.commentaire import Commentaire
 from models.menu import Menu

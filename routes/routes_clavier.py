@@ -1,21 +1,29 @@
-from flask import render_template, request, redirect, url_for
+from flask import render_template, request, redirect, url_for, jsonify
 from models import db
 from models.article import Article
 from models.clavier import Clavier, ClavierBouton
-from flask import request, jsonify
 from models.bouton_clavier import BoutonClavier
 
 def register_clavier_routes(app):
 
     @app.route('/programmer/claviers', methods=['GET'])
     def afficher_claviers():
-        clavier = Clavier.query.first()
+        claviers = Clavier.query.all()
+        clavier_id = request.args.get('clavier_id', type=int)
+
+        if clavier_id:
+            clavier = Clavier.query.get(clavier_id)
+        elif claviers:
+            clavier = claviers[0]
+        else:
+            clavier = None
+
         boutons = {}
         if clavier:
             boutons_bruts = BoutonClavier.query.filter_by(clavier_id=clavier.id).all()
             boutons = {b.position: b.to_dict() for b in boutons_bruts}
 
-        return render_template('programmation_claviers.html', clavier=clavier, boutons=boutons)
+        return render_template('programmation_claviers.html', claviers=claviers, clavier=clavier, boutons=boutons)
 
     @app.route('/programmer/claviers/save', methods=['POST'])
     def enregistrer_clavier():
@@ -39,9 +47,6 @@ def register_clavier_routes(app):
         articles = Article.query.all()
         return render_template('assigner_article.html', position=position, articles=articles, clavier_id=clavier.id)
 
-    from flask import request, jsonify
-    from models.bouton_clavier import db, BoutonClavier
-
     @app.route('/clavier/save_bouton', methods=['POST'])
     def save_bouton():
         data = request.get_json()
@@ -53,9 +58,7 @@ def register_clavier_routes(app):
         couleur = data.get('couleur', '#e0e0e0')
         image = data.get('image', '')
         masquer_texte = data.get('masquer_texte') in ['true', 'True', True]
-
-        # Pour l'instant, on fixe le clavier_id à 1
-        clavier_id = 1
+        clavier_id = int(data.get('clavier_id')) if data.get('clavier_id') else 1
 
         bouton = BoutonClavier.query.filter_by(clavier_id=clavier_id, position=position).first()
 
@@ -106,4 +109,3 @@ def register_clavier_routes(app):
             return jsonify([])
 
         return jsonify([{"id": el.id, "nom": el.nom} for el in data])
-

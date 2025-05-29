@@ -7,9 +7,9 @@ from routes_static_pages import register_static_pages
 from models.article import Article
 from models.clavier import Clavier
 from models.tva import Tva
-from models.groupe import Groupe
-from models.famille import Famille
-from models.sous_famille import SousFamille
+from models.Groupe import Groupe
+from models.Famille import Famille
+from models.SousFamille import SousFamille
 from models.reglement import Reglement
 from models.commentaire import Commentaire
 from models.menu import Menu
@@ -37,7 +37,7 @@ from routes.routes_reporting import register_reporting_routes
 from routes.routes_ticket import register_ticket_routes
 from routes.routes_programmation import register_programmation_routes
 from routes.routes_clavier import register_clavier_routes
-
+from routes.routes_familles import familles_bp
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -54,6 +54,7 @@ register_dashboard_routes(app)
 register_reporting_routes(app)
 register_ticket_routes(app)
 register_programmation_routes(app)
+app.register_blueprint(familles_bp)
 
 @app.route('/')
 def index():

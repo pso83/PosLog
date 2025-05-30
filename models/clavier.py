@@ -1,12 +1,19 @@
 from models import db
 from models.article import Article
+from models.bouton_clavier import BoutonClavier
 
 class Clavier(db.Model):
     __tablename__ = 'claviers'
     id = db.Column(db.Integer, primary_key=True)
-    nom = db.Column(db.String(100), nullable=False)
+    nom = db.Column(db.String(255))
 
-    boutons = db.relationship('ClavierBouton', backref='clavier', cascade='all, delete-orphan')
+    boutons = db.relationship(
+        'BoutonClavier',
+        backref='clavier',
+        lazy='dynamic',
+        primaryjoin="Clavier.id==BoutonClavier.clavier_id",
+        foreign_keys='BoutonClavier.clavier_id'
+    )
 
 
 class ClavierBouton(db.Model):

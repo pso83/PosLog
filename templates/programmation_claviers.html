@@ -57,7 +57,7 @@
           </form>
           <a href="{{ url_for('reset_clavier', clavier_id=clavier.id if clavier else 0) }}" class="btn btn-warning btn-sm w-100 mb-2">Réinitialiser</a>
           <a href="{{ url_for('dupliquer_clavier', id=clavier.id if clavier else 0) }}" class="btn btn-secondary btn-sm w-100 mb-2">Dupliquer</a>
-          <form method="post" action="{{ url_for('import_clavier', id=clavier.id if clavier else 0) }}">
+          <form method="post" action="{{ url_for('import_clavier', id=clavier.id if clavier else 0) }}" enctype="multipart/form-data">
             <input type="file" name="file" class="form-control form-control-sm mb-2" accept=".json">
             <button type="submit" class="btn btn-info btn-sm w-100">Importer</button>
           </form>
@@ -68,14 +68,14 @@
       <div class="card mb-3">
         <div class="card-header">Effacer bouton / ligne</div>
         <div class="card-body">
-          <form class="mb-2" method="post" action="/clavier/effacer_bouton/">
+          <form class="mb-2" method="post" action="/clavier/effacer_bouton/?clavier_id={{ clavier.id }}">
             <div class="input-group">
               <span class="input-group-text">Pos</span>
               <input type="number" name="effacerPosition" min="1" max="55" class="form-control" placeholder="1-55">
               <button type="submit" class="btn btn-danger">❌</button>
             </div>
           </form>
-          <form method="post" action="/clavier/effacer_ligne/">
+          <form method="post" action="/clavier/effacer_ligne/?clavier_id={{ clavier.id }}">
             <div class="input-group">
               <span class="input-group-text">Ligne</span>
               <input type="number" name="effacerLigne" min="1" max="11" class="form-control" placeholder="1-11">

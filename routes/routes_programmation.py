@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, jsonify, send_file
+from flask import Flask, render_template, request, redirect, url_for, jsonify, send_file, flash
 from models import db, article, Groupe, Famille, SousFamille, tva
 from models.article import db
 from models.article import Article
@@ -92,6 +92,7 @@ def register_routes(app):
     @app.route('/clavier/export/<int:id>')
     def export_clavier(id):
         clavier = Clavier.query.get_or_404(id)
+
         boutons = [
             {
                 'position': b.position,
@@ -101,9 +102,16 @@ def register_routes(app):
                 'couleur': b.couleur,
                 'image': b.image,
                 'masquer_texte': b.masquer_texte
-            } for b in clavier.nom
+            }
+            for b in clavier.boutons  # ← boucle correcte ici
         ]
-        export_json = json.dumps(boutons, ensure_ascii=False, indent=2)
+
+        export_json = json.dumps({
+            'clavier_id': clavier.id,
+            'clavier_nom': clavier.nom,
+            'boutons': boutons
+        }, ensure_ascii=False, indent=2)
+
         return send_file(
             BytesIO(export_json.encode('utf-8')),
             mimetype='application/json',
@@ -112,55 +120,72 @@ def register_routes(app):
         )
 
     # Route pour importer des boutons dans un clavier
+    from flask import request, redirect, url_for, flash
+    import json
+
     @app.route('/clavier/import/<int:id>', methods=['POST'])
     def import_clavier(id):
-        clavier = Clavier.query.get_or_404(id)
-        boutons_data = request.get_json()
+        fichier = request.files.get('file')
 
-        for b in boutons_data:
-            bouton = BoutonClavier.query.filter_by(clavier_id=clavier.id, position=b['position']).first()
-            if not bouton:
-                bouton = BoutonClavier(clavier_id=clavier.id, position=b['position'])
+        if not fichier or fichier.filename == '':
+            flash("Aucun fichier sélectionné.")
+            return redirect(url_for('afficher_claviers'))
 
-            bouton.type = b['type']
-            bouton.element_id = b['element_id']
-            bouton.label = b['label']
-            bouton.couleur = b['couleur']
-            bouton.image = b['image']
-            bouton.masquer_texte = b['masquer_texte']
+        try:
+            contenu = fichier.read().decode('utf-8')
+            json_data = json.loads(contenu)
+            boutons = json_data.get('boutons', [])
 
+        except Exception as e:
+            flash("Erreur lors du chargement du fichier JSON : " + str(e))
+            return redirect(url_for('afficher_claviers'))
+
+        # Supprimer les boutons existants du clavier
+        BoutonClavier.query.filter_by(clavier_id=id).delete()
+
+        for b in boutons:
+            bouton = BoutonClavier(
+                clavier_id=id,
+                position=b.get('position'),
+                type=b.get('type'),
+                element_id=b.get('element_id'),
+                label=b.get('label'),
+                couleur=b.get('couleur', '#e0e0e0'),
+                image=b.get('image', ''),
+                masquer_texte=b.get('masquer_texte', False)
+            )
             db.session.add(bouton)
 
         db.session.commit()
-        return redirect(url_for('programmation_claviers', message='Importation réussie', clavier_id=clavier.id))
+        flash("Importation réussie.")
+        return redirect(url_for('afficher_claviers', clavier_id=id))
 
     # Route pour supprimer un bouton spécifique d'un clavier
-    @app.route('/clavier/effacer_bouton/<int:position>', methods=['POST'])
-    def effacer_bouton(position):
-        clavier_id = request.form.get('clavier_id', type=int)
-        clavier = Clavier.query.get(clavier_id)
-        if clavier:
-            bouton = BoutonClavier.query.filter_by(clavier_id=clavier.id, position=position).first()
-            if bouton:
-                db.session.delete(bouton)
-                db.session.commit()
-        return redirect(url_for('programmation_claviers', message=f'Bouton {position} supprimé', clavier_id=clavier_id))
+    @app.route('/clavier/effacer_bouton/', methods=['POST'])
+    def effacer_bouton():
+        position = int(request.form.get('effacerPosition'))
+        clavier_id = int(request.args.get('clavier_id', 1))
+        bouton = BoutonClavier.query.filter_by(clavier_id=clavier_id, position=position).first()
+        if bouton:
+            db.session.delete(bouton)
+            db.session.commit()
+        return redirect(url_for('afficher_claviers', clavier_id=clavier_id))
 
     # Route pour supprimer tous les boutons d'une ligne donnée
-    @app.route('/clavier/effacer_ligne/<int:ligne>', methods=['POST'])
-    def effacer_ligne(ligne):
-        if ligne < 1 or ligne > 11:
-            return redirect(url_for('programmation_claviers', message='Ligne invalide'))
-
-        clavier_id = request.form.get('clavier_id', type=int)
-        clavier = Clavier.query.get(clavier_id)
-        if clavier:
-            debut = (ligne - 1) * 5 + 1
-            fin = ligne * 5
-            BoutonClavier.query.filter(BoutonClavier.clavier_id == clavier.id,
-                                       BoutonClavier.position.between(debut, fin)).delete(synchronize_session=False)
-            db.session.commit()
-        return redirect(url_for('programmation_claviers', message=f'Ligne {ligne} effacée', clavier_id=clavier_id))
+    @app.route('/clavier/effacer_ligne/', methods=['POST'])
+    def effacer_ligne():
+        ligne = int(request.form.get('effacerLigne'))
+        clavier_id = int(request.args.get('clavier_id', 1))
+        start = (ligne - 1) * 5 + 1
+        end = ligne * 5
+        boutons = BoutonClavier.query.filter(
+            BoutonClavier.clavier_id == clavier_id,
+            BoutonClavier.position.between(start, end)
+        ).all()
+        for b in boutons:
+            db.session.delete(b)
+        db.session.commit()
+        return redirect(url_for('afficher_claviers', clavier_id=clavier_id))
 
     @app.route('/clavier/elements')
     def get_elements():

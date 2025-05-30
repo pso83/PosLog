@@ -41,3 +41,4 @@ with app.app_context():
         print("✅ Toutes les tables sont en place.")
     except Exception as e:
         print("❌ Erreur lors de la connexion ou de la création des tables :", e)
+

@@ -206,6 +206,47 @@ def register_routes(app):
         results = model.query.with_entities(model.id, model.nom).all()
         return jsonify([{'id': r.id, 'nom': r.nom} for r in results])
 
+    @app.route('/programmer/reglements', methods=['GET'])
+    def programmation_reglements():
+        reglements = Reglement.query.all()
+        reglement_id = request.args.get('edit', type=int)
+        reglement = Reglement.query.get(reglement_id) if reglement_id else None
+        return render_template('programmation_reglements.html', reglements=reglements, reglement=reglement)
+
+    @app.route('/programmer/reglements/save', methods=['POST'])
+    def save_reglement():
+        reglement_id = request.form.get('reglement_id')
+        nom = request.form.get('nom')
+        valeur_programmee = request.form.get('valeur_programmee') == 'on'
+        montant = request.form.get('montant', type=float) if valeur_programmee else None
+
+        reglement_connecte = request.form.get('reglement_connecte') == 'on'
+        saisie_quantite = request.form.get('saisie_quantite') == 'on'
+        saisie_montant = request.form.get('saisie_montant') == 'on'
+        pas_de_rendu = request.form.get('pas_de_rendu') == 'on'
+        pourboire = request.form.get('pourboire') == 'on'
+        avoir = request.form.get('avoir') == 'on'
+
+        if reglement_id:
+            reglement = Reglement.query.get_or_404(int(reglement_id))
+        else:
+            reglement = Reglement()
+
+        reglement.nom = nom
+        reglement.montant = montant
+        reglement.reglement_connecte = reglement_connecte
+        reglement.saisie_quantite = saisie_quantite
+        reglement.saisie_montant = saisie_montant
+        reglement.valeur_programmee = valeur_programmee
+        reglement.pas_de_rendu = pas_de_rendu
+        reglement.pourboire = pourboire
+        reglement.avoir = avoir
+
+        db.session.add(reglement)
+        db.session.commit()
+
+        return redirect(url_for('programmation_reglements'))
+
     @app.route('/programmation/tva', methods=['POST'])
     def add_tva():
         label = request.form.get('label')

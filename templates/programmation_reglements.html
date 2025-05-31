@@ -1,0 +1,96 @@
+
+{% extends "base.html" %}
+
+{% block title %}Programmation des Règlements{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="mb-4">Programmation des Règlements</h1>
+
+    <form method="post" action="{{ url_for('save_reglement') }}" class="card p-4 mb-4">
+        {% if reglement %}
+            <input type="hidden" name="reglement_id" value="{{ reglement.id }}">
+        {% endif %}
+
+        <div class="mb-3">
+            <label class="form-label">Nom du règlement</label>
+            <input type="text" name="nom" class="form-control" required value="{{ reglement.nom if reglement else '' }}">
+        </div>
+
+        <div class="form-check mb-2">
+            <input class="form-check-input" type="checkbox" name="reglement_connecte" id="reglement_connecte" {% if reglement and reglement.reglement_connecte %}checked{% endif %}>
+            <label class="form-check-label" for="reglement_connecte">Règlement connecté</label>
+        </div>
+
+        <div class="form-check mb-2">
+            <input class="form-check-input" type="checkbox" name="saisie_quantite" id="saisie_quantite" {% if reglement and reglement.saisie_quantite %}checked{% endif %}>
+            <label class="form-check-label" for="saisie_quantite">Saisie quantité obligatoire</label>
+        </div>
+
+        <div class="form-check mb-2">
+            <input class="form-check-input" type="checkbox" name="saisie_montant" id="saisie_montant" {% if reglement and reglement.saisie_montant %}checked{% endif %}>
+            <label class="form-check-label" for="saisie_montant">Saisie montant obligatoire</label>
+        </div>
+
+        <div class="form-check mb-2">
+            <input class="form-check-input" type="checkbox" name="valeur_programmee" id="valeur_programmee"
+                   {% if reglement and reglement.valeur_programmee %}checked{% endif %} onchange="toggleMontant()">
+            <label class="form-check-label" for="valeur_programmee">Valeur programmée</label>
+        </div>
+
+        <div class="mb-3" id="montant_block" {% if not reglement or not reglement.valeur_programmee %}style="display: none;"{% endif %}>
+            <label class="form-label">Montant</label>
+            <input type="number" step="0.01" name="montant" class="form-control" value="{{ reglement.montant if reglement and reglement.montant else '' }}">
+        </div>
+
+        <div class="form-check mb-2">
+            <input class="form-check-input" type="checkbox" name="pas_de_rendu" id="pas_de_rendu" {% if reglement and reglement.pas_de_rendu %}checked{% endif %}>
+            <label class="form-check-label" for="pas_de_rendu">Pas de rendu monnaie</label>
+        </div>
+
+        <div class="form-check mb-2">
+            <input class="form-check-input" type="checkbox" name="pourboire" id="pourboire" {% if reglement and reglement.pourboire %}checked{% endif %}>
+            <label class="form-check-label" for="pourboire">Autoriser pourboire</label>
+        </div>
+
+        <div class="form-check mb-3">
+            <input class="form-check-input" type="checkbox" name="avoir" id="avoir" {% if reglement and reglement.avoir %}checked{% endif %}>
+            <label class="form-check-label" for="avoir">Créer un avoir</label>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Enregistrer</button>
+    </form>
+
+    <h2 class="mb-3">Liste des règlements</h2>
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Nom</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for r in reglements %}
+            <tr>
+                <td>{{ r.nom }}</td>
+                <td>
+                    <a href="{{ url_for('programmation_reglements', edit=r.id) }}" class="btn btn-sm btn-secondary">Modifier</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function toggleMontant() {
+        const checkbox = document.getElementById('valeur_programmee');
+        const montantBlock = document.getElementById('montant_block');
+        montantBlock.style.display = checkbox.checked ? 'block' : 'none';
+    }
+
+    document.addEventListener('DOMContentLoaded', toggleMontant);
+</script>
+{% endblock %}

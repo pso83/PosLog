@@ -40,3 +40,11 @@ class Article(db.Model):
     famille = db.relationship('Famille')
     sous_famille = db.relationship('SousFamille')
 
+    menu_pages = db.relationship(
+        "MenuPage",
+        secondary="menu_page_articles",
+        back_populates="articles"
+    )
+
+
+

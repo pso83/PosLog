@@ -77,35 +77,4 @@ def register_clavier_routes(app):
 
         return jsonify({"status": "ok"})
 
-    @app.route('/clavier/elements')
-    def get_elements_par_type():
-        type_elem = request.args.get('type')
 
-        if type_elem == 'article':
-            from models.article import Article
-            data = Article.query.with_entities(Article.id, Article.nom_article.label('nom')).all()
-        elif type_elem == 'menu':
-            from models.menu import Menu
-            data = Menu.query.with_entities(Menu.id, Menu.nom.label('nom')).all()
-        elif type_elem == 'formule':
-            from models.formule import Formule
-            data = Formule.query.with_entities(Formule.id, Formule.nom.label('nom')).all()
-        elif type_elem == 'fonction':
-            from models.fonction import Fonction
-            data = Fonction.query.with_entities(Fonction.id, Fonction.nom.label('nom')).all()
-        elif type_elem == 'utilisateur':
-            from models.utilisateur import Utilisateur
-            data = Utilisateur.query.with_entities(Utilisateur.id, Utilisateur.nom.label('nom')).all()
-        elif type_elem == 'reglement':
-            from models.reglement import Reglement
-            data = Reglement.query.with_entities(Reglement.id, Reglement.nom.label('nom')).all()
-        elif type_elem == 'commentaire':
-            from models.commentaire import Commentaire
-            data = Commentaire.query.with_entities(Commentaire.id, Commentaire.texte.label('nom')).all()
-        elif type_elem == 'clavier':
-            from models.clavier import Clavier
-            data = Clavier.query.with_entities(Clavier.id, Clavier.nom.label('nom')).all()
-        else:
-            return jsonify([])
-
-        return jsonify([{"id": el.id, "nom": el.nom} for el in data])

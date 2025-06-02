@@ -14,6 +14,8 @@ from models.menu import Menu
 from models.formule import Formule
 from models.fonction import Fonction
 from models.utilisateur import Utilisateur
+from models.menu import Menu
+from models.menu_page import MenuPage
 import json
 from datetime import datetime
 from io import BytesIO
@@ -188,23 +190,29 @@ def register_routes(app):
         return redirect(url_for('afficher_claviers', clavier_id=clavier_id))
 
     @app.route('/clavier/elements')
-    def get_elements():
-        type_map = {
-            'article': Article,
-            'fonction': Fonction,
-            'menu': Menu,
-            'formule': Formule,
-            'utilisateur': Utilisateur,
-            'reglement': Reglement,
-            'commentaire': Commentaire,
-            'clavier': Clavier
-        }
-        element_type = request.args.get('type')
-        model = type_map.get(element_type)
-        if not model:
+    def get_elements_par_type():
+        type_elem = request.args.get('type')
+
+        if type_elem == 'article':
+            data = Article.query.with_entities(Article.id, Article.nom_article.label('nom')).all()
+        elif type_elem == 'menu':
+            data = Menu.query.with_entities(Menu.id, Menu.nom.label('nom')).all()
+        elif type_elem == 'formule':
+            data = Formule.query.with_entities(Formule.id, Formule.nom.label('nom')).all()
+        elif type_elem == 'fonction':
+            data = Fonction.query.with_entities(Fonction.id, Fonction.nom.label('nom')).all()
+        elif type_elem == 'reglement':
+            data = Reglement.query.with_entities(Reglement.id, Reglement.nom.label('nom')).all()
+        elif type_elem == 'utilisateur':
+            data = Utilisateur.query.with_entities(Utilisateur.id, Utilisateur.nom.label('nom')).all()
+        elif type_elem == 'commentaire':
+            data = Commentaire.query.with_entities(Commentaire.id, Commentaire.texte.label('nom')).all()
+        elif type_elem == 'clavier':
+            data = Clavier.query.with_entities(Clavier.id, Clavier.nom.label('nom')).all()
+        else:
             return jsonify([])
-        results = model.query.with_entities(model.id, model.nom).all()
-        return jsonify([{'id': r.id, 'nom': r.nom} for r in results])
+
+        return jsonify([{"id": el.id, "nom": el.nom} for el in data])
 
     @app.route('/programmer/reglements', methods=['GET'])
     def programmation_reglements():
@@ -377,3 +385,140 @@ def register_programmation_routes(app):
             sous_familles=SousFamille.query.all()
         )
 
+    @app.route('/programmer/groupes', methods=['GET'])
+    def programmation_groupes():
+        groupes = Groupe.query.all()
+
+        groupe_id = request.args.get('id', type=int)
+        groupe = Groupe.query.get(groupe_id) if groupe_id else None
+
+        # ⚠️ Bien distinguer : familles par groupe_id, articles par groupe_id
+        familles = Famille.query.filter_by(groupe_id=groupe_id).all() if groupe_id else []
+        articles = Article.query.filter_by(groupe_id=groupe_id).all() if groupe_id else []
+
+        return render_template("programmation_groupes.html", groupes=groupes, groupe=groupe, familles=familles,
+                               articles=articles)
+
+    @app.route('/programmer/groupes/save', methods=['POST'])
+    def save_groupe():
+        nom = request.form.get("nom")
+        if nom:
+            g = Groupe(nom=nom)
+            db.session.add(g)
+            db.session.commit()
+        return redirect(url_for("programmation_groupes"))
+
+    @app.route('/programmer/familles', methods=['GET'])
+    def programmation_familles():
+        familles = Famille.query.all()
+        famille_id = request.args.get('famille_id', type=int)
+        articles = Article.query.filter_by(famille_id=famille_id).all() if famille_id else []
+        return render_template("programmation_familles.html", familles=familles, articles=articles)
+
+    @app.route('/programmer/familles/save', methods=['POST'])
+    def save_famille():
+        nom = request.form.get('nom')
+        if nom:
+            famille = Famille(nom=nom)
+            db.session.add(famille)
+            db.session.commit()
+        return redirect(url_for('programmation_familles'))
+
+    @app.route('/programmer/sous-familles', methods=['GET'])
+    def programmation_sous_familles():
+        sous_familles = SousFamille.query.all()
+        sous_famille_id = request.args.get('sous_famille_id', type=int)
+        articles = Article.query.filter_by(sous_famille_id=sous_famille_id).all() if sous_famille_id else []
+        return render_template("programmation_sous_familles.html", sous_familles=sous_familles, articles=articles)
+
+    @app.route('/programmer/sous-familles/save', methods=['POST'])
+    def save_sous_famille():
+        nom = request.form.get('nom')
+        if nom:
+            sous_famille = SousFamille(nom=nom)
+            db.session.add(sous_famille)
+            db.session.commit()
+        return redirect(url_for('programmation_sous_familles'))
+
+    # Affichage de la page de programmation des TVA
+    @app.route('/programmer/tva', methods=['GET'])
+    def programmation_tva():
+        tvas = Tva.query.all()
+        tva_id = request.args.get('tva_id', type=int)
+        tva = Tva.query.get(tva_id) if tva_id else None
+        articles = Article.query.filter_by(tva_id=tva_id).all() if tva_id else []
+        return render_template('programmation_tva.html', tvas=tvas, tva=tva, articles=articles)
+
+    # Sauvegarde d’une nouvelle TVA ou modification d’une TVA existante
+    @app.route('/programmer/tva/save', methods=['POST'])
+    def save_tva():
+        tva_id = request.form.get('tva_id')
+        label = request.form.get('label')
+        taux = request.form.get('taux')
+
+        if not label or not taux:
+            return redirect(url_for('programmation_tva'))
+
+        try:
+            taux = float(taux)
+        except ValueError:
+            return redirect(url_for('programmation_tva'))
+
+        if tva_id:
+            tva = Tva.query.get(int(tva_id))
+            if tva:
+                tva.label = label
+                tva.taux = taux
+        else:
+            tva = Tva(label=label, taux=taux)
+            db.session.add(tva)
+
+        db.session.commit()
+        return redirect(url_for('programmation_tva'))
+
+    @app.route('/programmer/menus', methods=['GET'])
+    def programmation_menus():
+        menus = Menu.query.all()
+        menu_id = request.args.get('menu_id', type=int)
+        menu = Menu.query.get(menu_id) if menu_id else None
+        pages = MenuPage.query.filter_by(menu_id=menu.id).all() if menu else []
+        articles = Article.query.filter_by(composant_menu=True).all()
+        return render_template('programmation_menus.html', menus=menus, menu=menu, pages=pages, articles=articles)
+
+    @app.route('/programmer/menus/save', methods=['POST'])
+    def save_menu():
+        menu_id = request.form.get('menu_id')
+        nom = request.form.get('nom')
+
+        if menu_id:
+            menu = Menu.query.get(int(menu_id))
+            if menu:
+                menu.nom = nom
+        else:
+            menu = Menu(nom=nom)
+            db.session.add(menu)
+
+        db.session.commit()
+        return redirect(url_for('programmation_menus', menu_id=menu.id))
+
+    @app.route('/programmer/menus/add_page', methods=['POST'])
+    def add_menu_page():
+        menu_id = request.form.get('menu_id', type=int)
+        page_nom = request.form.get('page_nom')
+        if menu_id and page_nom:
+            page = MenuPage(nom=page_nom, menu_id=menu_id)
+            db.session.add(page)
+            db.session.commit()
+        return redirect(url_for('programmation_menus', menu_id=menu_id))
+
+    @app.route('/programmer/menus/assign_article', methods=['POST'])
+    def assign_article_to_page():
+        page_id = request.form.get('page_id', type=int)
+        article_id = request.form.get('article_id', type=int)
+        page = MenuPage.query.get(page_id)
+        article = Article.query.get(article_id)
+        if page and article and article.composant_menu:
+            if article not in page.articles:
+                page.articles.append(article)
+                db.session.commit()
+        return redirect(url_for('programmation_menus', menu_id=page.menu_id))

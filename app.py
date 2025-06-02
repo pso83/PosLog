@@ -26,6 +26,10 @@ from models.stock import MouvementStock
 from models.vente import Vente
 from models.vente_detail import VenteDetail
 from models.bouton_clavier import BoutonClavier
+from models.menu import Menu
+from models.menu_page import MenuPage
+from models.menu_page_articles import menu_page_articles
+
 
 # Enregistrement des routes
 from routes.routes_programmation import register_routes

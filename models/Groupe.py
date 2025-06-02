@@ -1,7 +1,5 @@
 from models import db
 
-from models import db
-
 class Groupe(db.Model):
     __tablename__ = 'groupes'
     id = db.Column(db.Integer, primary_key=True)

@@ -1,4 +1,5 @@
-from models import db
+from extensions import db
+from models.menu_page_articles import menu_page_articles
 
 class Article(db.Model):
     __tablename__ = 'articles'
@@ -20,10 +21,9 @@ class Article(db.Model):
     gere_stock = db.Column(db.Boolean, default=False)
     vendu_en_negatif = db.Column(db.Boolean, default=False)
     hors_ca = db.Column(db.Boolean, default=False)
-    est_menu = db.Column(db.Boolean, default=False)
     est_formule = db.Column(db.Boolean, default=False)
     composant_menu = db.Column(db.Boolean, default=False)
-    composant_formulaire = db.Column(db.Boolean, default=False)
+    composant_formule = db.Column(db.Boolean, default=False)
     appel_commentaire = db.Column(db.Boolean, default=False)
     imprimable_preparation = db.Column(db.Boolean, default=False)
     invisible_telecommande = db.Column(db.Boolean, default=False)
@@ -41,10 +41,13 @@ class Article(db.Model):
     sous_famille = db.relationship('SousFamille')
 
     menu_pages = db.relationship(
-        "MenuPage",
-        secondary="menu_page_articles",
-        back_populates="articles"
+        'MenuPage',
+        secondary=menu_page_articles,
+        back_populates='articles'
     )
+
+    commentaire_id = db.Column(db.Integer, db.ForeignKey('commentaire.id'), nullable=True)
+    commentaire = db.relationship('Commentaire', backref='articles_appelants')
 
 
 

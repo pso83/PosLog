@@ -1,5 +1,4 @@
-from flask_sqlalchemy import SQLAlchemy
-from models import db
+from extensions import db
 
 class BoutonClavier(db.Model):
     __tablename__ = 'boutons_clavier'  # ← ici le nom exact de ta table en base

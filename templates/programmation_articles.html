@@ -10,6 +10,16 @@
         window.location.href = url;
       }
     }
+
+    function toggleCommentaireSelect() {
+      const checkbox = document.getElementById('appel_commentaire');
+      const commentaireDiv = document.getElementById('commentaire_div');
+      if (checkbox.checked) {
+        commentaireDiv.style.display = 'block';
+      } else {
+        commentaireDiv.style.display = 'none';
+      }
+    }
   </script>
 </head>
 <body class="bg-light p-4">
@@ -66,15 +76,26 @@
     </div>
 
     <div class="row mt-3">
-      {% set flags = ['prix_manuel', 'vendu_au_poids', 'avec_code_barre', 'eligible_fidelite', 'retour_autorise', 'avoir_autorise', 'gere_stock', 'vendu_en_negatif', 'hors_ca', 'est_menu', 'est_formule', 'composant_menu', 'composant_formulaire', 'appel_commentaire', 'imprimable_preparation', 'invisible_telecommande', 'vente_a_distance', 'gere_heure', 'depot_vente', 'gere_sav'] %}
+      {% set flags = ['prix_manuel', 'vendu_au_poids', 'avec_code_barre', 'eligible_fidelite', 'retour_autorise', 'avoir_autorise', 'gere_stock', 'vendu_en_negatif', 'hors_ca', 'est_formule', 'composant_menu', 'composant formule', 'appel_commentaire', 'imprimable_preparation', 'invisible_telecommande', 'vente_a_distance', 'gere_heure', 'depot_vente', 'gere_sav'] %}
       {% for flag in flags %}
       <div class="col-md-3">
         <div class="form-check">
-          <input class="form-check-input" type="checkbox" id="{{ flag }}" name="{{ flag }}" {% if article and article[flag] %}checked{% endif %}>
-          <label class="form-check-label" for="{{ flag }}">{{ flag.replace('_', ' ').capitalize() }}</label>
+          <input class="form-check-input" type="checkbox" id="{{ flag|replace(' ', '_') }}" name="{{ flag|replace(' ', '_') }}" {% if article and article[flag] %}checked{% endif %} {% if flag == 'appel_commentaire' %}onclick="toggleCommentaireSelect()" {% endif %}>
+          <label class="form-check-label" for="{{ flag|replace(' ', '_') }}">{{ flag.replace('_', ' ').capitalize() }}</label>
         </div>
       </div>
       {% endfor %}
+    </div>
+    <div class="row mt-3" id="commentaire_div" {% if not article or not article.appel_commentaire %}style="display:none"{% endif %}>
+      <div class="col-md-6">
+        <label class="form-label" for="commentaire_id">Commentaire à appeler</label>
+        <select class="form-select" name="commentaire_id" id="commentaire_id">
+          <option value="">-- Aucun --</option>
+          {% for commentaire in commentaires %}
+            <option value="{{ commentaire.id }}" {% if article and article.commentaire_id == commentaire.id %}selected{% endif %}>{{ commentaire.texte }}</option>
+          {% endfor %}
+        </select>
+      </div>
     </div>
     <button type="submit" class="btn btn-primary mt-4">Enregistrer</button>
   </form>

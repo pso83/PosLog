@@ -1,6 +1,6 @@
 from flask import render_template, request, redirect
 from flask import Flask
-from models.article import db  # déjà en place
+from extensions import db # déjà en place
 from models.clavier import Clavier
 from models.tva import Tva
 from models.Groupe import Groupe

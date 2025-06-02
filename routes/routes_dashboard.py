@@ -1,7 +1,7 @@
 from flask import render_template
 from models.vente import Vente
 from models.stock import MouvementStock
-from models import db
+from extensions import db
 from sqlalchemy import func, desc, case
 from datetime import date
 

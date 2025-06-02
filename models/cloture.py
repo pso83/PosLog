@@ -1,6 +1,6 @@
-from flask_sqlalchemy import SQLAlchemy
+from extensions import db
 from datetime import datetime
-from models import db
+
 
 class Cloture(db.Model):
     __tablename__ = 'clotures'

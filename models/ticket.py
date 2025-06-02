@@ -1,5 +1,4 @@
-from flask_sqlalchemy import SQLAlchemy
-from models import db
+from extensions import db
 
 class Ticket(db.Model):
     __tablename__ = 'ticket'

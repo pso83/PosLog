@@ -1,4 +1,4 @@
-from models import db
+from extensions import db
 from models.article import Article
 from models.bouton_clavier import BoutonClavier
 

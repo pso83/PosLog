@@ -1,4 +1,4 @@
-from models import db
+from extensions import db
 
 class Tva(db.Model):
     __tablename__ = 'tva'

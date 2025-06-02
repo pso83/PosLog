@@ -4,8 +4,9 @@
   <h2>Programmation des Menus</h2>
 
   <div class="row">
-    <!-- Liste des menus -->
+    <!-- Colonne gauche : Menus existants + création -->
     <div class="col-md-4">
+      <!-- Liste des menus -->
       <div class="card mb-4">
         <div class="card-header bg-dark text-white">Menus existants</div>
         <div class="card-body">
@@ -20,14 +21,14 @@
         </div>
       </div>
 
-      <!-- Formulaire de création -->
+      <!-- Formulaire de création de menu -->
       <div class="card">
         <div class="card-header">Créer un menu</div>
         <div class="card-body">
           <form method="post" action="{{ url_for('save_menu') }}">
             <div class="mb-3">
-              <label>Nom du menu</label>
-              <input type="text" name="nom" class="form-control" required>
+              <label for="nom">Nom du menu</label>
+              <input type="text" id="nom" name="nom" class="form-control" required>
             </div>
             <button class="btn btn-primary w-100">Créer</button>
           </form>
@@ -35,29 +36,60 @@
       </div>
     </div>
 
-    <!-- Pages du menu sélectionné -->
+    <!-- Colonne droite : Pages du menu sélectionné -->
     <div class="col-md-8">
       {% if menu %}
         <div class="card">
           <div class="card-header bg-secondary text-white">Pages du menu : {{ menu.nom }}</div>
           <div class="card-body">
+            <!-- Formulaire d'ajout de page -->
             <form method="post" action="{{ url_for('add_menu_page', menu_id=menu.id) }}" class="mb-3 d-flex">
-              <input type="text" name="titre_page" class="form-control me-2" placeholder="Ex : Entrées" required>
+              <input type="text" name="nom_page" class="form-control me-2" placeholder="Ex : Entrées" required>
               <button class="btn btn-success">Ajouter une page</button>
             </form>
 
+            <!-- Liste des pages -->
             <ul class="list-group">
               {% for page in pages %}
-                <li class="list-group-item d-flex justify-content-between align-items-center">
-                  {{ page.titre }}
-                  <a href="{{ url_for('assigner_articles_menu', page_id=page.id) }}" class="btn btn-outline-info btn-sm">Assigner des articles</a>
+                <li class="list-group-item">
+                  <div class="mb-2 d-flex justify-content-between align-items-center">
+                    <strong>{{ page.nom_page }}</strong>
+                    <form method="post" action="{{ url_for('assign_article_to_page') }}" class="d-flex align-items-center">
+                      <input type="hidden" name="page_id" value="{{ page.id }}">
+                      <select name="article_id" class="form-select form-select-sm me-2">
+                        {% for article in articles if article.composant_menu %}
+                          <option value="{{ article.id }}">{{ article.nom }}</option>
+                        {% endfor %}
+                      </select>
+                      <button class="btn btn-sm btn-outline-success">Assigner</button>
+                    </form>
+                  </div>
+
+                  {% if page.articles %}
+                    <ul class="list-group mt-2">
+                      {% for art in page.articles %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center py-1">
+                          {{ art.nom }}
+                          <form method="post" action="{{ url_for('retirer_article_menu') }}" class="d-inline">
+                            <input type="hidden" name="page_id" value="{{ page.id }}">
+                            <input type="hidden" name="article_id" value="{{ art.id }}">
+                            <button type="submit" class="btn btn-sm btn-outline-danger">Retirer</button>
+                          </form>
+                        </li>
+                      {% endfor %}
+                    </ul>
+                  {% else %}
+                    <p class="text-muted mt-2">Aucun article assigné</p>
+                  {% endif %}
                 </li>
               {% endfor %}
             </ul>
           </div>
         </div>
       {% else %}
-        <p class="text-muted">Sélectionnez un menu à gauche pour voir ou modifier ses pages.</p>
+        <div class="alert alert-info">
+          Sélectionnez un menu à gauche pour voir ou modifier ses pages.
+        </div>
       {% endif %}
     </div>
   </div>

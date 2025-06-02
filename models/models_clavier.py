@@ -1,4 +1,4 @@
-from models import db
+from extensions import db
 from models.article import Article
 
 class Clavier(db.Model):

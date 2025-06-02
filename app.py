@@ -1,6 +1,6 @@
 from flask import Flask
 from config import Config
-from models.article import db
+from extensions import db
 from routes_static_pages import register_static_pages
 
 # Importation explicite de tous les modèles (obligatoire pour db.create_all)
@@ -26,10 +26,6 @@ from models.stock import MouvementStock
 from models.vente import Vente
 from models.vente_detail import VenteDetail
 from models.bouton_clavier import BoutonClavier
-from models.menu import Menu
-from models.menu_page import MenuPage
-from models.menu_page_articles import menu_page_articles
-
 
 # Enregistrement des routes
 from routes.routes_programmation import register_routes

@@ -1,4 +1,4 @@
-from models import db
+from extensions import db
 
 menu_page_articles = db.Table(
     'menu_page_articles',

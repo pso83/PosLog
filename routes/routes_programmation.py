@@ -337,11 +337,16 @@ def register_routes(app):
         # Champs booléens
         flags = ['prix_manuel', 'vendu_au_poids', 'avec_code_barre', 'eligible_fidelite',
                  'retour_autorise', 'avoir_autorise', 'gere_stock', 'vendu_en_negatif', 'hors_ca',
-                 'est_menu', 'est_formule', 'composant_menu', 'composant_formulaire',
+                 'est_formule', 'composant_menu', 'composant_formule',
                  'appel_commentaire', 'imprimable_preparation', 'invisible_telecommande',
                  'vente_a_distance', 'gere_heure', 'depot_vente', 'gere_sav']
         for flag in flags:
             setattr(article, flag, flag in form)
+
+        # Traitement du champ commentaire_id
+        appel_commentaire = 'appel_commentaire' in form
+        commentaire_id = form.get('commentaire_id', type=int)
+        article.commentaire_id = commentaire_id if appel_commentaire else None
 
         db.session.add(article)
         db.session.commit()
@@ -374,11 +379,13 @@ def register_programmation_routes(app):
             query = query.filter_by(sous_famille_id=filtre_sous_famille)
 
         articles = query.all()
+        commentaires = Commentaire.query.all()
 
         return render_template(
             'programmation_articles.html',
             articles=articles,
             article=article,
+            commentaires=commentaires,
             tva_options=Tva.query.all(),
             groupes=Groupe.query.all(),
             familles=Famille.query.all(),
@@ -501,14 +508,25 @@ def register_programmation_routes(app):
         db.session.commit()
         return redirect(url_for('programmation_menus', menu_id=menu.id))
 
-    @app.route('/programmer/menus/add_page', methods=['POST'])
-    def add_menu_page():
-        menu_id = request.form.get('menu_id', type=int)
-        page_nom = request.form.get('page_nom')
-        if menu_id and page_nom:
-            page = MenuPage(nom=page_nom, menu_id=menu_id)
-            db.session.add(page)
+    @app.route('/programmer/menus/<int:menu_id>/add_page', methods=['POST'])
+    def add_menu_page(menu_id):
+        nom_page = request.form.get('nom_page')
+        if nom_page:
+            nouvelle_page = MenuPage(menu_id=menu_id, nom_page=nom_page)
+            db.session.add(nouvelle_page)
             db.session.commit()
+        return redirect(url_for('programmation_menus', menu_id=menu_id))
+
+    @app.route('/programmer/menus/page/save', methods=['POST'])
+    def save_menu_page():
+        menu_id = request.form.get('menu_id')
+        nom_page = request.form.get('nom_page')
+
+        if menu_id and nom_page:
+            nouvelle_page = MenuPage(menu_id=menu_id, nom_page=nom_page)
+            db.session.add(nouvelle_page)
+            db.session.commit()
+
         return redirect(url_for('programmation_menus', menu_id=menu_id))
 
     @app.route('/programmer/menus/assign_article', methods=['POST'])
@@ -522,3 +540,15 @@ def register_programmation_routes(app):
                 page.articles.append(article)
                 db.session.commit()
         return redirect(url_for('programmation_menus', menu_id=page.menu_id))
+
+    @app.route('/programmer/menus/retirer_article', methods=['POST'])
+    def retirer_article_menu():
+        page_id = request.form.get('page_id', type=int)
+        article_id = request.form.get('article_id', type=int)
+        page = MenuPage.query.get(page_id)
+        article = Article.query.get(article_id)
+        if page and article and article in page.articles:
+            page.articles.remove(article)
+            db.session.commit()
+        return redirect(url_for('programmation_menus', menu_id=page.menu_id))
+

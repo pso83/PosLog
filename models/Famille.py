@@ -1,4 +1,4 @@
-from models import db
+from extensions import db
 
 class Famille(db.Model):
     __tablename__ = 'familles'

@@ -9,13 +9,14 @@ from models.Groupe import Groupe
 from models.Famille import Famille
 from models.SousFamille import SousFamille
 from models.reglement import Reglement
-from models.commentaire import Commentaire
+from models.commentaire import Commentaire, ElementCommentaire
 from models.menu import Menu
 from models.formule import Formule
 from models.fonction import Fonction
 from models.utilisateur import Utilisateur
 from models.menu import Menu
 from models.menu_page import MenuPage
+from models.formule import Formule, FormuleComposant
 import json
 from datetime import datetime
 from io import BytesIO
@@ -362,35 +363,33 @@ def register_routes(app):
 def register_programmation_routes(app):
     @app.route('/programmer/articles', methods=['GET'])
     def programmation_articles():
-
-        article_id = request.args.get('id')
-        filtre_groupe = request.args.get('groupe')
-        filtre_famille = request.args.get('famille')
-        filtre_sous_famille = request.args.get('sous_famille')
-
-        article = Article.query.get(article_id) if article_id else None
-
-        query = Article.query
-        if filtre_groupe:
-            query = query.filter_by(groupe_id=filtre_groupe)
-        if filtre_famille:
-            query = query.filter_by(famille_id=filtre_famille)
-        if filtre_sous_famille:
-            query = query.filter_by(sous_famille_id=filtre_sous_famille)
-
-        articles = query.all()
+        # Récupération des listes nécessaires
+        groupes = Groupe.query.all()
+        familles = Famille.query.all()
+        sous_familles = SousFamille.query.all()
+        tva_options = Tva.query.all()
         commentaires = Commentaire.query.all()
 
-        return render_template(
-            'programmation_articles.html',
-            articles=articles,
-            article=article,
-            commentaires=commentaires,
-            tva_options=Tva.query.all(),
-            groupes=Groupe.query.all(),
-            familles=Famille.query.all(),
-            sous_familles=SousFamille.query.all()
-        )
+        # Gestion du filtre ou d'un article à modifier
+        article_id = request.args.get('id', type=int)
+        article = Article.query.get(article_id) if article_id else None
+
+        # Filtrage si nécessaire
+        query = Article.query
+        for champ in ['groupe', 'famille', 'sous_famille']:
+            valeur = request.args.get(champ)
+            if valeur:
+                query = query.filter(getattr(Article, f"{champ}_id") == int(valeur))
+        articles = query.all()
+
+        return render_template('programmation_articles.html',
+                               article=article,
+                               articles=articles,
+                               groupes=groupes,
+                               familles=familles,
+                               sous_familles=sous_familles,
+                               tva_options=tva_options,
+                               commentaires=commentaires)
 
     @app.route('/programmer/groupes', methods=['GET'])
     def programmation_groupes():
@@ -551,4 +550,117 @@ def register_programmation_routes(app):
             page.articles.remove(article)
             db.session.commit()
         return redirect(url_for('programmation_menus', menu_id=page.menu_id))
+
+    # Page principale de programmation des commentaires
+    @app.route('/programmer/commentaires', methods=['GET'])
+    def programmation_commentaires():
+        commentaires = Commentaire.query.all()
+        commentaire_id = request.args.get('commentaire_id', type=int)
+        commentaire = Commentaire.query.get(commentaire_id) if commentaire_id else None
+        return render_template('programmation_commentaires.html', commentaires=commentaires, commentaire=commentaire)
+
+    # Enregistrer ou modifier un commentaire
+    @app.route('/programmer/commentaires/save', methods=['POST'])
+    def save_commentaire():
+        commentaire_id = request.form.get('id')
+        nom = request.form.get('nom')
+
+        commentaire = Commentaire.query.get(commentaire_id) if commentaire_id else Commentaire()
+        commentaire.nom = nom
+
+        db.session.add(commentaire)
+        db.session.commit()
+        return redirect(url_for('programmation_commentaires', commentaire_id=commentaire.id))
+
+    # Ajouter un élément à un commentaire
+    @app.route('/programmer/commentaires/<int:commentaire_id>/add_element', methods=['POST'])
+    def add_element_commentaire(commentaire_id):
+        nom = request.form.get('element_nom')
+        if nom:
+            element = ElementCommentaire(nom=nom, commentaire_id=commentaire_id)
+            db.session.add(element)
+            db.session.commit()
+        return redirect(url_for('programmation_commentaires', commentaire_id=commentaire_id))
+
+    # Supprimer un élément
+    @app.route('/programmer/commentaires/<int:commentaire_id>/delete_element/<int:element_id>')
+    def delete_element_commentaire(commentaire_id, element_id):
+        element = CommentaireElement.query.get_or_404(element_id)
+        db.session.delete(element)
+        db.session.commit()
+        return redirect(url_for('programmation_commentaires', commentaire_id=commentaire_id))
+
+    @app.route('/programmer/formules', methods=['GET'])
+    def programmation_formules():
+        formule_id = request.args.get('formule_id', type=int)
+        formules = Formule.query.all()
+        formule = Formule.query.get(formule_id) if formule_id else None
+        composants = [fc.article for fc in formule.composants] if formule else []
+
+        articles = Article.query.filter_by(composant_formule=True).all()
+
+        return render_template('programmation_formules.html',
+                               formules=formules,
+                               formule=formule,
+                               composants=composants,
+                               articles=articles)
+
+    @app.route('/programmer/formules/save', methods=['POST'])
+    def save_formule():
+        form = request.form
+        formule_id = form.get('id')
+        formule = Formule.query.get(formule_id) if formule_id else Formule()
+        formule.nom = form.get('nom')
+        formule.prix = float(form.get('prix') or 0)
+
+        if not formule_id:
+            db.session.add(formule)
+        db.session.commit()
+        return redirect(url_for('programmation_formules', formule_id=formule.id))
+
+    @app.route("/programmation/formules/ajouter_composant", methods=["POST"])
+    def add_composant_formule():
+        formule_id = request.form["formule_id"]
+        article_id = request.form["article_id"]
+
+        formule = Formule.query.get(formule_id)
+        article = Article.query.get(article_id)
+
+        if formule and article:
+            formule.composants.append(article)
+            db.session.commit()
+
+        return redirect(url_for('programmation_formules', formule_id=formule_id))
+
+    @app.route('/programmer/formules/<int:composant_id>/delete_composant')
+    def delete_composant_formule(composant_id):
+        composant = FormuleComposant.query.get_or_404(composant_id)
+        formule_id = composant.formule_id
+        db.session.delete(composant)
+        db.session.commit()
+        return redirect(url_for('programmation_formules', formule_id=formule_id))
+
+    @app.route("/programmation/formules/supprimer_composant")
+    def remove_composant_formule():
+        formule_id = request.args.get("formule_id")
+        article_id = request.args.get("article_id")
+
+        formule = Formule.query.get(formule_id)
+        article = Article.query.get(article_id)
+
+        if formule and article:
+            formule.composants.remove(article)
+            db.session.commit()
+
+        return redirect(url_for('programmation_formules', formule_id=formule_id))
+
+    @app.route('/programmer/formules/delete/<int:formule_id>')
+    def delete_formule(formule_id):
+        formule = Formule.query.get_or_404(formule_id)
+        db.session.delete(formule)
+        db.session.commit()
+        return redirect(url_for('programmation_formules'))
+
+
+
 

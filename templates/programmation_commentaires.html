@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Programmation des commentaires</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light p-4">
+<div class="container">
+    <h2>Programmation des commentaires</h2>
+    <div class="row mt-4">
+        <!-- Liste des commentaires -->
+        <div class="col-md-4">
+            <div class="list-group">
+                {% for c in commentaires %}
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        {{ c.nom }}
+                        <a href="{{ url_for('programmation_commentaires', commentaire_id=c.id) }}" class="btn btn-sm btn-outline-primary">Voir</a>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Formulaire de commentaire + éléments -->
+        <div class="col-md-8">
+            <!-- Formulaire principal -->
+            <form method="post" action="{{ url_for('save_commentaire') }}" class="card p-3 mb-4">
+                {% if commentaire %}<input type="hidden" name="id" value="{{ commentaire.id }}">{% endif %}
+                <label class="form-label">Nom du commentaire</label>
+                <input type="text" class="form-control mb-3" name="nom" value="{{ commentaire.nom if commentaire else '' }}">
+                <button type="submit" class="btn btn-primary">Enregistrer</button>
+            </form>
+
+            <!-- Formulaire pour ajouter un élément -->
+            {% if commentaire %}
+            <form method="post" action="{{ url_for('add_element_commentaire', commentaire_id=commentaire.id) }}" class="card p-3 mb-4">
+                <label class="form-label">Ajouter un élément</label>
+                <div class="input-group">
+                    <input type="text" name="element_nom" class="form-control" placeholder="Ex: Bleu, Rosé...">
+                    <button class="btn btn-success" type="submit">Ajouter</button>
+                </div>
+            </form>
+
+            <!-- Liste des éléments -->
+            <div class="card p-3">
+                <h5>Éléments associés</h5>
+                <ul class="list-group">
+                    {% for e in commentaire.elements %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            {{ e.nom }}
+                            <a href="{{ url_for('delete_element_commentaire', element_id=e.id, commentaire_id=commentaire.id) }}"
+                               class="btn btn-sm btn-danger">Supprimer</a>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+</body>
+</html>

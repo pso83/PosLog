@@ -31,6 +31,8 @@ class Article(db.Model):
     gere_heure = db.Column(db.Boolean, default=False)
     depot_vente = db.Column(db.Boolean, default=False)
     gere_sav = db.Column(db.Boolean, default=False)
+    commentaire_id = db.Column(db.Integer, db.ForeignKey('commentaires.id'))  # <== C'est ça qui manque
+    commentaire = db.relationship('Commentaire', backref='articles')
 
     groupe_id = db.Column(db.Integer, db.ForeignKey('groupes.id'))
     famille_id = db.Column(db.Integer, db.ForeignKey('familles.id'))
@@ -46,8 +48,7 @@ class Article(db.Model):
         back_populates='articles'
     )
 
-    commentaire_id = db.Column(db.Integer, db.ForeignKey('commentaire.id'), nullable=True)
-    commentaire = db.relationship('Commentaire', backref='articles_appelants')
+
 
 
 

@@ -92,7 +92,7 @@
         <select class="form-select" name="commentaire_id" id="commentaire_id">
           <option value="">-- Aucun --</option>
           {% for commentaire in commentaires %}
-            <option value="{{ commentaire.id }}" {% if article and article.commentaire_id == commentaire.id %}selected{% endif %}>{{ commentaire.texte }}</option>
+            <option value="{{ commentaire.id }}" {% if article and article.commentaire_id == commentaire.id %}selected{% endif %}>{{ commentaire.nom }}</option>
           {% endfor %}
         </select>
       </div>
@@ -140,5 +140,23 @@
     </tbody>
   </table>
 </div>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const checkbox = document.getElementById('appel_commentaire');
+  const selectDiv = document.getElementById('commentaire_select');
+
+  function toggleSelect() {
+    if (checkbox && selectDiv) {
+      selectDiv.style.display = checkbox.checked ? 'block' : 'none';
+    }
+  }
+
+  if (checkbox) {
+    checkbox.addEventListener('change', toggleSelect);
+    toggleSelect(); // Initialiser à l'affichage
+  }
+});
+</script>
+
 </body>
 </html>

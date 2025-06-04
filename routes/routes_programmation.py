@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, jsonify, send_file, flash
+from flask import Flask, render_template, request, redirect, url_for, jsonify, send_file, flash, Blueprint
 from models import db, article, Groupe, Famille, SousFamille, tva
 from models.article import db
 from models.article import Article
@@ -737,3 +737,87 @@ def register_programmation_routes(app):
         db.session.commit()
         return redirect(url_for('configuration_utilisateurs'))
 
+# Configuration des profils
+    config_bp = Blueprint('config', __name__)
+    @config_bp.route("/configuration/profils")
+    def configuration_profils():
+        profils = Profil.query.all()
+        return render_template("configuration_profils.html", profils=profils)
+
+    @config_bp.route("/configuration/profils/save", methods=["POST"])
+    def save_profil():
+        form = request.form
+        profil_id = form.get("id")
+
+        if profil_id:
+            profil = Profil.query.get(profil_id)
+        else:
+            profil = Profil()
+
+        profil.nom = form["nom"]
+        # Checkboxes booléennes
+        for field in Profil.__table__.columns.keys():
+            if field != "id" and field != "nom":
+                setattr(profil, field, form.get(field) == "on")
+
+        db.session.add(profil)
+        db.session.commit()
+        return redirect(url_for("config.configuration_profils"))
+
+    @config_bp.route("/configuration/profils/delete/<int:id>")
+    def delete_profil(id):
+        profil = Profil.query.get_or_404(id)
+        db.session.delete(profil)
+        db.session.commit()
+        return redirect(url_for("config.configuration_profils"))
+
+    @app.route('/configuration/profils/save', methods=['POST'])
+    def save_profil():
+        id = request.form.get('id')
+        profil = Profil.query.get(id) if id else Profil()
+
+        profil.nom = request.form.get('nom')
+
+        # Accès
+        profil.acces_vente = 'acces_vente' in request.form
+        profil.acces_programmation = 'acces_programmation' in request.form
+        profil.acces_gestion = 'acces_gestion' in request.form
+        profil.acces_configuration = 'acces_configuration' in request.form
+        profil.acces_clients = 'acces_clients' in request.form
+
+        # Autorisations
+        profil.autorise_offert = 'autorise_offert' in request.form
+        profil.autorise_annuler_ligne = 'autorise_annuler_ligne' in request.form
+        profil.autorise_annuler_avant_enc = 'autorise_annuler_avant_enc' in request.form
+        profil.autorise_annuler_apres_enc = 'autorise_annuler_apres_enc' in request.form
+        profil.autorise_annuler_attente = 'autorise_annuler_attente' in request.form
+        profil.autorise_remises = 'autorise_remises' in request.form
+        profil.autorise_changement_tarif = 'autorise_changement_tarif' in request.form
+        profil.autorise_mise_attente = 'autorise_mise_attente' in request.form
+        profil.autorise_transfert_table = 'autorise_transfert_table' in request.form
+        profil.autorise_transfert_compte = 'autorise_transfert_compte' in request.form
+        profil.autorise_modif_couverts = 'autorise_modif_couverts' in request.form
+
+        # Créations
+        profil.creation_utilisateur = 'creation_utilisateur' in request.form
+        profil.creation_client = 'creation_client' in request.form
+        profil.creation_carte = 'creation_carte' in request.form
+        profil.creation_avoir = 'creation_avoir' in request.form
+
+        # Modifications
+        profil.modif_utilisateur = 'modif_utilisateur' in request.form
+        profil.modif_client = 'modif_client' in request.form
+        profil.modif_carte = 'modif_carte' in request.form
+        profil.modif_avoir = 'modif_avoir' in request.form
+
+        # Suppressions
+        profil.suppr_utilisateur = 'suppr_utilisateur' in request.form
+        profil.suppr_client = 'suppr_client' in request.form
+        profil.suppr_carte = 'suppr_carte' in request.form
+        profil.suppr_avoir = 'suppr_avoir' in request.form
+
+        if not id:
+            db.session.add(profil)
+
+        db.session.commit()
+        return redirect(url_for('configuration'))

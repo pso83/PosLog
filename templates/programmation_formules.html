@@ -28,7 +28,7 @@
       </div>
     </div>
 
-    <!-- 🟨 Formulaire -->
+    <!-- 🟨 Formulaire principal : création / édition de la formule -->
     <div class="col-md-8">
       <form method="post" action="{{ url_for('save_formule') }}">
         {% if formule %}<input type="hidden" name="id" value="{{ formule.id }}">{% endif %}
@@ -42,26 +42,43 @@
           <input type="number" step="0.01" class="form-control" name="prix" value="{{ formule.prix if formule else '' }}">
         </div>
 
-        {% if formule %}
-          <form method="post" action="{{ url_for('add_composant_formule') }}" class="mt-4">
-            <input type="hidden" name="formule_id" value="{{ formule.id }}">
-            <div class="row align-items-end">
-              <div class="col-md-8">
-                <label class="form-label">Ajouter un composant</label>
-                <select name="article_id" class="form-select">
-                  {% for a in composants %}
-                    <option value="{{ a.id }}">{{ a.nom_article }}</option>
-                  {% endfor %}
-                </select>
-              </div>
-              <div class="col-md-4">
-                <button type="submit" class="btn btn-success">Ajouter</button>
-              </div>
-            </div>
-          </form>
-        {% endif %}
         <button type="submit" class="btn btn-primary mt-3">Enregistrer la formule</button>
       </form>
+
+      {% if formule %}
+        <!-- ✅ Formulaire séparé pour ajouter un composant -->
+        <form method="post" action="{{ url_for('add_composant_formule', formule_id=formule.id) }}" class="mt-4">
+          <div class="row">
+            <div class="col-md-8">
+              <select class="form-select" name="article_id">
+                <option value="">-- Ajouter un composant --</option>
+                {% for a in articles %}
+                  <option value="{{ a.id }}">{{ a.nom_article }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-4">
+              <button type="submit" class="btn btn-outline-success">Ajouter</button>
+            </div>
+          </div>
+        </form>
+
+        <!-- ✅ Liste des composants -->
+        <div class="mt-4">
+          <label class="form-label">Composants de la formule</label>
+          <ul class="list-group">
+            {% for composant in formule.composants %}
+              <li class="list-group-item d-flex justify-content-between align-items-center">
+                {{ composant.article.nom_article }}
+                <a href="{{ url_for('remove_composant_formule', formule_id=formule.id, article_id=composant.article.id) }}"
+                   class="btn btn-sm btn-outline-danger">Supprimer</a>
+              </li>
+            {% else %}
+              <li class="list-group-item text-muted">Aucun composant ajouté</li>
+            {% endfor %}
+          </ul>
+        </div>
+      {% endif %}
     </div>
   </div>
 </div>

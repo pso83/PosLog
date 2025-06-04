@@ -15,3 +15,6 @@ class FormuleComposant(db.Model):
 
     formule = db.relationship('Formule', back_populates='composants')
     article = db.relationship('Article')
+
+
+

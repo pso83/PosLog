@@ -17,6 +17,7 @@ from models.utilisateur import Utilisateur
 from models.menu import Menu
 from models.menu_page import MenuPage
 from models.formule import Formule, FormuleComposant
+
 import json
 from datetime import datetime
 from io import BytesIO
@@ -599,7 +600,7 @@ def register_programmation_routes(app):
 
         articles = Article.query.filter_by(composant_formule=True).all()
 
-        return render_template('programmation_formules.html',
+        return render_template("programmation_formules.html",
                                formules=formules,
                                formule=formule,
                                composants=composants,
@@ -618,18 +619,13 @@ def register_programmation_routes(app):
         db.session.commit()
         return redirect(url_for('programmation_formules', formule_id=formule.id))
 
-    @app.route("/programmation/formules/ajouter_composant", methods=["POST"])
-    def add_composant_formule():
-        formule_id = request.form["formule_id"]
-        article_id = request.form["article_id"]
-
-        formule = Formule.query.get(formule_id)
-        article = Article.query.get(article_id)
-
-        if formule and article:
-            formule.composants.append(article)
+    @app.route('/programmer/formules/<int:formule_id>/add_composant', methods=['POST'])
+    def add_composant_formule(formule_id):
+        article_id = request.form.get('article_id', type=int)
+        if article_id:
+            composant = FormuleComposant(formule_id=formule_id, article_id=article_id)
+            db.session.add(composant)
             db.session.commit()
-
         return redirect(url_for('programmation_formules', formule_id=formule_id))
 
     @app.route('/programmer/formules/<int:composant_id>/delete_composant')

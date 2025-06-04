@@ -2,14 +2,69 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>⚙️ Configuration</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <title>Configuration du système</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <style>
+    .nav-link.active {
+      background-color: #0d6efd;
+      color: white !important;
+    }
+    .nav-link:hover {
+      background-color: #e9ecef;
+    }
+  </style>
 </head>
-<body class="bg-light p-5">
-  <div class="container text-center">
-    <h1 class="mb-4">⚙️ Configuration</h1>
-    <p class="lead">Bienvenue sur la page ⚙️ Configuration.</p>
-    <a href="/dashboard" class="btn btn-primary mt-4">⬅ Retour au Dashboard</a>
+<body class="bg-light p-4">
+
+<div class="container-fluid">
+  <h2 class="mb-4">Configuration du système</h2>
+  <div class="row">
+    <!-- Menu latéral -->
+    <div class="col-md-3">
+      <div class="list-group">
+        <a href="#fonctions" class="list-group-item list-group-item-action active" data-bs-toggle="list">Fonctions de caisse</a>
+        <a href="#utilisateurs" class="list-group-item list-group-item-action" data-bs-toggle="list">Utilisateurs</a>
+        <a href="#profils" class="list-group-item list-group-item-action" data-bs-toggle="list">Profils</a>
+        <a href="#peripheriques" class="list-group-item list-group-item-action" data-bs-toggle="list">Périphériques</a>
+        <a href="#reseau" class="list-group-item list-group-item-action" data-bs-toggle="list">Réseau</a>
+        <a href="#ticket" class="list-group-item list-group-item-action" data-bs-toggle="list">Ticket de caisse</a>
+      </div>
+    </div>
+
+    <!-- Contenu principal -->
+    <div class="col-md-9">
+      <div class="tab-content border p-4 bg-white rounded shadow-sm">
+        <div class="tab-pane fade show active" id="fonctions">
+          <h4>Fonctions de caisse</h4>
+          <p>Section à compléter.</p>
+        </div>
+        <div class="tab-pane fade" id="utilisateurs">
+          <h4>Utilisateurs</h4>
+          <p>Section à compléter.</p>
+        </div>
+        <div class="tab-pane fade" id="profils">
+          <h4>Profils</h4>
+          <p>Section à compléter.</p>
+        </div>
+        <div class="tab-pane fade" id="peripheriques">
+          <h4>Périphériques</h4>
+          <p>Section à compléter.</p>
+        </div>
+        <div class="tab-pane fade" id="reseau">
+          <h4>Réseau</h4>
+          <p>Section à compléter.</p>
+        </div>
+        <div class="tab-pane fade" id="ticket">
+          <h4>Ticket de caisse</h4>
+          <p>Section à compléter.</p>
+        </div>
+      </div>
+    </div>
   </div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
 </body>
 </html>

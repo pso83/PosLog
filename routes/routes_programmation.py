@@ -10,13 +10,13 @@ from models.Famille import Famille
 from models.SousFamille import SousFamille
 from models.reglement import Reglement
 from models.commentaire import Commentaire, ElementCommentaire
-from models.menu import Menu
-from models.formule import Formule
+from models.ticket_config import TicketConfig
 from models.fonction import Fonction
 from models.utilisateur import Utilisateur
 from models.menu import Menu
 from models.menu_page import MenuPage
 from models.formule import Formule, FormuleComposant
+from models.profil import Profil
 
 import json
 from datetime import datetime
@@ -361,6 +361,11 @@ def register_routes(app):
         db.session.commit()
         return redirect(url_for('programmation_articles'))
 
+
+class CommentaireElement:
+    pass
+
+
 def register_programmation_routes(app):
     @app.route('/programmer/articles', methods=['GET'])
     def programmation_articles():
@@ -657,6 +662,78 @@ def register_programmation_routes(app):
         db.session.commit()
         return redirect(url_for('programmation_formules'))
 
+# Configuration du ticket de caisse
+    @app.route('/configuration/ticket', methods=['GET'])
+    def configuration_ticket():
+        config = TicketConfig.query.first()
+        if not config:
+            config = TicketConfig()
+            db.session.add(config)
+            db.session.commit()
+        return render_template('configuration.html', config=config)
 
+    @app.route('/configuration/ticket/save', methods=['POST'])
+    def save_ticket_config():
+        config = TicketConfig.query.first()
+        if not config:
+            config = TicketConfig()
+            db.session.add(config)
 
+        form = request.form
+        config.nom_commerce = form.get('nom_commerce')
+        config.adresse = form.get('adresse')
+        config.siret = form.get('siret')
+        config.tva_intra = form.get('tva_intra')
+        config.entete_ligne1 = form.get('entete_ligne1')
+        config.entete_ligne2 = form.get('entete_ligne2')
+        config.pied_ligne1 = form.get('pied_ligne1')
+        config.pied_ligne2 = form.get('pied_ligne2')
+        config.pied_ligne3 = form.get('pied_ligne3')
+        config.pied_ligne4 = form.get('pied_ligne4')
+
+        db.session.commit()
+        return redirect(url_for('configuration_ticket'))
+
+# Configuration des utilisateurs
+    @app.route('/configuration/utilisateurs', methods=['GET'])
+    def configuration_utilisateurs():
+        id = request.args.get('id', type=int)
+        utilisateur = Utilisateur.query.get(id) if id else None
+
+        utilisateurs = Utilisateur.query.all()
+        profils = Profil.query.all()
+        claviers = Clavier.query.all()
+        imprimantes = Imprimante.query.all()
+
+        return render_template('configuration.html',
+                               utilisateur=utilisateur,
+                               utilisateurs=utilisateurs,
+                               profils=profils,
+                               claviers=claviers,
+                               imprimantes=imprimantes)
+
+    @app.route('/configuration/utilisateurs/save', methods=['POST'])
+    def save_utilisateur():
+        form = request.form
+        id = form.get('id', type=int)
+        utilisateur = Utilisateur.query.get(id) if id else Utilisateur()
+
+        utilisateur.nom = form.get('nom')
+        utilisateur.code = form.get('code')
+        utilisateur.profil_id = form.get('profil_id') or None
+        utilisateur.clavier_id = form.get('clavier_id') or None
+        utilisateur.mode_vente = form.get('mode_vente')
+        utilisateur.imprimante_id = form.get('imprimante_id') or None
+
+        db.session.add(utilisateur)
+        db.session.commit()
+
+        return redirect(url_for('configuration_utilisateurs'))
+
+    @app.route('/configuration/utilisateurs/delete/<int:id>', methods=['GET'])
+    def delete_utilisateur(id):
+        utilisateur = Utilisateur.query.get_or_404(id)
+        db.session.delete(utilisateur)
+        db.session.commit()
+        return redirect(url_for('configuration_utilisateurs'))
 

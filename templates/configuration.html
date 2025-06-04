@@ -3,14 +3,21 @@
 <head>
   <meta charset="UTF-8">
   <title>Configuration du système</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
     .nav-link.active {
-      background-color: #0d6efd;
+      background-color: #0d6efd !important;
       color: white !important;
     }
-    .nav-link:hover {
-      background-color: #e9ecef;
+    #ticket-preview {
+      width: 260px;
+      margin: auto;
+      background: white;
+      font-family: monospace;
+      font-size: 13px;
+      line-height: 1.4;
+      text-align: center;
+      box-shadow: 0 0 5px rgba(0,0,0,0.2);
     }
   </style>
 </head>
@@ -19,52 +26,191 @@
 <div class="container-fluid">
   <h2 class="mb-4">Configuration du système</h2>
   <div class="row">
-    <!-- Menu latéral -->
+    <!-- Menu gauche -->
     <div class="col-md-3">
-      <div class="list-group">
-        <a href="#fonctions" class="list-group-item list-group-item-action active" data-bs-toggle="list">Fonctions de caisse</a>
-        <a href="#utilisateurs" class="list-group-item list-group-item-action" data-bs-toggle="list">Utilisateurs</a>
-        <a href="#profils" class="list-group-item list-group-item-action" data-bs-toggle="list">Profils</a>
-        <a href="#peripheriques" class="list-group-item list-group-item-action" data-bs-toggle="list">Périphériques</a>
-        <a href="#reseau" class="list-group-item list-group-item-action" data-bs-toggle="list">Réseau</a>
-        <a href="#ticket" class="list-group-item list-group-item-action" data-bs-toggle="list">Ticket de caisse</a>
+      <div class="list-group" id="config-tabs" role="tablist">
+        <a class="list-group-item list-group-item-action active" data-bs-toggle="list" href="#fonctions">Fonctions de caisse</a>
+        <a class="list-group-item list-group-item-action" data-bs-toggle="list" href="#utilisateurs">Utilisateurs</a>
+        <a class="list-group-item list-group-item-action" data-bs-toggle="list" href="#profils">Profils</a>
+        <a class="list-group-item list-group-item-action" data-bs-toggle="list" href="#peripheriques">Périphériques</a>
+        <a class="list-group-item list-group-item-action" data-bs-toggle="list" href="#reseau">Réseau</a>
+        <a class="list-group-item list-group-item-action" data-bs-toggle="list" href="#ticket">Ticket de caisse</a>
       </div>
     </div>
 
-    <!-- Contenu principal -->
+    <!-- Contenu à droite -->
     <div class="col-md-9">
-      <div class="tab-content border p-4 bg-white rounded shadow-sm">
+      <div class="tab-content">
+        <!-- Fonctions -->
         <div class="tab-pane fade show active" id="fonctions">
           <h4>Fonctions de caisse</h4>
           <p>Section à compléter.</p>
         </div>
+
+        <!-- Utilisateurs -->
         <div class="tab-pane fade" id="utilisateurs">
-          <h4>Utilisateurs</h4>
-          <p>Section à compléter.</p>
+          <h4>Gestion des utilisateurs</h4>
+          <form method="post" action="{{ url_for('save_utilisateur') }}" class="card p-3 mb-4">
+            {% if utilisateur %}<input type="hidden" name="id" value="{{ utilisateur.id }}">{% endif %}
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label class="form-label">Nom</label>
+                <input type="text" class="form-control" name="nom" value="{{ utilisateur.nom if utilisateur else '' }}" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Code</label>
+                <input type="text" class="form-control" name="code" value="{{ utilisateur.code if utilisateur else '' }}" required>
+              </div>
+            </div>
+            <div class="row mb-3">
+              <div class="col-md-4">
+                <label class="form-label">Profil</label>
+                <select class="form-select" name="profil_id">
+                  <option value="">-- Choisir --</option>
+                  {% for profil in profils %}
+                    <option value="{{ profil.id }}" {% if utilisateur and utilisateur.profil_id == profil.id %}selected{% endif %}>{{ profil.nom }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Clavier</label>
+                <select class="form-select" name="clavier_id">
+                  <option value="">-- Aucun --</option>
+                  {% for clavier in claviers %}
+                    <option value="{{ clavier.id }}" {% if utilisateur and utilisateur.clavier_id == clavier.id %}selected{% endif %}>{{ clavier.nom }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Mode de vente</label>
+                <select class="form-select" name="mode_vente">
+                  <option value="ticket" {% if utilisateur and utilisateur.mode_vente == 'ticket' %}selected{% endif %}>Ticket</option>
+                  <option value="table" {% if utilisateur and utilisateur.mode_vente == 'table' %}selected{% endif %}>Table</option>
+                  <option value="compte" {% if utilisateur and utilisateur.mode_vente == 'compte' %}selected{% endif %}>Compte</option>
+                </select>
+              </div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Imprimante</label>
+              <select class="form-select" name="imprimante_id">
+                <option value="">-- Aucune --</option>
+                {% for imprimante in imprimantes %}
+                  <option value="{{ imprimante.id }}" {% if utilisateur and utilisateur.imprimante_id == imprimante.id %}selected{% endif %}>{{ imprimante.nom }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <button type="submit" class="btn btn-primary">Enregistrer</button>
+          </form>
+
+          <h5>Utilisateurs existants</h5>
+          <table class="table table-striped">
+            <thead>
+              <tr><th>Nom</th><th>Code</th><th>Profil</th><th>Clavier</th><th>Mode</th><th>Imprimante</th><th>Actions</th></tr>
+            </thead>
+            <tbody>
+              {% for u in utilisateurs %}
+              <tr>
+                <td>{{ u.nom }}</td>
+                <td>{{ u.code }}</td>
+                <td>{{ u.profil.nom if u.profil else '' }}</td>
+                <td>{{ u.clavier.nom if u.clavier else '' }}</td>
+                <td>{{ u.mode_vente }}</td>
+                <td>{{ u.imprimante.nom if u.imprimante else '' }}</td>
+                <td>
+                  <a href="{{ url_for('configuration_utilisateurs', id=u.id) }}" class="btn btn-sm btn-secondary">Modifier</a>
+                  <a href="{{ url_for('delete_utilisateur', id=u.id) }}" class="btn btn-sm btn-danger">Supprimer</a>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
         </div>
-        <div class="tab-pane fade" id="profils">
-          <h4>Profils</h4>
-          <p>Section à compléter.</p>
-        </div>
-        <div class="tab-pane fade" id="peripheriques">
-          <h4>Périphériques</h4>
-          <p>Section à compléter.</p>
-        </div>
-        <div class="tab-pane fade" id="reseau">
-          <h4>Réseau</h4>
-          <p>Section à compléter.</p>
-        </div>
+
+        <!-- Profils -->
+        <div class="tab-pane fade" id="profils"><h4>Profils</h4><p>À compléter</p></div>
+
+        <!-- Périphériques -->
+        <div class="tab-pane fade" id="peripheriques"><h4>Périphériques</h4><p>À compléter</p></div>
+
+        <!-- Réseau -->
+        <div class="tab-pane fade" id="reseau"><h4>Réseau</h4><p>À compléter</p></div>
+
+        <!-- Ticket -->
         <div class="tab-pane fade" id="ticket">
-          <h4>Ticket de caisse</h4>
-          <p>Section à compléter.</p>
+          <div class="row">
+            <div class="col-md-7">
+              <ul class="nav nav-tabs mb-3">
+                <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#entete">Entête</button></li>
+                <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#pied">Pied</button></li>
+              </ul>
+              <form method="post" action="{{ url_for('save_ticket_config') }}" id="configForm">
+                <div class="tab-content">
+                  <div class="tab-pane fade show active" id="entete">
+                    <div class="mb-3"><label>Nom du commerce</label><input type="text" class="form-control" name="nom_commerce" value="{{ config.nom_commerce or '' }}"></div>
+                    <div class="mb-3"><label>Adresse</label><textarea class="form-control" name="adresse">{{ config.adresse or '' }}</textarea></div>
+                    <div class="mb-3"><label>SIRET</label><input type="text" class="form-control" name="siret" value="{{ config.siret or '' }}"></div>
+                    <div class="mb-3"><label>TVA</label><input type="text" class="form-control" name="tva_intra" value="{{ config.tva_intra or '' }}"></div>
+                    <div class="mb-3"><label>Ligne libre 1</label><input type="text" class="form-control" name="entete_ligne1" value="{{ config.entete_ligne1 or '' }}"></div>
+                    <div class="mb-3"><label>Ligne libre 2</label><input type="text" class="form-control" name="entete_ligne2" value="{{ config.entete_ligne2 or '' }}"></div>
+                  </div>
+                  <div class="tab-pane fade" id="pied">
+                    {% for i in range(1, 5) %}
+                    <div class="mb-3"><label>Ligne pied {{ i }}</label><input type="text" class="form-control" name="pied_ligne{{ i }}" value="{{ config['pied_ligne' ~ i] or '' }}"></div>
+                    {% endfor %}
+                  </div>
+                </div>
+                <button class="btn btn-primary mt-3">Enregistrer</button>
+              </form>
+            </div>
+            <div class="col-md-5">
+              <h5>Aperçu du ticket</h5>
+              <div id="ticket-preview" class="border p-3"><div id="preview-content"></div></div>
+              <button class="btn btn-outline-secondary btn-sm mt-2" onclick="window.print()">Imprimer</button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const form = document.getElementById('configForm');
+  const preview = document.getElementById('preview-content');
 
+  function updatePreview() {
+    const data = new FormData(form);
+    let html = '';
+
+    const nom = data.get('nom_commerce');
+    const adresse = data.get('adresse');
+    const siret = data.get('siret');
+    const tva = data.get('tva_intra');
+    const el1 = data.get('entete_ligne1');
+    const el2 = data.get('entete_ligne2');
+
+    if (nom) html += `<strong>${nom}</strong><br>`;
+    if (adresse) html += adresse.replace(/\n/g, '<br>') + '<br>';
+    if (siret) html += `SIRET : ${siret}<br>`;
+    if (tva) html += `TVA : ${tva}<br>`;
+    if (el1) html += el1 + '<br>';
+    if (el2) html += el2 + '<br>';
+    html += '<hr><div style="font-size:12px;">... contenu du ticket ...</div><hr>';
+    for (let i = 1; i <= 4; i++) {
+      const pied = data.get(`pied_ligne${i}`);
+      if (pied) html += `<div>${pied}</div>`;
+    }
+
+    preview.innerHTML = html;
+  }
+
+  if (form) {
+    form.querySelectorAll('input, textarea').forEach(el => el.addEventListener('input', updatePreview));
+    updatePreview();
+  }
+});
+</script>
 </body>
 </html>

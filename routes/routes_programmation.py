@@ -744,6 +744,12 @@ def register_programmation_routes(app):
         profils = Profil.query.all()
         return render_template("configuration_profils.html", profils=profils)
 
+    @app.route('/configuration_profil')
+    def configuration_profil():
+        profils = Profil.query.all()
+        utilisateurs = Utilisateur.query.all()
+        return render_template('configuration.html', profils=profils, utilisateurs=utilisateurs)
+
     @config_bp.route("/configuration/profils/save", methods=["POST"])
     def save_profil():
         form = request.form

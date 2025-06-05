@@ -138,11 +138,21 @@
             </div>
 
             <ul class="nav nav-tabs mb-3" id="tabsProfils" role="tablist">
-              <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#acces">Accès</button></li>
-              <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#autorisations">Autorisations</button></li>
-              <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#creations">Créations</button></li>
-              <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#modifications">Modifications</button></li>
-              <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#suppressions">Suppressions</button></li>
+              <li class="nav-item">
+                <button type="button" class="nav-link active" data-bs-toggle="tab" data-bs-target="#acces" role="tab">Accès</button>
+              </li>
+              <li class="nav-item">
+                <button type="button" class="nav-link" data-bs-toggle="tab" data-bs-target="#autorisations" role="tab">Autorisations</button>
+              </li>
+              <li class="nav-item">
+                <button type="button" class="nav-link" data-bs-toggle="tab" data-bs-target="#creations" role="tab">Créations</button>
+              </li>
+              <li class="nav-item">
+                <button type="button" class="nav-link" data-bs-toggle="tab" data-bs-target="#modifications" role="tab">Modifications</button>
+              </li>
+              <li class="nav-item">
+                <button type="button" class="nav-link" data-bs-toggle="tab" data-bs-target="#suppressions" role="tab">Suppressions</button>
+              </li>
             </ul>
 
             <div class="tab-content" id="tabsContent">
@@ -157,46 +167,75 @@
 
               <!-- Onglet Autorisations -->
               <div class="tab-pane fade" id="autorisations">
-                <div class="form-check"><input type="checkbox" name="autorise_offert" class="form-check-input" {% if profil and profil.autorise_offert %}checked{% endif %}> Offerts</div>
-                <div class="form-check"><input type="checkbox" name="autorise_annuler_ligne" class="form-check-input" {% if profil and profil.autorise_annuler_ligne %}checked{% endif %}> Annuler une ligne</div>
-                <div class="form-check"><input type="checkbox" name="autorise_annuler_avant_enc" class="form-check-input" {% if profil and profil.autorise_annuler_avant_enc %}checked{% endif %}> Annuler commande avant encaissement</div>
-                <div class="form-check"><input type="checkbox" name="autorise_annuler_apres_enc" class="form-check-input" {% if profil and profil.autorise_annuler_apres_enc %}checked{% endif %}> Annuler ticket encaissé</div>
-                <div class="form-check"><input type="checkbox" name="autorise_annuler_attente" class="form-check-input" {% if profil and profil.autorise_annuler_attente %}checked{% endif %}> Annuler ticket en attente</div>
-                <div class="form-check"><input type="checkbox" name="autorise_remises" class="form-check-input" {% if profil and profil.autorise_remises %}checked{% endif %}> Remises</div>
-                <div class="form-check"><input type="checkbox" name="autorise_changement_tarif" class="form-check-input" {% if profil and profil.autorise_changement_tarif %}checked{% endif %}> Changement de tarif</div>
-                <div class="form-check"><input type="checkbox" name="autorise_mise_attente" class="form-check-input" {% if profil and profil.autorise_mise_attente %}checked{% endif %}> Mise en attente</div>
-                <div class="form-check"><input type="checkbox" name="autorise_transfert_table" class="form-check-input" {% if profil and profil.autorise_transfert_table %}checked{% endif %}> Transfert vers une table</div>
-                <div class="form-check"><input type="checkbox" name="autorise_transfert_compte" class="form-check-input" {% if profil and profil.autorise_transfert_compte %}checked{% endif %}> Transfert vers un compte</div>
-                <div class="form-check"><input type="checkbox" name="autorise_modif_couverts" class="form-check-input" {% if profil and profil.autorise_modif_couverts %}checked{% endif %}> Modifier couverts</div>
+                <div class="form-check"><input type="checkbox" name="autorise_offert" class="form-check-input" {% if profil and profil.offrir %}checked{% endif %}> Offerts</div>
+                <div class="form-check"><input type="checkbox" name="autorise_annuler_ligne" class="form-check-input" {% if profil and profil.annuler_ligne %}checked{% endif %}> Annuler une ligne</div>
+                <div class="form-check"><input type="checkbox" name="autorise_annuler_avant_enc" class="form-check-input" {% if profil and profil.annuler_commande_avant_encaissement %}checked{% endif %}> Annuler commande avant encaissement</div>
+                <div class="form-check"><input type="checkbox" name="autorise_annuler_apres_enc" class="form-check-input" {% if profil and profil.annuler_ticket_encaisse %}checked{% endif %}> Annuler ticket encaissé</div>
+                <div class="form-check"><input type="checkbox" name="autorise_annuler_attente" class="form-check-input" {% if profil and profil.annuler_ticket_attente %}checked{% endif %}> Annuler ticket en attente</div>
+                <div class="form-check"><input type="checkbox" name="autorise_remises" class="form-check-input" {% if profil and profil.remise %}checked{% endif %}> Remises</div>
+                <div class="form-check"><input type="checkbox" name="autorise_changement_tarif" class="form-check-input" {% if profil and profil.changement_tarif %}checked{% endif %}> Changement de tarif</div>
+                <div class="form-check"><input type="checkbox" name="autorise_mise_attente" class="form-check-input" {% if profil and profil.mise_en_attente %}checked{% endif %}> Mise en attente</div>
+                <div class="form-check"><input type="checkbox" name="autorise_transfert_table" class="form-check-input" {% if profil and profil.transfert_table %}checked{% endif %}> Transfert vers une table</div>
+                <div class="form-check"><input type="checkbox" name="autorise_transfert_compte" class="form-check-input" {% if profil and profil.transfert_compte %}checked{% endif %}> Transfert vers un compte</div>
+                <div class="form-check"><input type="checkbox" name="autorise_modif_couverts" class="form-check-input" {% if profil and profil.modifier_couverts %}checked{% endif %}> Modifier couverts</div>
               </div>
 
               <!-- Onglet Créations -->
               <div class="tab-pane fade" id="creations">
-                <div class="form-check"><input type="checkbox" name="creation_utilisateur" class="form-check-input" {% if profil and profil.creation_utilisateur %}checked{% endif %}> Créer utilisateur</div>
-                <div class="form-check"><input type="checkbox" name="creation_client" class="form-check-input" {% if profil and profil.creation_client %}checked{% endif %}> Créer client</div>
-                <div class="form-check"><input type="checkbox" name="creation_carte" class="form-check-input" {% if profil and profil.creation_carte %}checked{% endif %}> Créer carte cadeau</div>
-                <div class="form-check"><input type="checkbox" name="creation_avoir" class="form-check-input" {% if profil and profil.creation_avoir %}checked{% endif %}> Créer avoir</div>
+                <div class="form-check"><input type="checkbox" name="creation_utilisateur" class="form-check-input" {% if profil and profil.creer_utilisateur %}checked{% endif %}> Créer utilisateur</div>
+                <div class="form-check"><input type="checkbox" name="creation_client" class="form-check-input" {% if profil and profil.creer_client %}checked{% endif %}> Créer client</div>
+                <div class="form-check"><input type="checkbox" name="creation_carte" class="form-check-input" {% if profil and profil.creer_carte_cadeau %}checked{% endif %}> Créer carte cadeau</div>
+                <div class="form-check"><input type="checkbox" name="creation_avoir" class="form-check-input" {% if profil and profil.creer_avoir %}checked{% endif %}> Créer avoir</div>
               </div>
 
               <!-- Onglet Modifications -->
               <div class="tab-pane fade" id="modifications">
-                <div class="form-check"><input type="checkbox" name="modif_utilisateur" class="form-check-input" {% if profil and profil.modif_utilisateur %}checked{% endif %}> Modifier utilisateur</div>
-                <div class="form-check"><input type="checkbox" name="modif_client" class="form-check-input" {% if profil and profil.modif_client %}checked{% endif %}> Modifier client</div>
-                <div class="form-check"><input type="checkbox" name="modif_carte" class="form-check-input" {% if profil and profil.modif_carte %}checked{% endif %}> Modifier carte cadeau</div>
-                <div class="form-check"><input type="checkbox" name="modif_avoir" class="form-check-input" {% if profil and profil.modif_avoir %}checked{% endif %}> Modifier avoir</div>
+                <div class="form-check"><input type="checkbox" name="modif_utilisateur" class="form-check-input" {% if profil and profil.modifier_utilisateur %}checked{% endif %}> Modifier utilisateur</div>
+                <div class="form-check"><input type="checkbox" name="modif_client" class="form-check-input" {% if profil and profil.modifier_client %}checked{% endif %}> Modifier client</div>
+                <div class="form-check"><input type="checkbox" name="modif_carte" class="form-check-input" {% if profil and profil.modifier_carte_cadeau %}checked{% endif %}> Modifier carte cadeau</div>
+                <div class="form-check"><input type="checkbox" name="modif_avoir" class="form-check-input" {% if profil and profil.modifier_avoir %}checked{% endif %}> Modifier avoir</div>
               </div>
 
               <!-- Onglet Suppressions -->
               <div class="tab-pane fade" id="suppressions">
-                <div class="form-check"><input type="checkbox" name="suppr_utilisateur" class="form-check-input" {% if profil and profil.suppr_utilisateur %}checked{% endif %}> Supprimer utilisateur</div>
-                <div class="form-check"><input type="checkbox" name="suppr_client" class="form-check-input" {% if profil and profil.suppr_client %}checked{% endif %}> Supprimer client</div>
-                <div class="form-check"><input type="checkbox" name="suppr_carte" class="form-check-input" {% if profil and profil.suppr_carte %}checked{% endif %}> Supprimer carte cadeau</div>
-                <div class="form-check"><input type="checkbox" name="suppr_avoir" class="form-check-input" {% if profil and profil.suppr_avoir %}checked{% endif %}> Supprimer avoir</div>
+                <div class="form-check"><input type="checkbox" name="suppr_utilisateur" class="form-check-input" {% if profil and profil.supprimer_utilisateur %}checked{% endif %}> Supprimer utilisateur</div>
+                <div class="form-check"><input type="checkbox" name="suppr_client" class="form-check-input" {% if profil and profil.supprimer_client %}checked{% endif %}> Supprimer client</div>
+                <div class="form-check"><input type="checkbox" name="suppr_carte" class="form-check-input" {% if profil and profil.supprimer_carte_cadeau %}checked{% endif %}> Supprimer carte cadeau</div>
+                <div class="form-check"><input type="checkbox" name="suppr_avoir" class="form-check-input" {% if profil and profil.supprimer_avoir %}checked{% endif %}> Supprimer avoir</div>
               </div>
             </div>
 
             <button type="submit" class="btn btn-primary mt-3">Enregistrer</button>
           </form>
+        <h3 class="mt-5">Profils enregistrés</h3>
+            <table class="table table-bordered table-striped mt-3">
+              <thead class="table-dark">
+                <tr>
+                  <th>Nom du profil</th>
+                  <th>Utilisateurs associés</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for profil in profils %}
+                <tr>
+                  <td>{{ profil.nom }}</td>
+                  <td>
+                    {% for user in profil.utilisateurs %}
+                      {{ user.nom }}<br>
+                    {% else %}
+                      <em>Aucun utilisateur</em>
+                    {% endfor %}
+                  </td>
+                  <td>
+                    <a href="/configuration/profils/view/{{ profil.id }}" class="btn btn-sm btn-info">Voir</a>
+                    <a href="/configuration/profils/edit/{{ profil.id }}" class="btn btn-sm btn-warning">Modifier</a>
+                    <a href="/configuration/profils/delete/{{ profil.id }}" class="btn btn-sm btn-danger" onclick="return confirm('Supprimer ce profil ?')">Supprimer</a>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
         </div>
 
         <!-- Périphériques -->

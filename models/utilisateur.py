@@ -17,3 +17,5 @@ class Utilisateur(db.Model):
     profil = db.relationship('Profil', backref='utilisateurs')
     clavier = db.relationship('Clavier', backref='utilisateurs')
     imprimante = db.relationship('Imprimante', backref='utilisateurs')
+
+    profil_id = db.Column(db.Integer, db.ForeignKey('profils.id'))

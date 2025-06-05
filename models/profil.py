@@ -42,3 +42,5 @@ class Profil(db.Model):
     supprimer_client = db.Column(db.Boolean, default=False)
     supprimer_carte_cadeau = db.Column(db.Boolean, default=False)
     supprimer_avoir = db.Column(db.Boolean, default=False)
+
+    utilisateurs = db.relationship('Utilisateur', backref='profil', lazy=True)

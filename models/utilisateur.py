@@ -14,8 +14,12 @@ class Utilisateur(db.Model):
     mode_vente = db.Column(db.String(20))  # 'ticket', 'table', 'compte'
     imprimante_id = db.Column(db.Integer, db.ForeignKey('imprimantes.id'))
 
-    profil = db.relationship('Profil', backref='utilisateurs')
+    profil = db.relationship("Profil", back_populates="utilisateurs")
     clavier = db.relationship('Clavier', backref='utilisateurs')
     imprimante = db.relationship('Imprimante', backref='utilisateurs')
 
-    profil_id = db.Column(db.Integer, db.ForeignKey('profils.id'))
+
+
+
+
+

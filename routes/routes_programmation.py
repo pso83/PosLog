@@ -22,6 +22,17 @@ import json
 from datetime import datetime
 from io import BytesIO
 
+# Fonction utilitaire générique de désaffectation des boutons
+
+def desaffecter_boutons(element_type, element_id):
+    boutons = BoutonClavier.query.filter_by(type=element_type, element_id=element_id).all()
+    for bouton in boutons:
+        bouton.type = None
+        bouton.element_id = None
+        bouton.label = f"Vide ({bouton.position})"
+        bouton.couleur = "#e0e0e0"
+    db.session.commit()
+
 def register_routes(app):
 
     @app.route('/programmation/elements', methods=['GET'])
@@ -216,6 +227,34 @@ def register_routes(app):
 
         return jsonify([{"id": el.id, "nom": el.nom} for el in data])
 
+        # Requête à utiliser dans la vue clavier pour affichage dynamique
+        @app.route('/clavier/boutons/<int:clavier_id>')
+        def afficher_boutons_clavier(clavier_id):
+            boutons = db.session.execute(f'''
+                SELECT b.*, 
+                       a.nom_article AS nom_article,
+                       m.nom AS nom_menu,
+                       f.nom AS nom_formule,
+                       c.nom AS nom_clavier,
+                       fn.nom AS nom_fonction,
+                       u.nom AS nom_utilisateur,
+                       r.nom AS nom_reglement,
+                       cm.texte AS nom_commentaire
+                FROM bouton_clavier b
+                LEFT JOIN article a ON b.type = 'article' AND b.element_id = a.id
+                LEFT JOIN menu m ON b.type = 'menu' AND b.element_id = m.id
+                LEFT JOIN formule f ON b.type = 'formule' AND b.element_id = f.id
+                LEFT JOIN clavier c ON b.type = 'clavier' AND b.element_id = c.id
+                LEFT JOIN fonction fn ON b.type = 'fonction' AND b.element_id = fn.id
+                LEFT JOIN utilisateur u ON b.type = 'utilisateur' AND b.element_id = u.id
+                LEFT JOIN reglement r ON b.type = 'reglement' AND b.element_id = r.id
+                LEFT JOIN commentaire cm ON b.type = 'commentaire' AND b.element_id = cm.id
+                WHERE b.clavier_id = :clavier_id
+            ''', {'clavier_id': clavier_id}).fetchall()
+            return jsonify([dict(row) for row in boutons])
+
+        # Fonction pour la gestion des reglements.
+
     @app.route('/programmer/reglements', methods=['GET'])
     def programmation_reglements():
         reglements = Reglement.query.all()
@@ -255,6 +294,14 @@ def register_routes(app):
         db.session.add(reglement)
         db.session.commit()
 
+        return redirect(url_for('programmation_reglements'))
+
+    @app.route('/programmer/reglements/delete/<int:id>')
+    def delete_reglement(id):
+        reglement = Reglement.query.get_or_404(id)
+        desaffecter_boutons('reglement', id)
+        db.session.delete(reglement)
+        db.session.commit()
         return redirect(url_for('programmation_reglements'))
 
     @app.route('/programmation/tva', methods=['POST'])
@@ -357,6 +404,7 @@ def register_routes(app):
     @app.route('/programmer/articles/delete/<int:id>')
     def delete_article(id):
         article = Article.query.get_or_404(id)
+        desaffecter_boutons('article', id)
         db.session.delete(article)
         db.session.commit()
         return redirect(url_for('programmation_articles'))
@@ -522,6 +570,14 @@ def register_programmation_routes(app):
             db.session.commit()
         return redirect(url_for('programmation_menus', menu_id=menu_id))
 
+    @app.route('/programmer/menus/delete/<int:id>')
+    def delete_menu(id):
+        menu = Menu.query.get_or_404(id)
+        desaffecter_boutons('menu', id)
+        db.session.delete(menu)
+        db.session.commit()
+        return redirect(url_for('programmation_menus'))
+
     @app.route('/programmer/menus/page/save', methods=['POST'])
     def save_menu_page():
         menu_id = request.form.get('menu_id')
@@ -590,8 +646,9 @@ def register_programmation_routes(app):
 
     # Supprimer un élément
     @app.route('/programmer/commentaires/<int:commentaire_id>/delete_element/<int:element_id>')
-    def delete_element_commentaire(commentaire_id, element_id):
+    def delete_commentaire(commentaire_id, element_id):
         element = CommentaireElement.query.get_or_404(element_id)
+        desaffecter_boutons('element', id)
         db.session.delete(element)
         db.session.commit()
         return redirect(url_for('programmation_commentaires', commentaire_id=commentaire_id))
@@ -657,7 +714,8 @@ def register_programmation_routes(app):
 
     @app.route('/programmer/formules/delete/<int:formule_id>')
     def delete_formule(formule_id):
-        formule = Formule.query.get_or_404(formule_id)
+        formule = Formule.query.get_or_404(id)
+        desaffecter_boutons('formule', id)
         db.session.delete(formule)
         db.session.commit()
         return redirect(url_for('programmation_formules'))
@@ -733,6 +791,7 @@ def register_programmation_routes(app):
     @app.route('/configuration/utilisateurs/delete/<int:id>', methods=['GET'])
     def delete_utilisateur(id):
         utilisateur = Utilisateur.query.get_or_404(id)
+        desaffecter_boutons('utilisateur', id)
         db.session.delete(utilisateur)
         db.session.commit()
         return redirect(url_for('configuration_utilisateurs'))
@@ -827,3 +886,5 @@ def register_programmation_routes(app):
 
         db.session.commit()
         return redirect(url_for('configuration'))
+
+

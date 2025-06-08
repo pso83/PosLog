@@ -7,13 +7,7 @@ class Clavier(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nom = db.Column(db.String(255))
 
-    boutons = db.relationship(
-        'BoutonClavier',
-        backref='clavier',
-        lazy='dynamic',
-        primaryjoin="Clavier.id==BoutonClavier.clavier_id",
-        foreign_keys='BoutonClavier.clavier_id'
-    )
+    boutons = db.relationship("BoutonClavier", backref="clavier", lazy="joined")
 
 
 class ClavierBouton(db.Model):

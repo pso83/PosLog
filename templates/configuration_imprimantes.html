@@ -1,51 +1,42 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="container mt-4" style="max-width: 700px;">
-  <h3 class="mb-4">Configuration des imprimantes</h3>
-
-  <form method="post" action="{{ url_for('save_imprimante') }}" class="card p-3 mb-4">
-    <div class="mb-3">
-      <label class="form-label">Nom</label>
-      <input type="text" class="form-control" name="nom" required>
+<div class="container mt-4">
+  <h3>Configuration des Imprimantes</h3>
+  <form method="post" class="card p-3 mb-4">
+    <input type="hidden" name="id" id="idInput">
+    <div class="row mb-2">
+      <div class="col-md-3">
+        <input type="text" name="nom" class="form-control" placeholder="Nom" required>
+      </div>
+      <div class="col-md-3">
+        <input type="text" name="ip" class="form-control" placeholder="IP">
+      </div>
+      <div class="col-md-2">
+        <input type="number" name="port" class="form-control" placeholder="Port">
+      </div>
+      <div class="col-md-3">
+        <input type="text" name="emplacement" class="form-control" placeholder="Emplacement">
+      </div>
+      <div class="col-md-1">
+        <button type="submit" class="btn btn-success">💾</button>
+      </div>
     </div>
-    <div class="mb-3">
-      <label class="form-label">Emplacement</label>
-      <input type="text" class="form-control" name="emplacement">
-    </div>
-    <div class="mb-3">
-      <label class="form-label">Type</label>
-      <select class="form-select" name="type">
-        <option value="ticket">Ticket</option>
-        <option value="cuisine">Cuisine</option>
-        <option value="autre">Autre</option>
-      </select>
-    </div>
-    <button type="submit" class="btn btn-primary">Ajouter</button>
   </form>
 
-  <table class="table table-bordered table-striped">
-    <thead>
-      <tr>
-        <th>Nom</th>
-        <th>Emplacement</th>
-        <th>Type</th>
-        <th>Action</th>
-      </tr>
-    </thead>
+  <table class="table table-striped">
+    <thead><tr><th>Nom</th><th>IP</th><th>Port</th><th>Emplacement</th><th>Actions</th></tr></thead>
     <tbody>
-      {% for i in imprimantes %}
+      {% for imprimante in imprimantes %}
       <tr>
-        <td>{{ i.nom }}</td>
-        <td>{{ i.emplacement or '' }}</td>
-        <td>{{ i.type or '' }}</td>
+        <td>{{ imprimante.nom }}</td>
+        <td>{{ imprimante.ip }}</td>
+        <td>{{ imprimante.port }}</td>
+        <td>{{ imprimante.emplacement }}</td>
         <td>
-          <form method="post" action="{{ url_for('delete_imprimante', id=i.id) }}" onsubmit="return confirm('Supprimer cette imprimante ?')">
-            <button class="btn btn-danger btn-sm">Supprimer</button>
-          </form>
+          <a href="?edit={{ imprimante.id }}" class="btn btn-sm btn-warning">✏️</a>
+          <a href="{{ url_for('delete_imprimante', id=imprimante.id) }}" class="btn btn-sm btn-danger">🗑️</a>
         </td>
       </tr>
-      {% else %}
-      <tr><td colspan="4">Aucune imprimante enregistrée.</td></tr>
       {% endfor %}
     </tbody>
   </table>

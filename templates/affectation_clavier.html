@@ -6,21 +6,24 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
     .keyboard-grid {
-      display: grid !important;
-      grid-template-columns: repeat(5, 124px) !important;
-      grid-template-rows: repeat(11, 65px) !important;
-      gap: 8px !important;
-      justify-content: center !important;
-      margin: 0 auto !important;
+      display: grid;
+      grid-template-columns: repeat(5, 124px);
+      grid-template-rows: repeat(11, 65px);
+      gap: 8px;
+      justify-content: center;
+      margin: 0 auto;
     }
     .keyboard-button {
-      width: 124px !important;
-      height: 65px !important;
-      padding: 0 !important;
-      font-size: 1rem !important;
+      width: 124px;
+      height: 65px;
+      padding: 0;
+      font-size: 0.75rem;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
     }
     .keyboard-button-form {
-      margin: 0 !important;
+      margin: 0;
     }
   </style>
 </head>
@@ -28,15 +31,36 @@
   <div class="container-fluid">
     <h2 class="mb-4">Programmation des claviers</h2>
     <div class="row">
+      <!-- Affichage du clavier -->
       <div class="col-md-8">
         <div class="card">
           <div class="card-header bg-dark text-white">Clavier</div>
           <div class="card-body">
             <div class="keyboard-grid">
-              {% for i in range(55) %}
+              {% for bouton in boutons %}
               <form method="get" action="/programmer/clavier/affectation" class="keyboard-button-form">
-                <input type="hidden" name="bouton" value="{{ i }}">
-                <button type="submit" class="btn btn-outline-primary keyboard-button">{{ i + 1 }}</button>
+                <input type="hidden" name="bouton" value="{{ bouton.position }}">
+                <button type="submit" class="btn btn-outline-primary keyboard-button">
+                  {% if bouton.article %}
+                    {{ bouton.article.nom_article }}
+                  {% elif bouton.clavier %}
+                    [Clavier] {{ bouton.clavier.nom }}
+                  {% elif bouton.fonction %}
+                    [Fonction] {{ bouton.fonction.nom }}
+                  {% elif bouton.menu %}
+                    [Menu] {{ bouton.menu.nom }}
+                  {% elif bouton.formule %}
+                    [Formule] {{ bouton.formule.nom }}
+                  {% elif bouton.utilisateur %}
+                    [Utilisateur] {{ bouton.utilisateur.nom }}
+                  {% elif bouton.reglement %}
+                    [Règlement] {{ bouton.reglement.nom }}
+                  {% elif bouton.commentaire %}
+                    [Commentaire] {{ bouton.commentaire.nom }}
+                  {% else %}
+                    Vide
+                  {% endif %}
+                </button>
               </form>
               {% endfor %}
             </div>
@@ -44,6 +68,7 @@
         </div>
       </div>
 
+      <!-- Sélection du clavier -->
       <div class="col-md-4">
         <div class="card">
           <div class="card-header bg-secondary text-white">Sélection du clavier</div>
@@ -51,9 +76,9 @@
             <form method="get" action="/programmer/clavier">
               <div class="mb-3">
                 <label class="form-label">Clavier</label>
-                <select name="clavier_id" class="form-select">
+                <select name="clavier_id" class="form-select" required>
                   {% for clavier in claviers %}
-                  <option value="{{ clavier.id }}">{{ clavier.nom }}</option>
+                    <option value="{{ clavier.id }}" {% if clavier.id == clavier_id %}selected{% endif %}>{{ clavier.nom }}</option>
                   {% endfor %}
                 </select>
               </div>

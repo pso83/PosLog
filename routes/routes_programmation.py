@@ -933,12 +933,6 @@ def register_programmation_routes(app):
         db.session.commit()
         return redirect(url_for('configuration'))
 
-    # Gestion des imprimantes
-    @app.route('/configuration/imprimantes')
-    def configuration_imprimantes():
-        imprimantes = Imprimante.query.all()
-        return render_template('configuration_imprimantes.html', imprimantes=imprimantes)
-
     @app.route('/configuration/imprimantes/save', methods=['POST'])
     def save_imprimante():
         nom = request.form.get('nom')
@@ -950,9 +944,34 @@ def register_programmation_routes(app):
         db.session.commit()
         return redirect(url_for('configuration_imprimantes'))
 
-    @app.route('/configuration/imprimantes/delete/<int:id>', methods=['POST'])
+    @app.route('/configuration/peripheriques/imprimantes/delete/<int:id>')
     def delete_imprimante(id):
-        impr = Imprimante.query.get_or_404(id)
-        db.session.delete(impr)
+        imprimante = Imprimante.query.get_or_404(id)
+        db.session.delete(imprimante)
         db.session.commit()
         return redirect(url_for('configuration_imprimantes'))
+
+    @app.route('/configuration/peripheriques/imprimantes', methods=['GET', 'POST'])
+    def configuration_imprimantes():
+        if request.method == 'POST':
+            id_ = request.form.get('id')
+            nom = request.form['nom']
+            ip = request.form['ip']
+            port = request.form['port']
+            emplacement = request.form['emplacement']
+
+            if id_:
+                imprimante = Imprimante.query.get(id_)
+            else:
+                imprimante = Imprimante()
+
+            imprimante.nom = nom
+            imprimante.ip = ip
+            imprimante.port = port
+            imprimante.emplacement = emplacement
+            db.session.add(imprimante)
+            db.session.commit()
+            return redirect(url_for('configuration_imprimantes'))
+
+        imprimantes = Imprimante.query.all()
+        return render_template('configuration_imprimantes.html', imprimantes=imprimantes)

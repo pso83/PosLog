@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="container mt-4 text-center" style="max-width: 600px;">
+  <h3 class="mb-4">Configuration des périphériques</h3>
+
+  <div class="d-grid gap-3">
+    <a href="{{ url_for('configuration_imprimantes') }}" class="btn btn-outline-primary btn-lg">
+      🖨️ Imprimantes
+    </a>
+    <a href="{{ url_for('configuration_buzzer_preparation') }}" class="btn btn-outline-warning btn-lg">
+      🔊 Buzzer préparation
+    </a>
+    <a href="{{ url_for('configuration_buzzer_client') }}" class="btn btn-outline-danger btn-lg">
+      🔔 Buzzer client
+    </a>
+    <a href="{{ url_for('configuration_ecran_preparation') }}" class="btn btn-outline-info btn-lg">
+      🖥️ Écran préparation
+    </a>
+    <a href="{{ url_for('configuration_telecommandes') }}" class="btn btn-outline-success btn-lg">
+      🎮 Télécommandes
+    </a>
+  </div>
+
+  <div class="mt-4">
+    <a href="{{ url_for('configuration_home') }}" class="btn btn-secondary">
+      ← Retour à la configuration
+    </a>
+  </div>
+</div>
+
+{% endblock %}

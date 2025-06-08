@@ -239,7 +239,31 @@
         </div>
 
         <!-- Périphériques -->
-        <div class="tab-pane fade" id="peripheriques"><h4>Périphériques</h4><p>À compléter</p></div>
+        <div class="tab-pane fade" id="peripheriques">
+          <h4 class="mb-3">Configuration des périphériques</h4>
+          <div class="d-flex flex-wrap gap-3 justify-content-start">
+            <a href="{{ url_for('configuration_imprimantes') }}" class="btn btn-outline-primary text-center"
+               style="width: 200px; height: 100px; display: flex; align-items: center; justify-content: center; flex-direction: column;">
+              🖨️<div>Imprimantes</div>
+            </a>
+            <a href="{{ url_for('configuration_buzzer_preparation') }}" class="btn btn-outline-success text-center"
+               style="width: 200px; height: 100px; display: flex; align-items: center; justify-content: center; flex-direction: column;">
+              🔔<div>Buzzer Préparation</div>
+            </a>
+            <a href="{{ url_for('configuration_buzzer_client') }}" class="btn btn-outline-warning text-center"
+               style="width: 200px; height: 100px; display: flex; align-items: center; justify-content: center; flex-direction: column;">
+              🔔<div>Buzzer Client</div>
+            </a>
+            <a href="{{ url_for('configuration_ecran_preparation') }}" class="btn btn-outline-info text-center"
+               style="width: 200px; height: 100px; display: flex; align-items: center; justify-content: center; flex-direction: column;">
+              🖥️<div>Écran Préparation</div>
+            </a>
+            <a href="{{ url_for('configuration_telecommandes') }}" class="btn btn-outline-secondary text-center"
+               style="width: 200px; height: 100px; display: flex; align-items: center; justify-content: center; flex-direction: column;">
+              🎮<div>Télécommandes</div>
+            </a>
+          </div>
+        </div>
 
         <!-- Réseau -->
         <div class="tab-pane fade" id="reseau"><h4>Réseau</h4><p>À compléter</p></div>

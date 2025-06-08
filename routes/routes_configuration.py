@@ -12,6 +12,10 @@ def register_configuration_routes(app):
     def configuration_page():
         return render_template('configuration_systeme.html')
 
+    @app.route('/configuration/peripheriques')
+    def configuration_peripheriques():
+        return render_template('configuration_peripheriques.html')
+
     @app.route('/configuration/fonctions', methods=['POST'])
     def add_fonction():
         fonction = request.form.get('fonction')
@@ -62,3 +66,15 @@ def register_configuration_routes(app):
             db.session.add(Ticket(template=template))
             db.session.commit()
         return redirect('/configuration/systeme')
+
+    @app.route('/configuration/buzzer_preparation')
+    def configuration_buzzer_preparation(): ...
+
+    @app.route('/configuration/buzzer_client')
+    def configuration_buzzer_client(): ...
+
+    @app.route('/configuration/ecran_preparation')
+    def configuration_ecran_preparation(): ...
+
+    @app.route('/configuration/telecommandes')
+    def configuration_telecommandes(): ...

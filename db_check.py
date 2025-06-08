@@ -1,6 +1,6 @@
 from flask import Flask
 from config import Config
-from models.article import db
+from extensions import db
 
 # Importation des modèles
 from models.article import Article

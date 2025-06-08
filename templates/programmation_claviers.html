@@ -1,38 +1,22 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="container-fluid">
+{% include '_menu_burger.html' %}
+
+<div class="container py-4">
   <div class="row">
 
-    <!-- Grille des boutons -->
+    <!-- Grille dynamique des boutons -->
     <div class="col-md-9">
       <h4 class="mb-3">Programmation du clavier : {{ clavier.nom if clavier else 'Aucun clavier sélectionné' }}</h4>
 
-      <div class="d-flex flex-wrap" style="width: 624px; height: 715px;">
-        {% for row in range(11) %}
-          <div class="d-flex" style="width: 100%;">
-            {% for col in range(5) %}
-              {% set pos = row * 5 + col + 1 %}
-              {% set b = boutons.get(pos, {}) %}
-              <button
-                class="btn me-1 mb-1"
-                style="width: 124px; height: 65px; background-color: {{ b.get('couleur', '#e0e0e0') }};"
-                onclick="openButtonModal({{ pos }}, {{ b | tojson | safe }})">
-                {% if b.get('image') %}
-                  <img src="{{ url_for('static', filename=b.image) }}" alt="" style="width: 100%; height: 100%;">
-                {% else %}
-                  {{ b.get('label') or 'Vide ' ~ pos }}
-                {% endif %}
-              </button>
-            {% endfor %}
-          </div>
-        {% endfor %}
-      </div>
+      <div id="clavier-container" class="d-flex flex-wrap" style="width: 624px; height: 715px;"></div>
 
       <p class="text-success mt-3">{{ message }}</p>
     </div>
 
-    <!-- Outils de gestion à droite -->
+    <!-- Outils à droite -->
     <div class="col-md-3">
+      <!-- Création clavier -->
       <div class="card mb-3">
         <div class="card-header">Créer un clavier</div>
         <div class="card-body">
@@ -43,6 +27,7 @@
         </div>
       </div>
 
+      <!-- Sélection clavier -->
       <div class="card mb-3">
         <div class="card-header">Claviers disponibles</div>
         <div class="card-body">
@@ -65,6 +50,7 @@
         </div>
       </div>
 
+      <!-- Effacement -->
       <div class="card mb-3">
         <div class="card-header">Effacer bouton / ligne</div>
         <div class="card-body">
@@ -89,7 +75,7 @@
   </div>
 </div>
 
-<!-- Modale pour configuration des boutons -->
+<!-- Modale configuration bouton -->
 <div class="modal fade" id="buttonModal" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
@@ -145,7 +131,7 @@
 </div>
 
 <script>
-  function openButtonModal(pos, bouton) {
+function openButtonModal(pos, bouton) {
   document.getElementById('positionInput').value = pos;
   document.getElementById('typeInput').value = bouton.type || 'article';
   document.getElementById('labelInput').value = bouton.label || '';
@@ -176,17 +162,12 @@
       })
       .catch(error => {
         console.error('Erreur lors du chargement des éléments :', error);
-        alert("Erreur lors du chargement des éléments pour ce type.");
+        alert("Erreur lors du chargement des éléments.");
       });
   }
 
-  // Charger les éléments initiaux
   chargerElements(typeInput.value, bouton.element_id);
-
-  // Recharger quand le type change
   typeInput.onchange = () => chargerElements(typeInput.value);
-
-  // Mettre à jour le label quand l’élément change
   elementInput.onchange = () => {
     const selectedOption = elementInput.options[elementInput.selectedIndex];
     if (selectedOption) {
@@ -197,30 +178,77 @@
   new bootstrap.Modal(document.getElementById('buttonModal')).show();
 }
 
+function saveButtonConfig() {
+  const form = document.getElementById('buttonForm');
+  const data = Object.fromEntries(new FormData(form).entries());
+  data.masquer_texte = document.getElementById('masquerTexteInput').checked;
 
-  function saveButtonConfig() {
-    const form = document.getElementById('buttonForm');
-    const data = Object.fromEntries(new FormData(form).entries());
-    data.masquer_texte = document.getElementById('masquerTexteInput').checked;
+  fetch('/clavier/save_bouton', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  })
+  .then(res => res.json())
+  .then(resp => {
+    if (resp.status === 'ok') {
+      window.location.reload();
+    } else {
+      alert("Erreur lors de l'enregistrement");
+    }
+  })
+  .catch(err => {
+    console.error('Erreur lors de la sauvegarde :', err);
+    alert("Une erreur est survenue");
+  });
+}
 
-    fetch('/clavier/save_bouton', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
-    })
+document.addEventListener('DOMContentLoaded', function () {
+  const clavierId = {{ clavier.id if clavier else 0 }};
+  const container = document.getElementById('clavier-container');
+
+  fetch(`/clavier/boutons/${clavierId}`)
     .then(res => res.json())
-    .then(resp => {
-      if (resp.status === 'ok') {
-        window.location.reload();
-      } else {
-        alert("Erreur lors de l'enregistrement");
+    .then(data => {
+      container.innerHTML = '';
+      for (let row = 0; row < 11; row++) {
+        const rowDiv = document.createElement('div');
+        rowDiv.className = 'd-flex';
+        rowDiv.style.width = '100%';
+
+        for (let col = 0; col < 5; col++) {
+          const pos = row * 5 + col + 1;
+          const b = data.find(btn => btn.position === pos) || {};
+
+          const btn = document.createElement('button');
+          btn.className = 'btn me-1 mb-1';
+          btn.style.width = '124px';
+          btn.style.height = '65px';
+          btn.style.backgroundColor = b.couleur || '#e0e0e0';
+          btn.onclick = () => openButtonModal(pos, b);
+
+          if (b.image) {
+            const img = document.createElement('img');
+            img.src = `/static/${b.image}`;
+            img.alt = '';
+            img.style.width = '100%';
+            img.style.height = '100%';
+            btn.appendChild(img);
+          } else {
+            const nom = b.nom_article || b.nom_menu || b.nom_formule || b.nom_clavier ||
+                        b.nom_fonction || b.nom_utilisateur || b.nom_reglement || b.nom_commentaire || b.label || `Vide ${pos}`;
+            btn.textContent = nom;
+          }
+
+          rowDiv.appendChild(btn);
+        }
+
+        container.appendChild(rowDiv);
       }
     })
     .catch(err => {
-      console.error('Erreur lors de la sauvegarde :', err);
-      alert("Une erreur est survenue");
+      console.error("Erreur lors du chargement des boutons :", err);
+      container.innerHTML = '<p class="text-danger">Erreur de chargement des boutons.</p>';
     });
-  }
+});
 </script>
-
 {% endblock %}

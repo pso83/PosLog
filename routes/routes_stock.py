@@ -1,6 +1,6 @@
 from flask import request, redirect, render_template
 from models.stock import MouvementStock
-from models.article import db
+from extensions import db
 from datetime import datetime
 
 def register_stock_routes(app):

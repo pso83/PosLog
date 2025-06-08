@@ -5,7 +5,7 @@ from models.utilisateur import Utilisateur
 from models.peripherique import Peripherique
 from models.reseau import Reseau
 from models.ticket import Ticket
-from models.article import db
+from extensions import db
 
 def register_configuration_routes(app):
     @app.route('/configuration/systeme', methods=['GET'])

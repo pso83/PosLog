@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4" style="max-width: 700px;">
+  <h3 class="mb-4">Configuration des imprimantes</h3>
+
+  <form method="post" action="{{ url_for('save_imprimante') }}" class="card p-3 mb-4">
+    <div class="mb-3">
+      <label class="form-label">Nom</label>
+      <input type="text" class="form-control" name="nom" required>
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Emplacement</label>
+      <input type="text" class="form-control" name="emplacement">
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Type</label>
+      <select class="form-select" name="type">
+        <option value="ticket">Ticket</option>
+        <option value="cuisine">Cuisine</option>
+        <option value="autre">Autre</option>
+      </select>
+    </div>
+    <button type="submit" class="btn btn-primary">Ajouter</button>
+  </form>
+
+  <table class="table table-bordered table-striped">
+    <thead>
+      <tr>
+        <th>Nom</th>
+        <th>Emplacement</th>
+        <th>Type</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for i in imprimantes %}
+      <tr>
+        <td>{{ i.nom }}</td>
+        <td>{{ i.emplacement or '' }}</td>
+        <td>{{ i.type or '' }}</td>
+        <td>
+          <form method="post" action="{{ url_for('delete_imprimante', id=i.id) }}" onsubmit="return confirm('Supprimer cette imprimante ?')">
+            <button class="btn btn-danger btn-sm">Supprimer</button>
+          </form>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="4">Aucune imprimante enregistrée.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

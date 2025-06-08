@@ -1,7 +1,7 @@
 from flask import render_template
 from models.vente import Vente
 from models.vente_detail import VenteDetail
-from models.article import db
+from extensions import db
 
 def register_ticket_routes(app):
     @app.route('/ticket/<int:vente_id>', methods=['GET'])

@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, jsonify, send_file, flash, Blueprint
 from models import db, article, Groupe, Famille, SousFamille, tva
-from models.article import db
+from extensions import db
 from models.article import Article
 from models.clavier import Clavier
 from models.bouton_clavier import BoutonClavier
@@ -17,6 +17,7 @@ from models.menu import Menu
 from models.menu_page import MenuPage
 from models.formule import Formule, FormuleComposant
 from models.profil import Profil
+from models.imprimante import Imprimante
 
 import json
 from datetime import datetime
@@ -27,9 +28,9 @@ from io import BytesIO
 def desaffecter_boutons(element_type, element_id):
     boutons = BoutonClavier.query.filter_by(type=element_type, element_id=element_id).all()
     for bouton in boutons:
-        bouton.type = None
+        bouton.type = 'vide'
         bouton.element_id = None
-        bouton.label = f"Vide ({bouton.position})"
+        bouton.label = f"Vide {bouton.position}"
         bouton.couleur = "#e0e0e0"
     db.session.commit()
 
@@ -230,28 +231,55 @@ def register_routes(app):
         # Requête à utiliser dans la vue clavier pour affichage dynamique
         @app.route('/clavier/boutons/<int:clavier_id>')
         def afficher_boutons_clavier(clavier_id):
-            boutons = db.session.execute(f'''
-                SELECT b.*, 
-                       a.nom_article AS nom_article,
-                       m.nom AS nom_menu,
-                       f.nom AS nom_formule,
-                       c.nom AS nom_clavier,
-                       fn.nom AS nom_fonction,
-                       u.nom AS nom_utilisateur,
-                       r.nom AS nom_reglement,
-                       cm.texte AS nom_commentaire
-                FROM bouton_clavier b
-                LEFT JOIN article a ON b.type = 'article' AND b.element_id = a.id
-                LEFT JOIN menu m ON b.type = 'menu' AND b.element_id = m.id
-                LEFT JOIN formule f ON b.type = 'formule' AND b.element_id = f.id
-                LEFT JOIN clavier c ON b.type = 'clavier' AND b.element_id = c.id
-                LEFT JOIN fonction fn ON b.type = 'fonction' AND b.element_id = fn.id
-                LEFT JOIN utilisateur u ON b.type = 'utilisateur' AND b.element_id = u.id
-                LEFT JOIN reglement r ON b.type = 'reglement' AND b.element_id = r.id
-                LEFT JOIN commentaire cm ON b.type = 'commentaire' AND b.element_id = cm.id
-                WHERE b.clavier_id = :clavier_id
-            ''', {'clavier_id': clavier_id}).fetchall()
-            return jsonify([dict(row) for row in boutons])
+            try:
+                boutons = db.session.execute(text('''
+                                                  SELECT b.position,
+                                                         b.label,
+                                                         b.couleur,
+                                                         b.image,
+                                                         b.masquer_texte,
+                                                         b.type,
+                                                         b.element_id,
+                                                         a.nom_article AS nom_article,
+                                                         m.nom         AS nom_menu,
+                                                         f.nom         AS nom_formule,
+                                                         c.nom         AS nom_clavier,
+                                                         fn.nom        AS nom_fonction,
+                                                         u.nom         AS nom_utilisateur,
+                                                         r.nom         AS nom_reglement,
+                                                         cm.texte      AS nom_commentaire
+                                                  FROM bouton_clavier b
+                                                           LEFT JOIN article a ON b.type = 'article' AND b.element_id = a.id
+                                                           LEFT JOIN menu m ON b.type = 'menu' AND b.element_id = m.id
+                                                           LEFT JOIN formule f ON b.type = 'formule' AND b.element_id = f.id
+                                                           LEFT JOIN clavier c ON b.type = 'clavier' AND b.element_id = c.id
+                                                           LEFT JOIN fonction fn ON b.type = 'fonction' AND b.element_id = fn.id
+                                                           LEFT JOIN utilisateur u ON b.type = 'utilisateur' AND b.element_id = u.id
+                                                           LEFT JOIN reglement r ON b.type = 'reglement' AND b.element_id = r.id
+                                                           LEFT JOIN commentaire cm ON b.type = 'commentaire' AND b.element_id = cm.id
+                                                  WHERE b.clavier_id = :clavier_id
+                                                  '''), {'clavier_id': clavier_id}).mappings().all()
+
+                result = []
+                for pos in range(1, 56):
+                    bouton = next((dict(b) for b in boutons if b['position'] == pos), None)
+                    if not bouton:
+                        bouton = {
+                            "position": pos,
+                            "label": f"Vide {pos}",
+                            "couleur": "#e0e0e0",
+                            "image": None,
+                            "masquer_texte": False,
+                            "type": "vide",
+                            "element_id": None
+                        }
+                    result.append(bouton)
+
+                return jsonify(result)
+
+            except Exception as e:
+                print("Erreur dans /clavier/boutons :", e)
+                return jsonify({'error': 'Erreur interne'}), 500
 
         # Fonction pour la gestion des reglements.
 
@@ -404,9 +432,17 @@ def register_routes(app):
     @app.route('/programmer/articles/delete/<int:id>')
     def delete_article(id):
         article = Article.query.get_or_404(id)
+
+        # 1. Désaffecter les boutons du clavier
         desaffecter_boutons('article', id)
+
+        # 2. Supprimer les références dans FormuleComposant
+        FormuleComposant.query.filter_by(article_id=id).delete()
+
+        # 4. Supprimer l'article
         db.session.delete(article)
         db.session.commit()
+
         return redirect(url_for('programmation_articles'))
 
 
@@ -573,9 +609,19 @@ def register_programmation_routes(app):
     @app.route('/programmer/menus/delete/<int:id>')
     def delete_menu(id):
         menu = Menu.query.get_or_404(id)
+
+        # 1. Désaffecter les boutons qui utilisent ce menu
         desaffecter_boutons('menu', id)
+
+        # 2. Supprimer les articles liés aux pages du menu (si relation directe)
+        for page in menu.pages:
+            page.articles.clear()  # relation many-to-many, si définie
+            db.session.delete(page)
+
+        # 3. Supprimer le menu lui-même
         db.session.delete(menu)
         db.session.commit()
+
         return redirect(url_for('programmation_menus'))
 
     @app.route('/programmer/menus/page/save', methods=['POST'])
@@ -887,4 +933,26 @@ def register_programmation_routes(app):
         db.session.commit()
         return redirect(url_for('configuration'))
 
+    # Gestion des imprimantes
+    @app.route('/configuration/imprimantes')
+    def configuration_imprimantes():
+        imprimantes = Imprimante.query.all()
+        return render_template('configuration_imprimantes.html', imprimantes=imprimantes)
 
+    @app.route('/configuration/imprimantes/save', methods=['POST'])
+    def save_imprimante():
+        nom = request.form.get('nom')
+        emplacement = request.form.get('emplacement')
+        type_impr = request.form.get('type')
+
+        imprimante = Imprimante(nom=nom, emplacement=emplacement, type=type_impr)
+        db.session.add(imprimante)
+        db.session.commit()
+        return redirect(url_for('configuration_imprimantes'))
+
+    @app.route('/configuration/imprimantes/delete/<int:id>', methods=['POST'])
+    def delete_imprimante(id):
+        impr = Imprimante.query.get_or_404(id)
+        db.session.delete(impr)
+        db.session.commit()
+        return redirect(url_for('configuration_imprimantes'))

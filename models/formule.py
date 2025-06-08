@@ -11,7 +11,7 @@ class FormuleComposant(db.Model):
     __tablename__ = 'formule_composants'
     id = db.Column(db.Integer, primary_key=True)
     formule_id = db.Column(db.Integer, db.ForeignKey('formules.id'), nullable=False)
-    article_id = db.Column(db.Integer, db.ForeignKey('articles.id'), nullable=False)
+    article_id = db.Column(db.Integer, db.ForeignKey('articles.id', ondelete='CASCADE'))
 
     formule = db.relationship('Formule', back_populates='composants')
     article = db.relationship('Article')

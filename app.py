@@ -26,6 +26,7 @@ from models.stock import MouvementStock
 from models.vente import Vente
 from models.vente_detail import VenteDetail
 from models.bouton_clavier import BoutonClavier
+from models.imprimante import Imprimante
 
 # Enregistrement des routes
 from routes.routes_programmation import register_routes
@@ -38,6 +39,7 @@ from routes.routes_ticket import register_ticket_routes
 from routes.routes_programmation import register_programmation_routes
 from routes.routes_clavier import register_clavier_routes
 from routes.routes_familles import familles_bp
+from routes.routes_clavier import clavier_bp
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -55,6 +57,7 @@ register_reporting_routes(app)
 register_ticket_routes(app)
 register_programmation_routes(app)
 app.register_blueprint(familles_bp)
+app.register_blueprint(clavier_bp)
 
 @app.route('/')
 def index():

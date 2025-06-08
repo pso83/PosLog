@@ -1,0 +1,57 @@
+<style>
+  #burgerMenu {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    z-index: 1050;
+  }
+
+  #sideMenu {
+    position: fixed;
+    top: 0;
+    left: -250px;
+    width: 250px;
+    height: 100%;
+    background-color: #343a40;
+    padding-top: 60px;
+    transition: 0.3s;
+    z-index: 1040;
+  }
+
+  #sideMenu a {
+    padding: 10px 20px;
+    text-decoration: none;
+    font-weight: bold;
+    display: block;
+    color: white;
+  }
+
+  #sideMenu a:hover {
+    background-color: #495057;
+  }
+</style>
+
+<div id="burgerMenu">
+  <button class="btn btn-outline-light bg-dark" onclick="toggleMenu()">☰</button>
+</div>
+
+<div id="sideMenu">
+  <a href="/programmer/articles">🧾 Articles</a>
+  <a href="/programmer/claviers">🎹 Claviers</a>
+  <a href="/programmer/tva">💰 TVA</a>
+  <a href="/programmer/groupes">📁 Groupes</a>
+  <a href="/programmer/familles">📂 Familles</a>
+  <a href="/programmer/sous-familles">📂 Sous-familles</a>
+  <a href="/programmer/reglements">💳 Règlements</a>
+  <a href="/programmer/commentaires">💬 Commentaires</a>
+  <a href="/programmer/formules">📋 Formules</a>
+  <a href="/programmer/menus">📑 Menus</a>
+  <a href="/programmer">↩️ Retour à la programmation</a>
+</div>
+
+<script>
+  function toggleMenu() {
+    const menu = document.getElementById("sideMenu");
+    menu.style.left = menu.style.left === "0px" ? "-250px" : "0px";
+  }
+</script>

@@ -1,7 +1,6 @@
 from flask import request, render_template, send_file
 from models.vente import Vente
-from models.article import db
-from sqlalchemy import and_
+from extensions import db
 from io import StringIO
 import csv
 from datetime import datetime

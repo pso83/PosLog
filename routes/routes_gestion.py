@@ -1,7 +1,7 @@
 from flask import request, redirect, render_template
 from models.edition import Edition
 from models.cloture import Cloture
-from models.article import db
+from extensions import db
 from datetime import datetime
 
 def register_gestion_routes(app):

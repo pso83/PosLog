@@ -5,4 +5,4 @@ class Menu(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nom = db.Column(db.String(100), nullable=False)
 
-    pages = db.relationship('MenuPage', back_populates='menu', cascade="all, delete-orphan")
+    pages = db.relationship("MenuPage", back_populates="menu", cascade="all, delete-orphan")

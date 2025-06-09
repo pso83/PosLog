@@ -1,44 +1,126 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="container mt-4">
-  <h3>Configuration des Imprimantes</h3>
-  <form method="post" class="card p-3 mb-4">
-    <input type="hidden" name="id" id="idInput">
-    <div class="row mb-2">
-      <div class="col-md-3">
-        <input type="text" name="nom" class="form-control" placeholder="Nom" required>
-      </div>
-      <div class="col-md-3">
-        <input type="text" name="ip" class="form-control" placeholder="IP">
-      </div>
-      <div class="col-md-2">
-        <input type="number" name="port" class="form-control" placeholder="Port">
-      </div>
-      <div class="col-md-3">
-        <input type="text" name="emplacement" class="form-control" placeholder="Emplacement">
-      </div>
-      <div class="col-md-1">
-        <button type="submit" class="btn btn-success">💾</button>
+<div class="container py-4">
+  <h4 class="mb-4">Configuration des imprimantes</h4>
+  <form method="post">
+    <div class="mb-3">
+      <label for="nom" class="form-label">Nom de l'imprimante</label>
+      <input type="text" class="form-control" id="nom" name="nom" required>
+    </div>
+
+    <div class="mb-3">
+      <label for="typeSelect" class="form-label">Type d'imprimante</label>
+      <select name="type" class="form-select" id="typeSelect" onchange="toggleFields()">
+        <option value="Série">Série</option>
+        <option value="Windows">Windows</option>
+      </select>
+    </div>
+
+    <div id="windowsFields" style="display: none;">
+      <div class="mb-3">
+        <label for="nom_windows" class="form-label">Imprimante Windows</label>
+        <select name="nom_windows" class="form-select">
+          {% for p in printers %}
+            <option value="{{ p }}">{{ p }}</option>
+          {% endfor %}
+        </select>
       </div>
     </div>
+
+    <div id="serieFields">
+      <div class="mb-3">
+        <label for="port_com" class="form-label">Port COM</label>
+        <select name="port_com" class="form-select">
+          {% for i in range(1, 21) %}
+            <option value="{{ i }}">{{ i }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="mb-3">
+        <label for="vitesse" class="form-label">Vitesse</label>
+        <select name="vitesse" class="form-select">
+          {% for v in [2400, 4800, 9600, 19200, 38400, 56000, 115200] %}
+            <option value="{{ v }}">{{ v }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="mb-3">
+        <label for="bit_donnee" class="form-label">Bit de donnée</label>
+        <select name="bit_donnee" class="form-select">
+          {% for b in [5, 6, 7, 8] %}
+            <option value="{{ b }}">{{ b }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="mb-3">
+        <label for="bit_arret" class="form-label">Bit d'arrêt</label>
+        <select name="bit_arret" class="form-select">
+          {% for b in [1, 1.5, 2] %}
+            <option value="{{ b }}">{{ b }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="mb-3">
+        <label for="parite" class="form-label">Parité</label>
+        <select name="parite" class="form-select">
+          {% for p in ['Aucun', 'Paire', 'Impaire'] %}
+            <option value="{{ p }}">{{ p }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="mb-3">
+        <label for="control_flux" class="form-label">Contrôle de flux</label>
+        <select name="control_flux" class="form-select">
+          {% for f in ['Aucun contrôl', 'RTS/CTS', 'XON/XOFF'] %}
+            <option value="{{ f }}">{{ f }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Enregistrer</button>
   </form>
 
-  <table class="table table-striped">
-    <thead><tr><th>Nom</th><th>IP</th><th>Port</th><th>Emplacement</th><th>Actions</th></tr></thead>
-    <tbody>
-      {% for imprimante in imprimantes %}
+  <hr class="my-4">
+
+  <h5>Liste des imprimantes configurées</h5>
+  <table class="table table-bordered">
+    <thead>
       <tr>
-        <td>{{ imprimante.nom }}</td>
-        <td>{{ imprimante.ip }}</td>
-        <td>{{ imprimante.port }}</td>
-        <td>{{ imprimante.emplacement }}</td>
+        <th>Nom</th>
+        <th>Type</th>
+        <th>Détails</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for imp in imprimantes %}
+      <tr>
+        <td>{{ imp.nom }}</td>
+        <td>{{ imp.type }}</td>
         <td>
-          <a href="?edit={{ imprimante.id }}" class="btn btn-sm btn-warning">✏️</a>
-          <a href="{{ url_for('delete_imprimante', id=imprimante.id) }}" class="btn btn-sm btn-danger">🗑️</a>
+          {% if imp.type == 'Windows' %}
+            Windows: {{ imp.nom_windows }}
+          {% else %}
+            COM{{ imp.port_com }} | {{ imp.vitesse }} bps | {{ imp.bit_donnee }} bit | Arrêt: {{ imp.bit_arret }} | Parité: {{ imp.parite }} | Flux: {{ imp.control_flux }}
+          {% endif %}
         </td>
       </tr>
       {% endfor %}
     </tbody>
   </table>
 </div>
+
+<script>
+function toggleFields() {
+  const type = document.getElementById("typeSelect").value;
+  document.getElementById("windowsFields").style.display = (type === "Windows") ? "block" : "none";
+  document.getElementById("serieFields").style.display = (type === "Série") ? "block" : "none";
+}
+window.onload = toggleFields;
+</script>
 {% endblock %}

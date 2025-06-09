@@ -1,5 +1,5 @@
-from flask import Flask, render_template, request, redirect, url_for, jsonify, send_file, flash, Blueprint
-from models import db, article, Groupe, Famille, SousFamille, tva
+from flask import Flask, render_template, jsonify, send_file, Blueprint, request, redirect, url_for, flash
+from models import db, article, Groupe, Famille, SousFamille, tva, clavier
 from extensions import db
 from models.article import Article
 from models.clavier import Clavier
@@ -20,19 +20,39 @@ from models.profil import Profil
 from models.imprimante import Imprimante
 
 import json
+import io
 from datetime import datetime
 from io import BytesIO
+
+clavier_bp = Blueprint('programmation', __name__)
+
+programmation_bp = Blueprint('programmation', __name__)
 
 # Fonction utilitaire générique de désaffectation des boutons
 
 def desaffecter_boutons(element_type, element_id):
-    boutons = BoutonClavier.query.filter_by(type=element_type, element_id=element_id).all()
-    for bouton in boutons:
-        bouton.type = 'vide'
-        bouton.element_id = None
-        bouton.label = f"Vide {bouton.position}"
-        bouton.couleur = "#e0e0e0"
+    field_map = {
+        'article': BoutonClavier.article_id,
+        'fonction': BoutonClavier.fonction_id,
+        'menu': BoutonClavier.menu_id,
+        'formule': BoutonClavier.formule_id,
+        'utilisateur': BoutonClavier.utilisateur_id,
+        'reglement': BoutonClavier.reglement_id,
+        'commentaire': BoutonClavier.commentaire_id,
+        'clavier': BoutonClavier.sous_clavier_id
+    }
+
+    champ = field_map.get(element_type)
+    if not champ:
+        return
+
+    boutons = BoutonClavier.query.filter(champ == element_id).all()
+
+    for b in boutons:
+        db.session.delete(b)
+
     db.session.commit()
+
 
 def register_routes(app):
 
@@ -41,24 +61,53 @@ def register_routes(app):
         return render_template('programmation_elements.html')
 
     # Route pour afficher la programmation des claviers
-    @app.route('/programmer/claviers')
+    @programmation_bp.route('/claviers')
     def programmation_claviers():
         claviers = Clavier.query.all()
-        clavier_id = request.args.get('clavier_id', type=int)
-        clavier = Clavier.query.get(clavier_id) if clavier_id else claviers[0] if claviers else None
+        clavier_id = request.args.get("clavier_id", type=int)
 
-        boutons = {
-            b.position: {
-                'type': b.type,
-                'element_id': b.element_id,
-                'label': b.label,
-                'couleur': b.couleur,
-                'image': b.image,
-                'masquer_texte': b.masquer_texte
-            } for b in clavier.boutons
-        } if clavier else {}
+        clavier = Clavier.query.get(clavier_id) if clavier_id else (claviers[0] if claviers else None)
 
-        return render_template('programmation_claviers.html', claviers=claviers, clavier=clavier, boutons=boutons)
+        boutons = []
+        if clavier:
+            for b in clavier.boutons:
+                if b.article_id:
+                    bouton_type = 'article'
+                    element_id = b.article_id
+                elif b.fonction_id:
+                    bouton_type = 'fonction'
+                    element_id = b.fonction_id
+                elif b.menu_id:
+                    bouton_type = 'menu'
+                    element_id = b.menu_id
+                elif b.formule_id:
+                    bouton_type = 'formule'
+                    element_id = b.formule_id
+                elif b.utilisateur_id:
+                    bouton_type = 'utilisateur'
+                    element_id = b.utilisateur_id
+                elif b.reglement_id:
+                    bouton_type = 'reglement'
+                    element_id = b.reglement_id
+                elif b.commentaire_id:
+                    bouton_type = 'commentaire'
+                    element_id = b.commentaire_id
+                elif b.sous_clavier_id:
+                    bouton_type = 'sous_clavier'
+                    element_id = b.sous_clavier_id
+                else:
+                    bouton_type = None
+                    element_id = None
+
+                boutons.append({
+                    'id': b.id,
+                    'position': b.position,
+                    'type': bouton_type,
+                    'element_id': element_id
+                })
+
+        return render_template('programmation_claviers.html', claviers=claviers, clavier=clavier, boutons=boutons,
+                               message=None)
 
     # Route pour créer un clavier
     @app.route('/clavier/creer', methods=['POST'])
@@ -68,7 +117,7 @@ def register_routes(app):
             clavier = Clavier(nom=nom)
             db.session.add(clavier)
             db.session.commit()
-        return redirect(url_for('programmation_claviers', message='Clavier créé'))
+        return redirect(url_for('clavier_bp.programmation_claviers', message='Clavier créé'))
 
     # Route pour réinitialiser tous les boutons d'un clavier
     @app.route('/clavier/reset')
@@ -78,7 +127,7 @@ def register_routes(app):
         if clavier:
             BoutonClavier.query.filter_by(clavier_id=clavier.id).delete()
             db.session.commit()
-        return redirect(url_for('programmation_claviers', message='Clavier réinitialisé', clavier_id=clavier_id))
+        return redirect(url_for('programmation.programmation_claviers', message='Clavier réinitialisé', clavier_id=clavier_id))
 
     # Route pour dupliquer un clavier
     @app.route('/clavier/dupliquer/<int:id>')
@@ -102,79 +151,141 @@ def register_routes(app):
             db.session.add(copie)
 
         db.session.commit()
-        return redirect(url_for('programmation_claviers', message='Clavier dupliqué', clavier_id=nouveau.id))
+        return redirect(url_for('programmation.programmation_claviers', message='Clavier dupliqué', clavier_id=nouveau.id))
 
     # Route pour exporter les boutons d'un clavier
-    @app.route('/clavier/export/<int:id>')
+    @programmation_bp.route('/clavier/export/<int:id>')
     def export_clavier(id):
-        clavier = Clavier.query.get_or_404(id)
+        clavier = Clavier.query.get(id)
+        if not clavier:
+            return "Clavier introuvable", 404
 
-        boutons = [
-            {
+        data = {
+            'nom': clavier.nom,
+            'boutons': []
+        }
+
+        for b in clavier.boutons:
+            bouton_type = (
+                'article' if b.article_id else
+                'fonction' if b.fonction_id else
+                'menu' if b.menu_id else
+                'formule' if b.formule_id else
+                'utilisateur' if b.utilisateur_id else
+                'reglement' if b.reglement_id else
+                'commentaire' if b.commentaire_id else
+                'clavier' if b.sous_clavier_id else
+                None
+            )
+
+            element_id = (
+                    b.article_id or b.fonction_id or b.menu_id or b.formule_id or
+                    b.utilisateur_id or b.reglement_id or b.commentaire_id or b.sous_clavier_id
+            )
+
+            data['boutons'].append({
                 'position': b.position,
-                'type': b.type,
-                'element_id': b.element_id,
-                'label': b.label,
+                'type': bouton_type,
+                'element_id': element_id,
                 'couleur': b.couleur,
                 'image': b.image,
                 'masquer_texte': b.masquer_texte
-            }
-            for b in clavier.boutons  # ← boucle correcte ici
-        ]
+            })
 
-        export_json = json.dumps({
-            'clavier_id': clavier.id,
-            'clavier_nom': clavier.nom,
-            'boutons': boutons
-        }, ensure_ascii=False, indent=2)
+        json_data = json.dumps(data, ensure_ascii=False, indent=2)
+        buffer = io.BytesIO(json_data.encode('utf-8'))
 
         return send_file(
-            BytesIO(export_json.encode('utf-8')),
+            buffer,
             mimetype='application/json',
             as_attachment=True,
-            download_name=f'clavier_{id}_export.json'
+            download_name=f"clavier_{clavier.nom}.json"
         )
 
     # Route pour importer des boutons dans un clavier
-    from flask import request, redirect, url_for, flash
-    import json
-
-    @app.route('/clavier/import/<int:id>', methods=['POST'])
+    @clavier_bp.route('/import/<int:id>', methods=['POST'])
     def import_clavier(id):
         fichier = request.files.get('file')
-
-        if not fichier or fichier.filename == '':
-            flash("Aucun fichier sélectionné.")
-            return redirect(url_for('afficher_claviers'))
+        if not fichier:
+            return redirect(
+                url_for('programmation.programmation_claviers', clavier_id=id, message="Aucun fichier sélectionné"))
 
         try:
-            contenu = fichier.read().decode('utf-8')
-            json_data = json.loads(contenu)
-            boutons = json_data.get('boutons', [])
+            data = json.load(fichier)
+            boutons = data.get('boutons', [])
+
+            # Supprimer les anciens boutons de ce clavier
+            BoutonClavier.query.filter_by(clavier_id=id).delete()
+
+            for b in boutons:
+                type_element = b.get('type')
+                element_id = b.get('element_id')
+
+                bouton = BoutonClavier(
+                    clavier_id=id,
+                    position=b.get('position'),
+                    couleur=b.get('couleur'),
+                    image=b.get('image'),
+                    masquer_texte=b.get('masquer_texte', False),
+                    element_type=type_element
+                )
+
+                # Affectation de la bonne clé étrangère selon le type
+                if type_element == 'article':
+                    bouton.article_id = element_id
+                elif type_element == 'fonction':
+                    bouton.fonction_id = element_id
+                elif type_element == 'menu':
+                    bouton.menu_id = element_id
+                elif type_element == 'formule':
+                    bouton.formule_id = element_id
+                elif type_element == 'utilisateur':
+                    bouton.utilisateur_id = element_id
+                elif type_element == 'reglement':
+                    bouton.reglement_id = element_id
+                elif type_element == 'commentaire':
+                    bouton.commentaire_id = element_id
+                elif type_element == 'clavier':
+                    bouton.sous_clavier_id = element_id
+
+                # Définir le label à afficher sur le bouton
+                label = f"Vide {b.get('position')}"
+                if type_element == 'article':
+                    obj = Article.query.get(element_id)
+                    label = obj.nom_article if obj else label
+                elif type_element == 'fonction':
+                    obj = Fonction.query.get(element_id)
+                    label = obj.nom if obj else label
+                elif type_element == 'menu':
+                    obj = Menu.query.get(element_id)
+                    label = obj.nom if obj else label
+                elif type_element == 'formule':
+                    obj = Formule.query.get(element_id)
+                    label = obj.nom if obj else label
+                elif type_element == 'utilisateur':
+                    obj = Utilisateur.query.get(element_id)
+                    label = obj.nom if obj else label
+                elif type_element == 'reglement':
+                    obj = Reglement.query.get(element_id)
+                    label = obj.nom if obj else label
+                elif type_element == 'commentaire':
+                    obj = Commentaire.query.get(element_id)
+                    label = obj.texte if obj else label
+                elif type_element == 'clavier':
+                    obj = Clavier.query.get(element_id)
+                    label = obj.nom if obj else label
+
+                bouton.label = label
+                db.session.add(bouton)
+
+            db.session.commit()
+            return redirect(
+                url_for('programmation.programmation_claviers', clavier_id=id, message="Importation réussie"))
 
         except Exception as e:
-            flash("Erreur lors du chargement du fichier JSON : " + str(e))
-            return redirect(url_for('afficher_claviers'))
-
-        # Supprimer les boutons existants du clavier
-        BoutonClavier.query.filter_by(clavier_id=id).delete()
-
-        for b in boutons:
-            bouton = BoutonClavier(
-                clavier_id=id,
-                position=b.get('position'),
-                type=b.get('type'),
-                element_id=b.get('element_id'),
-                label=b.get('label'),
-                couleur=b.get('couleur', '#e0e0e0'),
-                image=b.get('image', ''),
-                masquer_texte=b.get('masquer_texte', False)
-            )
-            db.session.add(bouton)
-
-        db.session.commit()
-        flash("Importation réussie.")
-        return redirect(url_for('afficher_claviers', clavier_id=id))
+            print("Erreur lors de l'importation :", e)
+            return redirect(
+                url_for('programmation.programmation_claviers', clavier_id=id, message="Erreur lors de l'importation"))
 
     # Route pour supprimer un bouton spécifique d'un clavier
     @app.route('/clavier/effacer_bouton/', methods=['POST'])
@@ -185,7 +296,7 @@ def register_routes(app):
         if bouton:
             db.session.delete(bouton)
             db.session.commit()
-        return redirect(url_for('afficher_claviers', clavier_id=clavier_id))
+        return redirect(url_for('programmation.programmation_claviers', clavier_id=clavier_id))
 
     # Route pour supprimer tous les boutons d'une ligne donnée
     @app.route('/clavier/effacer_ligne/', methods=['POST'])
@@ -201,7 +312,7 @@ def register_routes(app):
         for b in boutons:
             db.session.delete(b)
         db.session.commit()
-        return redirect(url_for('afficher_claviers', clavier_id=clavier_id))
+        return redirect(url_for('programmation.programmation_claviers', clavier_id=clavier_id))
 
     @app.route('/clavier/elements')
     def get_elements_par_type():
@@ -280,6 +391,20 @@ def register_routes(app):
             except Exception as e:
                 print("Erreur dans /clavier/boutons :", e)
                 return jsonify({'error': 'Erreur interne'}), 500
+
+    # route pour supprimer un clavier
+    @clavier_bp.route('/clavier/supprimer/<int:id>', methods=['POST'])
+    def supprimer_clavier(id):
+        clavier = Clavier.query.get_or_404(id)
+
+        # Supprimer d'abord les boutons liés
+        BoutonClavier.query.filter_by(clavier_id=id).delete()
+
+        # Puis supprimer le clavier
+        db.session.delete(clavier)
+        db.session.commit()
+
+        return redirect(url_for('clavier_bp.programmation_claviers', message="Clavier supprimé"))
 
         # Fonction pour la gestion des reglements.
 

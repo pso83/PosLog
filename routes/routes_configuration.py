@@ -1,11 +1,13 @@
-from flask import request, redirect, render_template
+from flask import request, redirect, render_template, Blueprint, url_for
 from models.fonction import Fonction
 from models.profil import Profil
 from models.utilisateur import Utilisateur
 from models.peripherique import Peripherique
 from models.reseau import Reseau
 from models.ticket import Ticket
+from models.imprimante import Imprimante
 from extensions import db
+import win32print
 
 def register_configuration_routes(app):
     @app.route('/configuration/systeme', methods=['GET'])
@@ -78,3 +80,31 @@ def register_configuration_routes(app):
 
     @app.route('/configuration/telecommandes')
     def configuration_telecommandes(): ...
+
+    config_bp = Blueprint('configuration', __name__)
+
+    @config_bp.route("/configuration/imprimantes", methods=["GET", "POST"])
+    def configuration_imprimantes():
+        if request.method == "POST":
+            data = request.form
+            imprimante = Imprimante(
+                nom=data.get("nom"),
+                type=data.get("type"),
+                nom_windows=data.get("nom_windows") if data.get("type") == "Windows" else None,
+                port_com=data.get("port_com") if data.get("type") == "Série" else None,
+                vitesse=data.get("vitesse") if data.get("type") == "Série" else None,
+                bit_donnee=data.get("bit_donnee") if data.get("type") == "Série" else None,
+                bit_arret=data.get("bit_arret") if data.get("type") == "Série" else None,
+                parite=data.get("parite") if data.get("type") == "Série" else None,
+                control_flux=data.get("control_flux") if data.get("type") == "Série" else None
+            )
+            db.session.add(imprimante)
+            db.session.commit()
+            return redirect(url_for("configuration.configuration_imprimantes"))
+
+        imprimantes = Imprimante.query.all()
+        try:
+            printers = [p[2] for p in win32print.EnumPrinters(2)]
+        except:
+            printers = []
+        return render_template("configuration_imprimantes.html", imprimantes=imprimantes, printers=printers)

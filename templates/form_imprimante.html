@@ -1,0 +1,104 @@
+from pathlib import Path
+
+# Contenu du partial `partials/form_imprimante.html`
+form_partial_content = """
+<form method="post" action="{{ action_url }}">
+  <div class="mb-3">
+    <label for="type" class="form-label">Type d'imprimante</label>
+    <select name="type" id="type" class="form-select" onchange="toggleFields(this.value)">
+      <option value="Série" {% if imprimante and imprimante.type == 'Série' %}selected{% endif %}>Série</option>
+      <option value="Windows" {% if imprimante and imprimante.type == 'Windows' %}selected{% endif %}>Windows</option>
+    </select>
+  </div>
+
+  <div class="mb-3">
+    <label for="nom" class="form-label">Nom de l'imprimante</label>
+    <input type="text" name="nom" id="nom" class="form-control" required value="{{ imprimante.nom if imprimante else '' }}">
+  </div>
+
+  <div id="windowsFields" class="mb-3" style="display: none;">
+    <label for="windows_nom" class="form-label">Imprimante Windows</label>
+    <select name="windows_nom" id="windows_nom" class="form-select">
+      {% for printer in imprimantes_windows %}
+        <option value="{{ printer }}" {% if imprimante and imprimante.windows_nom == printer %}selected{% endif %}>{{ printer }}</option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <div id="serieFields" style="display: none;">
+    <div class="mb-3">
+      <label for="port_com" class="form-label">Port COM</label>
+      <select name="port_com" id="port_com" class="form-select">
+        {% for i in range(1, 21) %}
+          <option value="{{ i }}" {% if imprimante and imprimante.port_com == i %}selected{% endif %}>COM{{ i }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="mb-3">
+      <label for="vitesse" class="form-label">Vitesse</label>
+      <select name="vitesse" id="vitesse" class="form-select">
+        {% for v in [2400, 4800, 9600, 19200, 38400, 56000, 115200] %}
+          <option value="{{ v }}" {% if imprimante and imprimante.vitesse == v %}selected{% endif %}>{{ v }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="mb-3">
+      <label for="bit_donnee" class="form-label">Bit de donnée</label>
+      <select name="bit_donnee" id="bit_donnee" class="form-select">
+        {% for b in [5, 6, 7, 8] %}
+          <option value="{{ b }}" {% if imprimante and imprimante.bit_donnee == b %}selected{% endif %}>{{ b }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="mb-3">
+      <label for="bit_arret" class="form-label">Bit d'arrêt</label>
+      <select name="bit_arret" id="bit_arret" class="form-select">
+        {% for b in ['1', '1.5', '2'] %}
+          <option value="{{ b }}" {% if imprimante and imprimante.bit_arret == b %}selected{% endif %}>{{ b }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="mb-3">
+      <label for="parite" class="form-label">Parité</label>
+      <select name="parite" id="parite" class="form-select">
+        {% for p in ['Aucun', 'Paire', 'Impaire'] %}
+          <option value="{{ p }}" {% if imprimante and imprimante.parite == p %}selected{% endif %}>{{ p }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="mb-3">
+      <label for="controle_flux" class="form-label">Contrôle de flux</label>
+      <select name="controle_flux" id="controle_flux" class="form-select">
+        {% for c in ['Aucun contrôl', 'RTS/CTS', 'XON/XOFF'] %}
+          <option value="{{ c }}" {% if imprimante and imprimante.controle_flux == c %}selected{% endif %}>{{ c }}</option>
+        {% endfor %}
+      </select>
+    </div>
+  </div>
+
+  <button type="submit" class="btn btn-success">Enregistrer</button>
+</form>
+
+<script>
+function toggleFields(type) {
+  document.getElementById('windowsFields').style.display = (type === 'Windows') ? 'block' : 'none';
+  document.getElementById('serieFields').style.display = (type === 'Série') ? 'block' : 'none';
+}
+window.onload = function() {
+  const selected = document.getElementById('type').value;
+  toggleFields(selected);
+};
+</script>
+"""
+
+# Écriture dans le fichier
+partial_path = Path("/mnt/data/partials/form_imprimante.html")
+partial_path.parent.mkdir(parents=True, exist_ok=True)
+partial_path.write_text(form_partial_content, encoding='utf-8')
+
+partial_path.name

@@ -1,0 +1,13 @@
+
+<!-- modification_imprimante.html -->
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4">
+  <h3>Modifier l'imprimante</h3>
+  <form method="post" action="{{ url_for('modifier_imprimante', id=imprimante.id) }}">
+    {% include 'partials/form_imprimante.html' %}
+    <button type="submit" class="btn btn-success mt-3">Enregistrer</button>
+    <a href="{{ url_for('configuration_imprimantes') }}" class="btn btn-secondary mt-3">Annuler</a>
+  </form>
+</div>
+{% endblock %}

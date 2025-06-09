@@ -4,28 +4,35 @@ class BoutonClavier(db.Model):
     __tablename__ = 'boutons_clavier'
 
     id = db.Column(db.Integer, primary_key=True)
-    clavier_id = db.Column(db.Integer, db.ForeignKey('claviers.id'))
     position = db.Column(db.Integer, nullable=False)
+    clavier_id = db.Column(db.Integer, db.ForeignKey('claviers.id'), nullable=False)
 
-    # Associations multiples possibles
-    article_id = db.Column(db.Integer, db.ForeignKey('articles.id'), nullable=True)
-    fonction_id = db.Column(db.Integer, db.ForeignKey('fonctions.id'), nullable=True)
-    sous_clavier_id = db.Column(db.Integer, db.ForeignKey('claviers.id'), nullable=True)
-    menu_id = db.Column(db.Integer, db.ForeignKey('menu.id'), nullable=True)
-    formule_id = db.Column(db.Integer, db.ForeignKey('formules.id'), nullable=True)
-    utilisateur_id = db.Column(db.Integer, db.ForeignKey('utilisateurs.id'), nullable=True)
-    reglement_id = db.Column(db.Integer, db.ForeignKey('reglements.id'), nullable=True)
-    commentaire_id = db.Column(db.Integer, db.ForeignKey('commentaires.id'), nullable=True)
+    # back_populates avec Clavier
+    clavier = db.relationship("Clavier", back_populates="boutons", foreign_keys=[clavier_id])
 
-    # Relations
-    article = db.relationship("Article", lazy='joined')
-    fonction = db.relationship("Fonction", lazy='joined')
-    clavier = db.relationship("Clavier", backref="boutons", foreign_keys='BoutonClavier.clavier_id')
-    menu = db.relationship("Menu", lazy='joined')
-    formule = db.relationship("Formule", lazy='joined')
-    utilisateur = db.relationship("Utilisateur", lazy='joined')
-    reglement = db.relationship("Reglement", lazy='joined')
-    commentaire = db.relationship("Commentaire", lazy='joined')
+    # les clés étrangères selon les types de bouton :
+    article_id = db.Column(db.Integer, db.ForeignKey('articles.id'))
+    fonction_id = db.Column(db.Integer, db.ForeignKey('fonctions.id'))
+    menu_id = db.Column(db.Integer, db.ForeignKey('menu.id'))
+    formule_id = db.Column(db.Integer, db.ForeignKey('formules.id'))
+    utilisateur_id = db.Column(db.Integer, db.ForeignKey('utilisateurs.id'))
+    reglement_id = db.Column(db.Integer, db.ForeignKey('reglements.id'))
+    commentaire_id = db.Column(db.Integer, db.ForeignKey('commentaires.id'))
+    sous_clavier_id = db.Column(db.Integer, db.ForeignKey('claviers.id'))
 
+    # champs visuels
+    couleur = db.Column(db.String(20))
+    image = db.Column(db.String(255))
+    masquer_texte = db.Column(db.Boolean, default=False)
 
+    # relations vers les entités
+    article = db.relationship("Article")
+    fonction = db.relationship("Fonction")
+    menu = db.relationship("Menu")
+    formule = db.relationship("Formule")
+    utilisateur = db.relationship("Utilisateur")
+    reglement = db.relationship("Reglement")
+    commentaire = db.relationship("Commentaire")
+    sous_clavier = db.relationship("Clavier", foreign_keys=[sous_clavier_id])
+    element_type = db.Column(db.String(50))
 

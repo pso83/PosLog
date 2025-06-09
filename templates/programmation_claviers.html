@@ -4,19 +4,24 @@
 
 <div class="container py-4">
   <div class="row">
-
-    <!-- Grille dynamique des boutons -->
     <div class="col-md-9">
       <h4 class="mb-3">Programmation du clavier : {{ clavier.nom if clavier else 'Aucun clavier sélectionné' }}</h4>
-
       <div id="clavier-container" class="d-flex flex-wrap" style="width: 624px; height: 715px;"></div>
-
-      <p class="text-success mt-3">{{ message }}</p>
+      {% if message %}
+        <div class="position-fixed top-0 end-0 p-3" style="z-index: 1055">
+          <div id="toastMessage" class="toast align-items-center text-white bg-{{ message_type or 'success' }} border-0 show" role="alert">
+            <div class="d-flex">
+              <div class="toast-body">
+                {{ message }}
+              </div>
+              <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Fermer"></button>
+            </div>
+          </div>
+        </div>
+      {% endif %}
     </div>
 
-    <!-- Outils à droite -->
     <div class="col-md-3">
-      <!-- Création clavier -->
       <div class="card mb-3">
         <div class="card-header">Créer un clavier</div>
         <div class="card-body">
@@ -27,30 +32,42 @@
         </div>
       </div>
 
-      <!-- Sélection clavier -->
       <div class="card mb-3">
         <div class="card-header">Claviers disponibles</div>
         <div class="card-body">
-          <form method="get" action="{{ url_for('programmation_claviers') }}">
-            <select name="clavier_id" class="form-select mb-2" onchange="this.form.submit()">
-              {% for c in claviers %}
-                <option value="{{ c.id }}" {% if clavier and clavier.id == c.id %}selected{% endif %}>{{ c.nom }}</option>
-              {% else %}
-                <option>Aucun clavier disponible</option>
-              {% endfor %}
-            </select>
+          <form method="get" action="{{ url_for('programmation.programmation_claviers') }}">
+            <div class="mb-3" style="max-height: 250px; overflow-y: auto;">
+              <ul class="list-group">
+                {% for c in claviers %}
+                  <li class="list-group-item d-flex justify-content-between align-items-center {% if c.id == clavier.id %}active{% endif %}">
+                    <a href="{{ url_for('clavier_bp.programmation_claviers', clavier_id=c.id) }}"
+                       class="{% if c.id == clavier.id %}text-white{% else %}text-dark{% endif %} text-decoration-none">
+                      {{ c.nom }}
+                    </a>
+                    <form method="post"
+                          action="{{ url_for('clavier_bp.supprimer_clavier', id=c.id) }}"
+                          onsubmit="return confirm('Confirmer la suppression ?');"
+                          style="margin: 0;">
+                      <button type="submit" class="btn btn-sm btn-danger">🗑️</button>
+                    </form>
+                  </li>
+                {% endfor %}
+              </ul>
+            </div>
           </form>
-          <a href="{{ url_for('reset_clavier', clavier_id=clavier.id if clavier else 0) }}" class="btn btn-warning btn-sm w-100 mb-2">Réinitialiser</a>
-          <a href="{{ url_for('dupliquer_clavier', id=clavier.id if clavier else 0) }}" class="btn btn-secondary btn-sm w-100 mb-2">Dupliquer</a>
-          <form method="post" action="{{ url_for('import_clavier', id=clavier.id if clavier else 0) }}" enctype="multipart/form-data">
+          {% if clavier %}
+          <a href="#" onclick="confirmReset({{ clavier.id }})" class="btn btn-warning btn-sm w-100 mb-2">Réinitialiser</a>
+          <a href="{{ url_for('dupliquer_clavier', id=clavier.id) }}" class="btn btn-secondary btn-sm w-100 mb-2">Dupliquer</a>
+          <form method="post" action="{{ url_for('clavier_bp.import_clavier', id=clavier.id) }}" enctype="multipart/form-data">
             <input type="file" name="file" class="form-control form-control-sm mb-2" accept=".json">
             <button type="submit" class="btn btn-info btn-sm w-100">Importer</button>
           </form>
-          <a href="{{ url_for('export_clavier', id=clavier.id if clavier else 0) }}" class="btn btn-success btn-sm w-100">Exporter</a>
+          <a href="{{ url_for('programmation.export_clavier', id=clavier.id) }}" class="btn btn-success btn-sm w-100">Exporter</a>
+          {% endif %}
         </div>
       </div>
 
-      <!-- Effacement -->
+      {% if clavier %}
       <div class="card mb-3">
         <div class="card-header">Effacer bouton / ligne</div>
         <div class="card-body">
@@ -70,8 +87,8 @@
           </form>
         </div>
       </div>
+      {% endif %}
     </div>
-
   </div>
 </div>
 
@@ -86,7 +103,7 @@
       <div class="modal-body">
         <form id="buttonForm">
           <input type="hidden" name="position" id="positionInput">
-          <input type="hidden" name="clavier_id" id="clavierIdInput" value="{{ clavier.id if clavier }}">
+          <input type="hidden" name="clavier_id" id="clavierIdInput" value="{{ clavier.id if clavier else '' }}">
           <div class="mb-2">
             <label for="typeInput">Type</label>
             <select name="type" id="typeInput" class="form-select">
@@ -103,10 +120,6 @@
           <div class="mb-2">
             <label for="elementInput">Élément</label>
             <select name="element_id" id="elementInput" class="form-select"></select>
-          </div>
-          <div class="mb-2">
-            <label for="labelInput">Label</label>
-            <input type="text" name="label" id="labelInput" class="form-control">
           </div>
           <div class="mb-2">
             <label for="couleurInput">Couleur</label>
@@ -132,15 +145,23 @@
 
 <script>
 function openButtonModal(pos, bouton) {
-  document.getElementById('positionInput').value = pos;
-  document.getElementById('typeInput').value = bouton.type || 'article';
-  document.getElementById('labelInput').value = bouton.label || '';
-  document.getElementById('couleurInput').value = bouton.couleur || '#e0e0e0';
-  document.getElementById('imageInput').value = bouton.image || '';
-  document.getElementById('masquerTexteInput').checked = bouton.masquer_texte || false;
-
+  const positionInput = document.getElementById('positionInput');
   const typeInput = document.getElementById('typeInput');
   const elementInput = document.getElementById('elementInput');
+  const couleurInput = document.getElementById('couleurInput');
+  const imageInput = document.getElementById('imageInput');
+  const masquerTexteInput = document.getElementById('masquerTexteInput');
+
+  if (!positionInput || !typeInput || !elementInput) {
+    alert("Erreur : la modale n'est pas chargée dans le DOM.");
+    return;
+  }
+
+  positionInput.value = pos;
+  typeInput.value = bouton.type || 'article';
+  couleurInput.value = bouton.couleur || '#e0e0e0';
+  imageInput.value = bouton.image || '';
+  masquerTexteInput.checked = bouton.masquer_texte || false;
 
   function chargerElements(type, selectedId = null) {
     fetch(`/clavier/elements?type=${type}`)
@@ -154,11 +175,6 @@ function openButtonModal(pos, bouton) {
           if (e.id == selectedId) opt.selected = true;
           elementInput.appendChild(opt);
         });
-
-        const selectedOption = elementInput.options[elementInput.selectedIndex];
-        if (!document.getElementById('labelInput').value && selectedOption) {
-          document.getElementById('labelInput').value = selectedOption.textContent;
-        }
       })
       .catch(error => {
         console.error('Erreur lors du chargement des éléments :', error);
@@ -168,12 +184,6 @@ function openButtonModal(pos, bouton) {
 
   chargerElements(typeInput.value, bouton.element_id);
   typeInput.onchange = () => chargerElements(typeInput.value);
-  elementInput.onchange = () => {
-    const selectedOption = elementInput.options[elementInput.selectedIndex];
-    if (selectedOption) {
-      document.getElementById('labelInput').value = selectedOption.textContent;
-    }
-  };
 
   new bootstrap.Modal(document.getElementById('buttonModal')).show();
 }
@@ -202,7 +212,8 @@ function saveButtonConfig() {
   });
 }
 
-document.addEventListener('DOMContentLoaded', function () {
+// chargement dynamique des boutons sur grille
+window.addEventListener('DOMContentLoaded', () => {
   const clavierId = {{ clavier.id if clavier else 0 }};
   const container = document.getElementById('clavier-container');
 
@@ -234,9 +245,7 @@ document.addEventListener('DOMContentLoaded', function () {
             img.style.height = '100%';
             btn.appendChild(img);
           } else {
-            const nom = b.nom_article || b.nom_menu || b.nom_formule || b.nom_clavier ||
-                        b.nom_fonction || b.nom_utilisateur || b.nom_reglement || b.nom_commentaire || b.label || `Vide ${pos}`;
-            btn.textContent = nom;
+            btn.textContent = b.nom || `Vide ${pos}`;
           }
 
           rowDiv.appendChild(btn);
@@ -250,5 +259,20 @@ document.addEventListener('DOMContentLoaded', function () {
       container.innerHTML = '<p class="text-danger">Erreur de chargement des boutons.</p>';
     });
 });
+function confirmReset(clavierId) {
+  if (confirm('⚠️ Voulez-vous vraiment réinitialiser ce clavier ? Cette action supprimera tous les boutons.')) {
+    window.location.href = `/clavier/reset?clavier_id=${clavierId}`;
+  }
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+    const toastEl = document.getElementById('toastMessage');
+    if (toastEl) {
+      const toast = new bootstrap.Toast(toastEl, { delay: 3000 });
+      toast.show();
+    }
+  });
+
 </script>
+
 {% endblock %}

@@ -1,0 +1,42 @@
+
+<!-- liste_imprimantes.html -->
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4">
+  <h3>Liste des imprimantes</h3>
+  <a href="{{ url_for('ajouter_imprimante') }}" class="btn btn-primary mb-3">Ajouter une imprimante</a>
+  <table class="table table-bordered table-striped">
+    <thead class="table-dark">
+      <tr>
+        <th>Nom</th>
+        <th>Type</th>
+        <th>Port / Windows</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for imprimante in imprimantes %}
+      <tr>
+        <td>{{ imprimante.nom }}</td>
+        <td>{{ imprimante.type }}</td>
+        <td>
+          {% if imprimante.type == 'Série' %}
+            COM{{ imprimante.port_com }}
+          {% else %}
+            {{ imprimante.nom_windows }}
+          {% endif %}
+        </td>
+        <td>
+          <a href="{{ url_for('modifier_imprimante', id=imprimante.id) }}" class="btn btn-sm btn-warning">✏️</a>
+          <form method="post" action="{{ url_for('supprimer_imprimante', id=imprimante.id) }}"
+                onsubmit="return confirm('Supprimer cette imprimante ?');"
+                style="display:inline;">
+            <button type="submit" class="btn btn-sm btn-danger">🗑️</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

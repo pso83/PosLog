@@ -1,6 +1,4 @@
 from extensions import db
-from models.imprimante import Imprimante
-
 
 class Utilisateur(db.Model):
     __tablename__ = 'utilisateurs'
@@ -11,15 +9,10 @@ class Utilisateur(db.Model):
 
     profil_id = db.Column(db.Integer, db.ForeignKey('profils.id'))
     clavier_id = db.Column(db.Integer, db.ForeignKey('claviers.id'))
-    mode_vente = db.Column(db.String(20))  # 'ticket', 'table', 'compte'
     imprimante_id = db.Column(db.Integer, db.ForeignKey('imprimantes.id'))
 
+    mode_vente = db.Column(db.String(20))  # 'ticket', 'table', 'compte'
+
     profil = db.relationship("Profil", back_populates="utilisateurs")
-    clavier = db.relationship('Clavier', backref='utilisateurs')
-    imprimante = db.relationship('Imprimante', backref='utilisateurs')
-
-
-
-
-
-
+    clavier = db.relationship("Clavier", backref="utilisateurs")
+    imprimante = db.relationship("Imprimante", back_populates="utilisateurs", lazy="joined")

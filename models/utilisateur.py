@@ -9,10 +9,14 @@ class Utilisateur(db.Model):
 
     profil_id = db.Column(db.Integer, db.ForeignKey('profils.id'))
     clavier_id = db.Column(db.Integer, db.ForeignKey('claviers.id'))
-    imprimante_id = db.Column(db.Integer, db.ForeignKey('imprimantes.id'))
+    imprimante_id = db.Column(db.Integer, db.ForeignKey('imprimante.id'), nullable=True)
 
     mode_vente = db.Column(db.String(20))  # 'ticket', 'table', 'compte'
 
     profil = db.relationship("Profil", back_populates="utilisateurs")
     clavier = db.relationship("Clavier", backref="utilisateurs")
-    imprimante = db.relationship("Imprimante", back_populates="utilisateurs", lazy="joined")
+    imprimante = db.relationship("Imprimante", backref="utilisateur", uselist=False)
+
+
+
+

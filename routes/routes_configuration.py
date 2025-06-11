@@ -6,6 +6,7 @@ from models.peripherique import Peripherique
 from models.reseau import Reseau
 from models.ticket import Ticket
 from models.imprimante import Imprimante
+from models.clavier import Clavier
 from extensions import db
 import win32print
 
@@ -34,6 +35,18 @@ def register_configuration_routes(app):
             db.session.commit()
         return redirect('/configuration/systeme')
 
+    @app.route('/configuration/utilisateurs', methods=['GET'])
+    def view_utilisateurs():
+        utilisateurs = Utilisateur.query.all()
+        profils = Profil.query.all()
+        claviers = Clavier.query.all()
+        imprimantes = Imprimante.query.all()
+        return render_template('configuration_utilisateurs.html',
+                               utilisateurs=utilisateurs,
+                               profils=profils,
+                               claviers=claviers,
+                               imprimantes=imprimantes)
+
     @app.route('/configuration/utilisateurs', methods=['POST'])
     def add_utilisateur():
         nom = request.form.get('nom')
@@ -42,7 +55,7 @@ def register_configuration_routes(app):
         if nom and mot_de_passe:
             db.session.add(Utilisateur(nom=nom, mot_de_passe=mot_de_passe, profil_id=profil_id))
             db.session.commit()
-        return redirect('/configuration/systeme')
+        return redirect(url_for('view_utilisateurs'))
 
     @app.route('/configuration/peripheriques', methods=['POST'])
     def add_peripherique():

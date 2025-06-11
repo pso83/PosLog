@@ -18,6 +18,7 @@ from models.menu_page import MenuPage
 from models.formule import Formule, FormuleComposant
 from models.profil import Profil
 from models.imprimante import Imprimante
+import win32print
 
 import json
 import io
@@ -27,6 +28,17 @@ from io import BytesIO
 clavier_bp = Blueprint('programmation', __name__)
 
 programmation_bp = Blueprint('programmation', __name__)
+
+def get_windows_printers():
+    printers = []
+    try:
+        flags = win32print.PRINTER_ENUM_LOCAL | win32print.PRINTER_ENUM_CONNECTIONS
+        printers_info = win32print.EnumPrinters(flags)
+        for printer in printers_info:
+            printers.append(printer[2])
+    except Exception as e:
+        print(f"Erreur lors de la récupération des imprimantes : {e}")
+    return printers
 
 # Fonction utilitaire générique de désaffectation des boutons
 
@@ -1069,7 +1081,7 @@ def register_programmation_routes(app):
         db.session.commit()
         return redirect(url_for('configuration_imprimantes'))
 
-    @app.route('/configuration/peripheriques/imprimantes/delete/<int:id>')
+    @app.route('/configuration/peripheriques/imprimantes/delete/<int:id>', methods=['POST'])
     def delete_imprimante(id):
         imprimante = Imprimante.query.get_or_404(id)
         db.session.delete(imprimante)
@@ -1080,10 +1092,15 @@ def register_programmation_routes(app):
     def configuration_imprimantes():
         if request.method == 'POST':
             id_ = request.form.get('id')
-            nom = request.form['nom']
-            ip = request.form['ip']
-            port = request.form['port']
-            emplacement = request.form['emplacement']
+            nom = request.form.get('nom')
+            type_impr = request.form.get('type')
+            nom_windows = request.form.get('nom_windows')
+            port_com = request.form.get('port_com')
+            vitesse = request.form.get('vitesse')
+            bit_donnee = request.form.get('bit_donnee')
+            bit_arret = request.form.get('bit_arret')
+            parite = request.form.get('parite')
+            controle_flux = request.form.get('controle_flux')
 
             if id_:
                 imprimante = Imprimante.query.get(id_)
@@ -1091,12 +1108,27 @@ def register_programmation_routes(app):
                 imprimante = Imprimante()
 
             imprimante.nom = nom
-            imprimante.ip = ip
-            imprimante.port = port
-            imprimante.emplacement = emplacement
+            imprimante.type = type_impr
+            imprimante.nom_windows = nom_windows
+            imprimante.port_com = int(port_com) if port_com else None
+            imprimante.vitesse = vitesse
+            imprimante.bit_donnee = bit_donnee
+            imprimante.bit_arret = bit_arret
+            imprimante.parite = parite
+            imprimante.controle_flux = controle_flux
+
             db.session.add(imprimante)
             db.session.commit()
             return redirect(url_for('configuration_imprimantes'))
 
         imprimantes = Imprimante.query.all()
-        return render_template('configuration_imprimantes.html', imprimantes=imprimantes)
+        imprimantes_windows = get_windows_printers()  # si tu utilises win32print
+        return render_template('configuration_imprimantes.html', imprimantes=imprimantes, imprimante=None,
+                               imprimantes_windows=imprimantes_windows)
+
+    @app.route('/configuration/peripheriques/imprimantes/edit/<int:id>')
+    def edit_imprimante(id):
+        imprimante = Imprimante.query.get_or_404(id)
+        imprimantes = Imprimante.query.all()
+        return render_template('configuration_imprimantes.html', imprimantes=imprimantes, imprimante=imprimante)
+

@@ -1,18 +1,20 @@
 from extensions import db
 
 class Imprimante(db.Model):
+    __tablename__ = 'imprimante'
+
     id = db.Column(db.Integer, primary_key=True)
     nom = db.Column(db.String(100), nullable=False)
-    utilisateur_id = db.Column(db.Integer, db.ForeignKey('utilisateur.id'), nullable=True)
+    type = db.Column(db.String(50))  # Windows ou Série
+    nom_windows = db.Column(db.String(200), nullable=True)
+    port_com = db.Column(db.Integer)
+    vitesse = db.Column(db.String(10), nullable=True)
+    bit_donnee = db.Column(db.String(10), nullable=True)
+    bit_arret = db.Column(db.String(10), nullable=True)
+    parite = db.Column(db.String(20), nullable=True)
+    controle_flux = db.Column(db.String(20), nullable=True)
 
-    # Champs spécifiques à Windows
-    nom_windows = db.Column(db.String(100), nullable=True)
+    utilisateur_id = db.Column(db.Integer, db.ForeignKey('utilisateurs.id'), nullable=True)
+    utilisateur = db.relationship('Utilisateur', back_populates='imprimantes', foreign_keys=[utilisateur_id])
 
-    # Champs spécifiques à Série
-    port_com = db.Column(db.Integer, nullable=True)
-    vitesse = db.Column(db.Integer, nullable=True)
-    bit_donnee = db.Column(db.Integer, nullable=True)
-    bit_arret = db.Column(db.String(4), nullable=True)  # "1", "1.5", "2"
-    parite = db.Column(db.String(10), nullable=True)    # "Aucun", "Paire", "Impaire"
-    controle_flux = db.Column(db.String(20), nullable=True)  # "Aucun contrôl", "RTS/CTS", "XON/XOFF"
 

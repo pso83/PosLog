@@ -15,7 +15,8 @@ class Utilisateur(db.Model):
 
     profil = db.relationship("Profil", back_populates="utilisateurs")
     clavier = db.relationship("Clavier", backref="utilisateurs")
-    imprimante = db.relationship("Imprimante", backref="utilisateur", uselist=False)
+
+    imprimantes = db.relationship('Imprimante', back_populates='utilisateur', foreign_keys='Imprimante.utilisateur_id')
 
 
 

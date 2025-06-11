@@ -1,126 +1,142 @@
+
 {% extends 'base.html' %}
 {% block content %}
+{% include '_menu_burger.html' %}
+
 <div class="container py-4">
-  <h4 class="mb-4">Configuration des imprimantes</h4>
-  <form method="post">
-    <div class="mb-3">
-      <label for="nom" class="form-label">Nom de l'imprimante</label>
-      <input type="text" class="form-control" id="nom" name="nom" required>
-    </div>
-
-    <div class="mb-3">
-      <label for="typeSelect" class="form-label">Type d'imprimante</label>
-      <select name="type" class="form-select" id="typeSelect" onchange="toggleFields()">
-        <option value="Série">Série</option>
-        <option value="Windows">Windows</option>
-      </select>
-    </div>
-
-    <div id="windowsFields" style="display: none;">
-      <div class="mb-3">
-        <label for="nom_windows" class="form-label">Imprimante Windows</label>
-        <select name="nom_windows" class="form-select">
-          {% for p in printers %}
-            <option value="{{ p }}">{{ p }}</option>
+  <div class="row justify-content-center">
+    <div class="col-md-4">
+      <div class="card">
+        <div class="card-header">Imprimantes</div>
+        <ul class="list-group list-group-flush">
+          {% for imprimante in imprimantes %}
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            {{ imprimante.nom }}
+            <span>
+              <a href="{{ url_for('edit_imprimante', id=imprimante.id) }}" class="btn btn-sm btn-primary">✏️</a>
+              <form method="post" action="{{ url_for('delete_imprimante', id=imprimante.id) }}" style="display:inline;" onsubmit="return confirm('Confirmer la suppression ?');">
+                  <button type="submit" class="btn btn-sm btn-danger">🗑️</button>
+              </form>
+            </span>
+          </li>
           {% endfor %}
-        </select>
+        </ul>
       </div>
     </div>
 
-    <div id="serieFields">
-      <div class="mb-3">
-        <label for="port_com" class="form-label">Port COM</label>
-        <select name="port_com" class="form-select">
-          {% for i in range(1, 21) %}
-            <option value="{{ i }}">{{ i }}</option>
-          {% endfor %}
-        </select>
-      </div>
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-header">{{ imprimante.id and 'Modifier' or 'Ajouter' }} une imprimante</div>
+        <div class="card-body">
+          <form method="post" action="{{ url_for('configuration_imprimantes') }}">
+            <input type="hidden" name="id" value="{{ imprimante.id if imprimante else '' }}">
+            <div class="mb-3">
+              <label for="nom" class="form-label">Nom</label>
+              <input type="text" class="form-control" id="nom" name="nom" required value="{{ imprimante.nom if imprimante else '' }}">
+            </div>
+            <div class="mb-3">
+            <div class="mb-3">
+              <label for="type" class="form-label">Type</label>
+              <select class="form-select" id="type" name="type">
+                <option value="Windows" {% if imprimante and imprimante.type == 'Windows' %}selected{% endif %}>Windows</option>
+                <option value="Série" {% if imprimante and imprimante.type == 'Série' %}selected{% endif %}>Série</option>
+              </select>
+            </div>
 
-      <div class="mb-3">
-        <label for="vitesse" class="form-label">Vitesse</label>
-        <select name="vitesse" class="form-select">
-          {% for v in [2400, 4800, 9600, 19200, 38400, 56000, 115200] %}
-            <option value="{{ v }}">{{ v }}</option>
-          {% endfor %}
-        </select>
-      </div>
+            <div id="windowsFields" {% if imprimante and imprimante.type != 'Windows' %}style="display:none;"{% endif %}>
+              <div class="mb-3">
+                <label for="nom_windows" class="form-label">Imprimante Windows</label>
+                <select name="nom_windows" class="form-control">
+                  <option value="">-- Sélectionner --</option>
+                  {% for imprimante in imprimantes_windows %}
+                    <option value="{{ imprimante }}">{{ imprimante }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
 
-      <div class="mb-3">
-        <label for="bit_donnee" class="form-label">Bit de donnée</label>
-        <select name="bit_donnee" class="form-select">
-          {% for b in [5, 6, 7, 8] %}
-            <option value="{{ b }}">{{ b }}</option>
-          {% endfor %}
-        </select>
-      </div>
+            <div id="serieFields" {% if not imprimante or imprimante.type != 'Série' %}style="display:none;"{% endif %}>
+              <div class="mb-3">
+                <label for="port_com" class="form-label">Port COM</label>
+                <select class="form-select" id="port_com" name="port_com">
+                  {% for i in range(1, 21) %}
+                    <option value="{{ i }}" {% if imprimante and imprimante.port_com == i %}selected{% endif %}>COM{{ i }}</option>
+                  {% endfor %}
+                </select>
+              </div>
 
-      <div class="mb-3">
-        <label for="bit_arret" class="form-label">Bit d'arrêt</label>
-        <select name="bit_arret" class="form-select">
-          {% for b in [1, 1.5, 2] %}
-            <option value="{{ b }}">{{ b }}</option>
-          {% endfor %}
-        </select>
-      </div>
+              <div class="mb-3">
+                <label for="vitesse" class="form-label">Vitesse</label>
+                <select class="form-select" id="vitesse" name="vitesse">
+                  {% for v in ['2400','4800','9600','19200','38400','56000','115200'] %}
+                  <option value="{{ v }}" {% if imprimante and imprimante.vitesse == v %}selected{% endif %}>{{ v }}</option>
+                  {% endfor %}
+                </select>
+              </div>
 
-      <div class="mb-3">
-        <label for="parite" class="form-label">Parité</label>
-        <select name="parite" class="form-select">
-          {% for p in ['Aucun', 'Paire', 'Impaire'] %}
-            <option value="{{ p }}">{{ p }}</option>
-          {% endfor %}
-        </select>
-      </div>
+              <div class="mb-3">
+                <label for="bit_donnee" class="form-label">Bit de donnée</label>
+                <select class="form-select" id="bit_donnee" name="bit_donnee">
+                  {% for b in ['5','6','7','8'] %}
+                  <option value="{{ b }}" {% if imprimante and imprimante.bit_donnee == b %}selected{% endif %}>{{ b }}</option>
+                  {% endfor %}
+                </select>
+              </div>
 
-      <div class="mb-3">
-        <label for="control_flux" class="form-label">Contrôle de flux</label>
-        <select name="control_flux" class="form-select">
-          {% for f in ['Aucun contrôl', 'RTS/CTS', 'XON/XOFF'] %}
-            <option value="{{ f }}">{{ f }}</option>
-          {% endfor %}
-        </select>
+              <div class="mb-3">
+                <label for="bit_arret" class="form-label">Bit d'arrêt</label>
+                <select class="form-select" id="bit_arret" name="bit_arret">
+                  {% for ba in ['1','1.5','2'] %}
+                  <option value="{{ ba }}" {% if imprimante and imprimante.bit_arret == ba %}selected{% endif %}>{{ ba }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <div class="mb-3">
+                <label for="parite" class="form-label">Parité</label>
+                <select class="form-select" id="parite" name="parite">
+                  {% for p in ['Aucun', 'Paire', 'Impaire'] %}
+                  <option value="{{ p }}" {% if imprimante and imprimante.parite == p %}selected{% endif %}>{{ p }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <div class="mb-3">
+                <label for="controle_flux" class="form-label">Contrôle de flux</label>
+                <select class="form-select" id="controle_flux" name="controle_flux">
+                  {% for cf in ['Aucun', 'RTS/CTS', 'XON/XOFF'] %}
+                  <option value="{{ cf }}" {% if imprimante and imprimante.controle_flux == cf %}selected{% endif %}>{{ cf }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-success w-100">Enregistrer</button>
+          </form>
+        </div>
       </div>
     </div>
-
-    <button type="submit" class="btn btn-primary">Enregistrer</button>
-  </form>
-
-  <hr class="my-4">
-
-  <h5>Liste des imprimantes configurées</h5>
-  <table class="table table-bordered">
-    <thead>
-      <tr>
-        <th>Nom</th>
-        <th>Type</th>
-        <th>Détails</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for imp in imprimantes %}
-      <tr>
-        <td>{{ imp.nom }}</td>
-        <td>{{ imp.type }}</td>
-        <td>
-          {% if imp.type == 'Windows' %}
-            Windows: {{ imp.nom_windows }}
-          {% else %}
-            COM{{ imp.port_com }} | {{ imp.vitesse }} bps | {{ imp.bit_donnee }} bit | Arrêt: {{ imp.bit_arret }} | Parité: {{ imp.parite }} | Flux: {{ imp.control_flux }}
-          {% endif %}
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+  </div>
 </div>
 
 <script>
-function toggleFields() {
-  const type = document.getElementById("typeSelect").value;
-  document.getElementById("windowsFields").style.display = (type === "Windows") ? "block" : "none";
-  document.getElementById("serieFields").style.display = (type === "Série") ? "block" : "none";
-}
-window.onload = toggleFields;
+document.addEventListener('DOMContentLoaded', () => {
+  const typeSelect = document.getElementById('type');
+  const windowsFields = document.getElementById('windowsFields');
+  const serieFields = document.getElementById('serieFields');
+
+  function toggleFields() {
+    if (typeSelect.value === 'Windows') {
+      windowsFields.style.display = 'block';
+      serieFields.style.display = 'none';
+    } else {
+      windowsFields.style.display = 'none';
+      serieFields.style.display = 'block';
+    }
+  }
+
+  typeSelect.addEventListener('change', toggleFields);
+  toggleFields();
+});
 </script>
 {% endblock %}

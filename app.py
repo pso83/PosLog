@@ -62,6 +62,7 @@ register_clavier_routes(app)
 app.register_blueprint(programmation_bp, url_prefix="/programmer")
 app.register_blueprint(clavier_bp, url_prefix="/clavier")
 app.register_blueprint(familles_bp)
+#app.register_blueprint(configuration_bp)
 
 # Route racine
 @app.route('/')

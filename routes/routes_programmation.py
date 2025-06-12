@@ -911,7 +911,7 @@ def register_programmation_routes(app):
             config = TicketConfig()
             db.session.add(config)
             db.session.commit()
-        return render_template('configuration.html', config=config)
+        return redirect(url_for('configuration_page') + '#ticket')
 
     @app.route('/configuration/ticket/save', methods=['POST'])
     def save_ticket_config():

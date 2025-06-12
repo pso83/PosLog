@@ -1,6 +1,7 @@
 from flask import request, redirect, render_template, Blueprint, url_for
 from models.fonction import Fonction
 from models.profil import Profil
+from models.ticket_config import TicketConfig
 from models.utilisateur import Utilisateur
 from models.peripherique import Peripherique
 from models.reseau import Reseau
@@ -12,29 +13,33 @@ import win32print
 
 def register_configuration_routes(app):
     @app.route('/configuration')
-    def configuration_root():
-        return redirect(url_for('configuration_utilisateurs'))
+    def redirect_to_configuration_systeme():
+        utilisateurs = Utilisateur.query.all()
+        profils = Profil.query.all()
+        claviers = Clavier.query.all()
+        imprimantes = Imprimante.query.all()
+        config = TicketConfig.query.first()
+
+        print("✅ Route configuration_page appelée")
+
+        return redirect(url_for('configuration_utilisateurs') + '#utilisateurs')
 
     @app.route('/configuration/systeme', methods=['GET'])
-    def configuration_page():
+    def configuration_utilisateurs():
         utilisateurs = Utilisateur.query.all()
         profils = Profil.query.all()
         claviers = Clavier.query.all()
         imprimantes = Imprimante.query.all()
 
-        print("🧪 Profils chargés:", profils)
-        print("🧪 Claviers chargés:", claviers)
-        print("🧪 Imprimantes chargées:", imprimantes)
-
         return render_template(
-            '/configuration/systeme',
+            'configuration.html',
             utilisateurs=utilisateurs,
             utilisateur=None,
             profils=profils,
             claviers=claviers,
             imprimantes=imprimantes,
             profil=None,
-            config={}
+            config=None
         )
 
     @app.route('/configuration/peripheriques')

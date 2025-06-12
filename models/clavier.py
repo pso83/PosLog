@@ -5,6 +5,7 @@ class Clavier(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     nom = db.Column(db.String(100), nullable=False)
+    utilisateurs = db.relationship("Utilisateur", backref="clavier")
 
     # Relation avec les boutons affectés à ce clavier
     boutons = db.relationship(

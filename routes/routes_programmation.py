@@ -936,22 +936,7 @@ def register_programmation_routes(app):
         return redirect(url_for('configuration_ticket'))
 
 # Configuration des utilisateurs
-    @app.route('/configuration/utilisateurs', methods=['GET'])
-    def configuration_utilisateurs():
-        id = request.args.get('id', type=int)
-        utilisateur = Utilisateur.query.get(id) if id else None
 
-        utilisateurs = Utilisateur.query.all()
-        profils = Profil.query.all()
-        claviers = Clavier.query.all()
-        imprimantes = Imprimante.query.all()
-
-        return render_template('configuration.html',
-                               utilisateur=utilisateur,
-                               utilisateurs=utilisateurs,
-                               profils=profils,
-                               claviers=claviers,
-                               imprimantes=imprimantes)
 
     @app.route('/configuration/utilisateurs/save', methods=['POST'])
     def save_utilisateur():
@@ -969,7 +954,7 @@ def register_programmation_routes(app):
         db.session.add(utilisateur)
         db.session.commit()
 
-        return redirect(url_for('configuration_utilisateurs'))
+        return redirect(url_for('configuration_page'))
 
     @app.route('/configuration/utilisateurs/delete/<int:id>', methods=['GET'])
     def delete_utilisateur(id):
@@ -977,7 +962,7 @@ def register_programmation_routes(app):
         desaffecter_boutons('utilisateur', id)
         db.session.delete(utilisateur)
         db.session.commit()
-        return redirect(url_for('configuration_utilisateurs'))
+        return redirect(url_for('configuration_page'))
 
 # Configuration des profils
     config_bp = Blueprint('config', __name__)

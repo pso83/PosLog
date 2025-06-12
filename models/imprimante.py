@@ -15,6 +15,6 @@ class Imprimante(db.Model):
     controle_flux = db.Column(db.String(20), nullable=True)
 
     utilisateur_id = db.Column(db.Integer, db.ForeignKey('utilisateurs.id'), nullable=True)
-    utilisateur = db.relationship('Utilisateur', back_populates='imprimantes', foreign_keys=[utilisateur_id])
+    utilisateur = db.relationship('Utilisateur', backref='imprimantes')
 
 

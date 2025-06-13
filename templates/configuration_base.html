@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Configuration</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+<div class="d-flex">
+    <!-- MENU LATÉRAL -->
+    <div class="bg-dark text-white p-3 vh-100" style="width: 250px;">
+        <h4 class="text-center">⚙️ Configuration</h4>
+        <ul class="nav flex-column mt-4">
+            <li class="nav-item"><a href="{{ url_for('configuration_accueil') }}" class="nav-link text-white">🏠 Accueil</a></li>
+            <li class="nav-item"><a href="{{ url_for('configuration_utilisateurs') }}" class="nav-link text-white">👤 Utilisateurs</a></li>
+            <li class="nav-item"><a href="{{ url_for('configuration_profils') }}" class="nav-link text-white">🔐 Profils</a></li>
+            <li class="nav-item"><a href="{{ url_for('configuration_imprimantes') }}" class="nav-link text-white">🖨️ Imprimantes</a></li>
+            <li class="nav-item"><a href="{{ url_for('configuration_reseau') }}" class="nav-link text-white">🌐 Réseau</a></li>
+            <li class="nav-item"><a href="{{ url_for('configuration_ticket') }}" class="nav-link text-white">🧾 Ticket</a></li>
+            <li class="nav-item"><a href="{{ url_for('configuration_peripheriques') }}" class="nav-link text-white">🧩 Périphériques</a></li>
+        </ul>
+    </div>
+
+    <!-- CONTENU CENTRAL -->
+    <div class="p-4" style="flex-grow: 1;">
+        {% block content %}{% endblock %}
+    </div>
+</div>
+</body>
+</html>

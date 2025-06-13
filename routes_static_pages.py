@@ -9,10 +9,6 @@ def register_static_pages(app):
     def programmer():
         return render_template('programmation.html')
 
-    @app.route('/configuration')
-    def configuration():
-        return render_template('configuration.html')
-
     @app.route('/gestion')
     def gestion():
         return render_template('gestion.html')

@@ -13,118 +13,39 @@ import win32print
 
 def register_configuration_routes(app):
     @app.route('/configuration')
-    def redirect_to_configuration_systeme():
-        utilisateurs = Utilisateur.query.all()
-        profils = Profil.query.all()
-        claviers = Clavier.query.all()
-        imprimantes = Imprimante.query.all()
-        config = TicketConfig.query.first()
+    def configuration_home():
+        return render_template('configuration_main.html')
 
-        print("✅ Route configuration_page appelée")
-
-        return redirect(url_for('configuration_utilisateurs') + '#utilisateurs')
-
-    @app.route('/configuration/systeme', methods=['GET'])
+    @app.route('/configuration/utilisateurs')
     def configuration_utilisateurs():
-        utilisateurs = Utilisateur.query.all()
-        profils = Profil.query.all()
-        claviers = Clavier.query.all()
-        imprimantes = Imprimante.query.all()
+        return render_template("configuration_utilisateurs.html")
 
-        return render_template(
-            'configuration.html',
-            utilisateurs=utilisateurs,
-            utilisateur=None,
-            profils=profils,
-            claviers=claviers,
-            imprimantes=imprimantes,
-            profil=None,
-            config=None
-        )
+    @app.route('/configuration/profils', methods=['GET', 'POST'])
+    def configuration_profils():
+        if request.method == 'POST':
+            nom = request.form.get('nom')
+            if nom:
+                db.session.add(Profil(nom=nom))
+                db.session.commit()
+                flash("Profil ajouté avec succès.", "success")
+            return redirect(url_for('configuration_profils'))
+
+        profils = Profil.query.all()
+        return render_template('configuration_profils.html', profils=profils)
+
+    @app.route('/configuration/imprimantes')
+    def configuration_imprimantes():
+        return render_template("configuration_imprimantes.html")
+
+    @app.route('/configuration/reseau')
+    def configuration_reseau():
+        return render_template("configuration_reseau.html")
+
+    @app.route('/configuration/ticket')
+    def configuration_ticket():
+        return render_template("configuration_ticket.html")
 
     @app.route('/configuration/peripheriques')
     def configuration_peripheriques():
-        return render_template('configuration_peripheriques.html')
+        return render_template("configuration_peripheriques.html")
 
-    @app.route('/configuration/fonctions', methods=['POST'])
-    def add_fonction():
-        fonction = request.form.get('fonction')
-        if fonction:
-            db.session.add(Fonction(fonction=fonction))
-            db.session.commit()
-        return redirect('/configuration/systeme')
-
-    @app.route('/configuration/profils', methods=['POST'])
-    def add_profil():
-        nom = request.form.get('nom')
-        if nom:
-            db.session.add(Profil(nom=nom))
-            db.session.commit()
-        return redirect('/configuration/systeme')
-
-
-
-    @app.route('/configuration/peripheriques', methods=['POST'])
-    def add_peripherique():
-        nom = request.form.get('nom')
-        type_ = request.form.get('type')
-        if nom and type_:
-            db.session.add(Peripherique(nom=nom, type=type_))
-            db.session.commit()
-        return redirect('/configuration/systeme')
-
-    @app.route('/configuration/reseau', methods=['POST'])
-    def add_reseau_param():
-        param = request.form.get('param')
-        if param:
-            db.session.add(Reseau(param=param))
-            db.session.commit()
-        return redirect('/configuration/systeme')
-
-    @app.route('/configuration/ticket', methods=['POST'])
-    def set_ticket_template():
-        template = request.form.get('template')
-        if template:
-            db.session.add(Ticket(template=template))
-            db.session.commit()
-        return redirect('/configuration/systeme')
-
-    @app.route('/configuration/buzzer_preparation')
-    def configuration_buzzer_preparation(): ...
-
-    @app.route('/configuration/buzzer_client')
-    def configuration_buzzer_client(): ...
-
-    @app.route('/configuration/ecran_preparation')
-    def configuration_ecran_preparation(): ...
-
-    @app.route('/configuration/telecommandes')
-    def configuration_telecommandes(): ...
-
-    config_bp = Blueprint('configuration', __name__)
-
-    @config_bp.route("/configuration/imprimantes", methods=["GET", "POST"])
-    def configuration_imprimantes():
-        if request.method == "POST":
-            data = request.form
-            imprimante = Imprimante(
-                nom=data.get("nom"),
-                type=data.get("type"),
-                nom_windows=data.get("nom_windows") if data.get("type") == "Windows" else None,
-                port_com=data.get("port_com") if data.get("type") == "Série" else None,
-                vitesse=data.get("vitesse") if data.get("type") == "Série" else None,
-                bit_donnee=data.get("bit_donnee") if data.get("type") == "Série" else None,
-                bit_arret=data.get("bit_arret") if data.get("type") == "Série" else None,
-                parite=data.get("parite") if data.get("type") == "Série" else None,
-                control_flux=data.get("control_flux") if data.get("type") == "Série" else None
-            )
-            db.session.add(imprimante)
-            db.session.commit()
-            return redirect(url_for("configuration.configuration_imprimantes"))
-
-        imprimantes = Imprimante.query.all()
-        try:
-            printers = [p[2] for p in win32print.EnumPrinters(2)]
-        except:
-            printers = []
-        return render_template("configuration_imprimantes.html", imprimantes=imprimantes, printers=printers)

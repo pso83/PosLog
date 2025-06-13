@@ -1,349 +1,68 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <title>Configuration du système</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <style>
-    .nav-link.active {
-      background-color: #0d6efd !important;
-      color: white !important;
-    }
-    #ticket-preview {
-      width: 260px;
-      margin: auto;
-      background: white;
-      font-family: monospace;
-      font-size: 13px;
-      line-height: 1.4;
-      text-align: center;
-      box-shadow: 0 0 5px rgba(0,0,0,0.2);
-    }
-  </style>
+    <meta charset="UTF-8">
+    <title>Configuration</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='theme-toggle.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='burger-menu.css') }}">
+    <script src="{{ url_for('static', filename='theme-toggle.js') }}" defer></script>
+    <style>
+        .container {
+            display: flex;
+        }
+        .content {
+            flex: 1;
+            padding: 30px;
+        }
+        .config-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+        .config-card {
+            padding: 20px;
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            border-radius: 8px;
+            text-align: center;
+            font-size: 1.2em;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .config-card:hover {
+            background-color: var(--bg-hover);
+        }
+        .theme-toggle-wrapper {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+    </style>
 </head>
-<body class="bg-light p-4">
-
-<div class="container-fluid">
-  <h2 class="mb-4">Configuration du système</h2>
-  <div class="row">
-    <!-- Menu gauche -->
-    <div class="col-md-3">
-      <div class="list-group" id="config-tabs" role="tablist">
-        <a class="list-group-item list-group-item-action active" data-bs-toggle="list" href="#fonctions">Fonctions de caisse</a>
-        <a class="list-group-item list-group-item-action" data-bs-toggle="list" href="#utilisateurs">Utilisateurs</a>
-        <a class="list-group-item list-group-item-action" data-bs-toggle="list" href="#profils">Profils</a>
-        <a class="list-group-item list-group-item-action" data-bs-toggle="list" href="#peripheriques">Périphériques</a>
-        <a class="list-group-item list-group-item-action" data-bs-toggle="list" href="#reseau">Réseau</a>
-        <a class="list-group-item list-group-item-action" data-bs-toggle="list" href="#ticket">Ticket de caisse</a>
-      </div>
+<body>
+    <div class="theme-toggle-wrapper">
+        {% include 'theme_toggle.html' %}
     </div>
 
-    <!-- Contenu à droite -->
-    <div class="col-md-9">
-      <div class="tab-content">
-        <!-- Fonctions -->
-        <div class="tab-pane fade show active" id="fonctions">
-          <h4>Fonctions de caisse</h4>
-          <p>Section à compléter.</p>
+    {% include 'burger_menu.html' %}
+
+    <div class="container">
+        <div class="content">
+            <h1>Configuration du système</h1>
+            <div class="config-grid">
+                <a href="{{ url_for('configuration_utilisateurs') }}" class="config-card">Utilisateurs</a>
+                <a href="{{ url_for('configuration_profils') }}" class="config-card">Profils</a>
+                <a href="{{ url_for('configuration_imprimantes') }}" class="config-card">Imprimantes</a>
+                <a href="{{ url_for('configuration_peripheriques') }}" class="config-card">Périphériques</a>
+                <a href="{{ url_for('configuration_ticket') }}" class="config-card">Ticket de caisse</a>
+                <a href="{{ url_for('configuration_reseau') }}" class="config-card">Réseau</a>
+                <a href="{{ url_for('configuration_buzzer_preparation') }}" class="config-card">Buzzer préparation</a>
+                <a href="{{ url_for('configuration_buzzer_client') }}" class="config-card">Buzzer client</a>
+                <a href="{{ url_for('configuration_ecran_preparation') }}" class="config-card">Écran préparation</a>
+                <a href="{{ url_for('configuration_telecommandes') }}" class="config-card">Télécommandes</a>
+            </div>
         </div>
-
-        <!-- Utilisateurs -->
-        <div class="tab-pane fade" id="utilisateurs">
-          <h4>Gestion des utilisateurs</h4>
-          <form method="post" action="{{ url_for('save_utilisateur') }}" class="card p-3 mb-4">
-            {% if utilisateur %}<input type="hidden" name="id" value="{{ utilisateur.id }}">{% endif %}
-            <div class="row mb-3">
-              <div class="col-md-6">
-                <label class="form-label">Nom</label>
-                <input type="text" class="form-control" name="nom" value="{{ utilisateur.nom if utilisateur else '' }}" required>
-              </div>
-              <div class="col-md-6">
-                <label class="form-label">Code</label>
-                <input type="text" class="form-control" name="code" value="{{ utilisateur.code if utilisateur else '' }}" required>
-              </div>
-            </div>
-            <div class="row mb-3">
-              <div class="col-md-4">
-                <label class="form-label">Profil</label>
-                <select class="form-select" name="profil_id">
-                  <option value="">-- Choisir --</option>
-                  {% for profil in profils %}
-                    <option value="{{ profil.id }}" {% if utilisateur and utilisateur.profil_id == profil.id %}selected{% endif %}>{{ profil.nom }}</option>
-                  {% endfor %}
-                </select>
-              </div>
-              <div class="col-md-4">
-                <label class="form-label">Clavier</label>
-                <select class="form-select" name="clavier_id">
-                  <option value="">-- Aucun --</option>
-                  {% for clavier in claviers %}
-                    <option value="{{ clavier.id }}" {% if utilisateur and utilisateur.clavier_id == clavier.id %}selected{% endif %}>{{ clavier.nom }}</option>
-                  {% endfor %}
-                </select>
-              </div>
-              <div class="col-md-4">
-                <label class="form-label">Mode de vente</label>
-                <select class="form-select" name="mode_vente">
-                  <option value="ticket" {% if utilisateur and utilisateur.mode_vente == 'ticket' %}selected{% endif %}>Ticket</option>
-                  <option value="table" {% if utilisateur and utilisateur.mode_vente == 'table' %}selected{% endif %}>Table</option>
-                  <option value="compte" {% if utilisateur and utilisateur.mode_vente == 'compte' %}selected{% endif %}>Compte</option>
-                </select>
-              </div>
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Imprimante</label>
-              <select class="form-select" name="imprimante_id">
-                <option value="">-- Aucune --</option>
-                {% for imprimante in imprimantes %}
-                  <option value="{{ imprimante.id }}" {% if utilisateur and utilisateur.imprimante_id == imprimante.id %}selected{% endif %}>{{ imprimante.nom }}</option>
-                {% endfor %}
-              </select>
-            </div>
-            <button type="submit" class="btn btn-primary">Enregistrer</button>
-          </form>
-
-          <h5>Utilisateurs existants</h5>
-          <table class="table table-striped">
-            <thead>
-              <tr><th>Nom</th><th>Code</th><th>Profil</th><th>Clavier</th><th>Mode</th><th>Imprimante</th><th>Actions</th></tr>
-            </thead>
-            <tbody>
-              {% for u in utilisateurs %}
-              <tr>
-                <td>{{ u.nom }}</td>
-                <td>{{ u.code }}</td>
-                <td>{{ u.profil.nom if u.profil else '' }}</td>
-                <td>{{ u.clavier.nom if u.clavier else '' }}</td>
-                <td>{{ u.mode_vente }}</td>
-                <td>{{ u.imprimante.nom if u.imprimante else '' }}</td>
-                <td>
-                  <a href="{{ url_for('configuration_page', id=u.id) }}" class="btn btn-sm btn-secondary">Modifier</a>
-                  <a href="{{ url_for('delete_utilisateur', id=u.id) }}" class="btn btn-sm btn-danger">Supprimer</a>
-                </td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-
-        <!-- Profils -->
-        <div class="tab-pane fade" id="profils">
-          <h4 class="mb-3">Profils utilisateurs</h4>
-          <form method="post" action="{{ url_for('save_profil') }}" class="card p-3 mb-4">
-            {% if profil %}<input type="hidden" name="id" value="{{ profil.id }}">{% endif %}
-
-            <div class="mb-3">
-              <label class="form-label">Nom du profil</label>
-              <input type="text" name="nom" class="form-control" value="{{ profil.nom if profil else '' }}" required>
-            </div>
-
-            <ul class="nav nav-tabs mb-3" id="tabsProfils" role="tablist">
-              <li class="nav-item">
-                <button type="button" class="nav-link active" data-bs-toggle="tab" data-bs-target="#acces" role="tab">Accès</button>
-              </li>
-              <li class="nav-item">
-                <button type="button" class="nav-link" data-bs-toggle="tab" data-bs-target="#autorisations" role="tab">Autorisations</button>
-              </li>
-              <li class="nav-item">
-                <button type="button" class="nav-link" data-bs-toggle="tab" data-bs-target="#creations" role="tab">Créations</button>
-              </li>
-              <li class="nav-item">
-                <button type="button" class="nav-link" data-bs-toggle="tab" data-bs-target="#modifications" role="tab">Modifications</button>
-              </li>
-              <li class="nav-item">
-                <button type="button" class="nav-link" data-bs-toggle="tab" data-bs-target="#suppressions" role="tab">Suppressions</button>
-              </li>
-            </ul>
-
-            <div class="tab-content" id="tabsContent">
-              <!-- Onglet Accès -->
-              <div class="tab-pane fade show active" id="acces">
-                <div class="form-check"><input type="checkbox" name="acces_vente" class="form-check-input" {% if profil and profil.acces_vente %}checked{% endif %}> Accéder à la vente</div>
-                <div class="form-check"><input type="checkbox" name="acces_programmation" class="form-check-input" {% if profil and profil.acces_programmation %}checked{% endif %}> Accéder à la programmation</div>
-                <div class="form-check"><input type="checkbox" name="acces_gestion" class="form-check-input" {% if profil and profil.acces_gestion %}checked{% endif %}> Accéder à la gestion</div>
-                <div class="form-check"><input type="checkbox" name="acces_configuration" class="form-check-input" {% if profil and profil.acces_configuration %}checked{% endif %}> Accéder à la configuration</div>
-                <div class="form-check"><input type="checkbox" name="acces_clients" class="form-check-input" {% if profil and profil.acces_clients %}checked{% endif %}> Accéder à la gestion des clients</div>
-              </div>
-
-              <!-- Onglet Autorisations -->
-              <div class="tab-pane fade" id="autorisations">
-                <div class="form-check"><input type="checkbox" name="autorise_offert" class="form-check-input" {% if profil and profil.offrir %}checked{% endif %}> Offerts</div>
-                <div class="form-check"><input type="checkbox" name="autorise_annuler_ligne" class="form-check-input" {% if profil and profil.annuler_ligne %}checked{% endif %}> Annuler une ligne</div>
-                <div class="form-check"><input type="checkbox" name="autorise_annuler_avant_enc" class="form-check-input" {% if profil and profil.annuler_commande_avant_encaissement %}checked{% endif %}> Annuler commande avant encaissement</div>
-                <div class="form-check"><input type="checkbox" name="autorise_annuler_apres_enc" class="form-check-input" {% if profil and profil.annuler_ticket_encaisse %}checked{% endif %}> Annuler ticket encaissé</div>
-                <div class="form-check"><input type="checkbox" name="autorise_annuler_attente" class="form-check-input" {% if profil and profil.annuler_ticket_attente %}checked{% endif %}> Annuler ticket en attente</div>
-                <div class="form-check"><input type="checkbox" name="autorise_remises" class="form-check-input" {% if profil and profil.remise %}checked{% endif %}> Remises</div>
-                <div class="form-check"><input type="checkbox" name="autorise_changement_tarif" class="form-check-input" {% if profil and profil.changement_tarif %}checked{% endif %}> Changement de tarif</div>
-                <div class="form-check"><input type="checkbox" name="autorise_mise_attente" class="form-check-input" {% if profil and profil.mise_en_attente %}checked{% endif %}> Mise en attente</div>
-                <div class="form-check"><input type="checkbox" name="autorise_transfert_table" class="form-check-input" {% if profil and profil.transfert_table %}checked{% endif %}> Transfert vers une table</div>
-                <div class="form-check"><input type="checkbox" name="autorise_transfert_compte" class="form-check-input" {% if profil and profil.transfert_compte %}checked{% endif %}> Transfert vers un compte</div>
-                <div class="form-check"><input type="checkbox" name="autorise_modif_couverts" class="form-check-input" {% if profil and profil.modifier_couverts %}checked{% endif %}> Modifier couverts</div>
-              </div>
-
-              <!-- Onglet Créations -->
-              <div class="tab-pane fade" id="creations">
-                <div class="form-check"><input type="checkbox" name="creation_utilisateur" class="form-check-input" {% if profil and profil.creer_utilisateur %}checked{% endif %}> Créer utilisateur</div>
-                <div class="form-check"><input type="checkbox" name="creation_client" class="form-check-input" {% if profil and profil.creer_client %}checked{% endif %}> Créer client</div>
-                <div class="form-check"><input type="checkbox" name="creation_carte" class="form-check-input" {% if profil and profil.creer_carte_cadeau %}checked{% endif %}> Créer carte cadeau</div>
-                <div class="form-check"><input type="checkbox" name="creation_avoir" class="form-check-input" {% if profil and profil.creer_avoir %}checked{% endif %}> Créer avoir</div>
-              </div>
-
-              <!-- Onglet Modifications -->
-              <div class="tab-pane fade" id="modifications">
-                <div class="form-check"><input type="checkbox" name="modif_utilisateur" class="form-check-input" {% if profil and profil.modifier_utilisateur %}checked{% endif %}> Modifier utilisateur</div>
-                <div class="form-check"><input type="checkbox" name="modif_client" class="form-check-input" {% if profil and profil.modifier_client %}checked{% endif %}> Modifier client</div>
-                <div class="form-check"><input type="checkbox" name="modif_carte" class="form-check-input" {% if profil and profil.modifier_carte_cadeau %}checked{% endif %}> Modifier carte cadeau</div>
-                <div class="form-check"><input type="checkbox" name="modif_avoir" class="form-check-input" {% if profil and profil.modifier_avoir %}checked{% endif %}> Modifier avoir</div>
-              </div>
-
-              <!-- Onglet Suppressions -->
-              <div class="tab-pane fade" id="suppressions">
-                <div class="form-check"><input type="checkbox" name="suppr_utilisateur" class="form-check-input" {% if profil and profil.supprimer_utilisateur %}checked{% endif %}> Supprimer utilisateur</div>
-                <div class="form-check"><input type="checkbox" name="suppr_client" class="form-check-input" {% if profil and profil.supprimer_client %}checked{% endif %}> Supprimer client</div>
-                <div class="form-check"><input type="checkbox" name="suppr_carte" class="form-check-input" {% if profil and profil.supprimer_carte_cadeau %}checked{% endif %}> Supprimer carte cadeau</div>
-                <div class="form-check"><input type="checkbox" name="suppr_avoir" class="form-check-input" {% if profil and profil.supprimer_avoir %}checked{% endif %}> Supprimer avoir</div>
-              </div>
-            </div>
-
-            <button type="submit" class="btn btn-primary mt-3">Enregistrer</button>
-          </form>
-        <h3 class="mt-5">Profils enregistrés</h3>
-            <table class="table table-bordered table-striped mt-3">
-              <thead class="table-dark">
-                <tr>
-                  <th>Nom du profil</th>
-                  <th>Utilisateurs associés</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for profil in profils %}
-                <tr>
-                  <td>{{ profil.nom }}</td>
-                  <td>
-                    {% for user in profil.utilisateurs %}
-                      {{ user.nom }}<br>
-                    {% else %}
-                      <em>Aucun utilisateur</em>
-                    {% endfor %}
-                  </td>
-                  <td>
-                    <a href="/configuration/profils/view/{{ profil.id }}" class="btn btn-sm btn-info">Voir</a>
-                    <a href="/configuration/profils/edit/{{ profil.id }}" class="btn btn-sm btn-warning">Modifier</a>
-                    <a href="/configuration/profils/delete/{{ profil.id }}" class="btn btn-sm btn-danger" onclick="return confirm('Supprimer ce profil ?')">Supprimer</a>
-                  </td>
-                </tr>
-                {% endfor %}
-              </tbody>
-            </table>
-        </div>
-
-        <!-- Périphériques -->
-        <div class="tab-pane fade" id="peripheriques">
-          <h4 class="mb-3">Configuration des périphériques</h4>
-          <div class="d-flex flex-wrap gap-3 justify-content-start">
-            <a href="{{ url_for('configuration_imprimantes') }}" class="btn btn-outline-primary text-center"
-               style="width: 200px; height: 100px; display: flex; align-items: center; justify-content: center; flex-direction: column;">
-              🖨️<div>Imprimantes</div>
-            </a>
-            <a href="{{ url_for('configuration_buzzer_preparation') }}" class="btn btn-outline-success text-center"
-               style="width: 200px; height: 100px; display: flex; align-items: center; justify-content: center; flex-direction: column;">
-              🔔<div>Buzzer Préparation</div>
-            </a>
-            <a href="{{ url_for('configuration_buzzer_client') }}" class="btn btn-outline-warning text-center"
-               style="width: 200px; height: 100px; display: flex; align-items: center; justify-content: center; flex-direction: column;">
-              🔔<div>Buzzer Client</div>
-            </a>
-            <a href="{{ url_for('configuration_ecran_preparation') }}" class="btn btn-outline-info text-center"
-               style="width: 200px; height: 100px; display: flex; align-items: center; justify-content: center; flex-direction: column;">
-              🖥️<div>Écran Préparation</div>
-            </a>
-            <a href="{{ url_for('configuration_telecommandes') }}" class="btn btn-outline-secondary text-center"
-               style="width: 200px; height: 100px; display: flex; align-items: center; justify-content: center; flex-direction: column;">
-              🎮<div>Télécommandes</div>
-            </a>
-          </div>
-        </div>
-
-        <!-- Réseau -->
-        <div class="tab-pane fade" id="reseau"><h4>Réseau</h4><p>À compléter</p></div>
-
-        <!-- Ticket -->
-        <div class="tab-pane fade" id="ticket">
-          <div class="row">
-            <div class="col-md-7">
-              <ul class="nav nav-tabs mb-3">
-                <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#entete">Entête</button></li>
-                <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#pied">Pied</button></li>
-              </ul>
-              <form method="post" action="{{ url_for('save_ticket_config') }}" id="configForm">
-                <div class="tab-content">
-                  <div class="tab-pane fade show active" id="entete">
-                    <div class="mb-3"><label>Nom du commerce</label><input type="text" class="form-control" name="nom_commerce" value="{{ config.nom_commerce or '' }}"></div>
-                    <div class="mb-3"><label>Adresse</label><textarea class="form-control" name="adresse">{{ config.adresse or '' }}</textarea></div>
-                    <div class="mb-3"><label>SIRET</label><input type="text" class="form-control" name="siret" value="{{ config.siret or '' }}"></div>
-                    <div class="mb-3"><label>TVA</label><input type="text" class="form-control" name="tva_intra" value="{{ config.tva_intra or '' }}"></div>
-                    <div class="mb-3"><label>Ligne libre 1</label><input type="text" class="form-control" name="entete_ligne1" value="{{ config.entete_ligne1 or '' }}"></div>
-                    <div class="mb-3"><label>Ligne libre 2</label><input type="text" class="form-control" name="entete_ligne2" value="{{ config.entete_ligne2 or '' }}"></div>
-                  </div>
-                  <div class="tab-pane fade" id="pied">
-                    {% for i in range(1, 5) %}
-                    <div class="mb-3"><label>Ligne pied {{ i }}</label><input type="text" class="form-control" name="pied_ligne{{ i }}" value="{{ config['pied_ligne' ~ i] or '' }}"></div>
-                    {% endfor %}
-                  </div>
-                </div>
-                <button class="btn btn-primary mt-3">Enregistrer</button>
-              </form>
-            </div>
-            <div class="col-md-5">
-              <h5>Aperçu du ticket</h5>
-              <div id="ticket-preview" class="border p-3"><div id="preview-content"></div></div>
-              <button class="btn btn-outline-secondary btn-sm mt-2" onclick="window.print()">Imprimer</button>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
-  </div>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-  const form = document.getElementById('configForm');
-  const preview = document.getElementById('preview-content');
-
-  function updatePreview() {
-    const data = new FormData(form);
-    let html = '';
-
-    const nom = data.get('nom_commerce');
-    const adresse = data.get('adresse');
-    const siret = data.get('siret');
-    const tva = data.get('tva_intra');
-    const el1 = data.get('entete_ligne1');
-    const el2 = data.get('entete_ligne2');
-
-    if (nom) html += `<strong>${nom}</strong><br>`;
-    if (adresse) html += adresse.replace(/\n/g, '<br>') + '<br>';
-    if (siret) html += `SIRET : ${siret}<br>`;
-    if (tva) html += `TVA : ${tva}<br>`;
-    if (el1) html += el1 + '<br>';
-    if (el2) html += el2 + '<br>';
-    html += '<hr><div style="font-size:12px;">... contenu du ticket ...</div><hr>';
-    for (let i = 1; i <= 4; i++) {
-      const pied = data.get(`pied_ligne${i}`);
-      if (pied) html += `<div>${pied}</div>`;
-    }
-
-    preview.innerHTML = html;
-  }
-
-  if (form) {
-    form.querySelectorAll('input, textarea').forEach(el => el.addEventListener('input', updatePreview));
-    updatePreview();
-  }
-});
-</script>
 </body>
 </html>

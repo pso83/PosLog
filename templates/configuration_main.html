@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="d-flex">
+  <!-- Menu latéral -->
+  <div class="bg-light border-end" style="width: 200px;">
+    <div class="list-group list-group-flush">
+      <a href="{{ url_for('configuration_utilisateurs') }}" class="list-group-item list-group-item-action">Utilisateurs</a>
+      <a href="{{ url_for('configuration_profils') }}" class="list-group-item list-group-item-action">Profils</a>
+      <a href="{{ url_for('configuration_imprimantes') }}" class="list-group-item list-group-item-action">Imprimantes</a>
+      <a href="{{ url_for('configuration_reseau') }}" class="list-group-item list-group-item-action">Réseau</a>
+      <a href="{{ url_for('configuration_ticket') }}" class="list-group-item list-group-item-action">Ticket de caisse</a>
+      <a href="{{ url_for('configuration_peripheriques') }}" class="list-group-item list-group-item-action">Périphériques</a>
+    </div>
+  </div>
+
+  <!-- Contenu principal -->
+  <div class="p-4 flex-grow-1">
+    <h2>Configuration du système</h2>
+    <p>Choisissez une section à gauche pour configurer votre système d'encaissement.</p>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,25 @@
+{% extends "layout_configuration.html" %}
+{% block title %}Configuration - Profils{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">Gestion des Profils</h2>
+
+    <form method="POST" class="mb-4">
+        <div class="input-group">
+            <input type="text" name="nom" class="form-control" placeholder="Nom du profil" required>
+            <button class="btn btn-primary" type="submit">Ajouter</button>
+        </div>
+    </form>
+
+    <ul class="list-group">
+        {% for p in profils %}
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+            {{ p.nom }}
+        </li>
+        {% else %}
+        <li class="list-group-item">Aucun profil enregistré.</li>
+        {% endfor %}
+    </ul>
+</div>
+{% endblock %}

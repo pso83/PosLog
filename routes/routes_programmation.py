@@ -954,7 +954,7 @@ def register_programmation_routes(app):
         db.session.add(utilisateur)
         db.session.commit()
 
-        return redirect(url_for('configuration_page'))
+        return redirect(url_for('configuration_utilisateurs') + '#utilisateurs')
 
     @app.route('/configuration/utilisateurs/delete/<int:id>', methods=['GET'])
     def delete_utilisateur(id):
@@ -962,7 +962,7 @@ def register_programmation_routes(app):
         desaffecter_boutons('utilisateur', id)
         db.session.delete(utilisateur)
         db.session.commit()
-        return redirect(url_for('configuration_page'))
+        return redirect(url_for('configuration_utilisateurs') + '#utilisateurs')
 
 # Configuration des profils
     config_bp = Blueprint('config', __name__)

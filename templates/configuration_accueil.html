@@ -1,0 +1,25 @@
+{% extends "configuration_base.html" %}
+
+{% block content %}
+    <h2 class="mb-4">Panneau de configuration</h2>
+    <div class="row">
+        <div class="col-md-4 mb-3">
+            <a href="{{ url_for('configuration_utilisateurs') }}" class="card card-body bg-light text-center">👤 Utilisateurs</a>
+        </div>
+        <div class="col-md-4 mb-3">
+            <a href="{{ url_for('configuration_profils') }}" class="card card-body bg-light text-center">🔐 Profils</a>
+        </div>
+        <div class="col-md-4 mb-3">
+            <a href="{{ url_for('configuration_imprimantes') }}" class="card card-body bg-light text-center">🖨️ Imprimantes</a>
+        </div>
+        <div class="col-md-4 mb-3">
+            <a href="{{ url_for('configuration_reseau') }}" class="card card-body bg-light text-center">🌐 Paramètres réseau</a>
+        </div>
+        <div class="col-md-4 mb-3">
+            <a href="{{ url_for('configuration_ticket') }}" class="card card-body bg-light text-center">🧾 Ticket de caisse</a>
+        </div>
+        <div class="col-md-4 mb-3">
+            <a href="{{ url_for('configuration_peripheriques') }}" class="card card-body bg-light text-center">🧩 Périphériques</a>
+        </div>
+    </div>
+{% endblock %}

@@ -26,7 +26,7 @@
 
     <div class="col-md-6">
       <div class="card">
-        <div class="card-header">{{ imprimante.id and 'Modifier' or 'Ajouter' }} une imprimante</div>
+        <div class="card-header">{{ 'Modifier' if imprimante and imprimante.id else 'Ajouter' }} une imprimante</div>
         <div class="card-body">
           <form method="post" action="{{ url_for('configuration_imprimantes') }}">
             <input type="hidden" name="id" value="{{ imprimante.id if imprimante else '' }}">

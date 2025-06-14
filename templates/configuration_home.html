@@ -1,0 +1,85 @@
+{% extends 'layout_configuration.html' %}
+
+{% block content %}
+<div class="container">
+    <h2 class="mb-4">Panneau de configuration</h2>
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        <div class="col">
+            <a href="{{ url_for('configuration.configuration_utilisateurs') }}" class="text-decoration-none">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">👤 Utilisateurs</h5>
+                        <p class="card-text">Gérer les utilisateurs de caisse</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col">
+            <a href="{{ url_for('configuration.configuration_profils') }}" class="text-decoration-none">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">🛡️ Profils</h5>
+                        <p class="card-text">Définir les profils d’accès</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col">
+            <a href="{{ url_for('configuration.configuration_claviers') }}" class="text-decoration-none">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">⌨️ Claviers</h5>
+                        <p class="card-text">Configurer les claviers de caisse</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col">
+            <a href="{{ url_for('configuration.configuration_imprimantes') }}" class="text-decoration-none">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">🖨️ Imprimantes</h5>
+                        <p class="card-text">Gérer les imprimantes connectées</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col">
+            <a href="{{ url_for('configuration.configuration_ticket') }}" class="text-decoration-none">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">🧾 Ticket</h5>
+                        <p class="card-text">Mise en page des tickets de caisse</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col">
+            <a href="{{ url_for('configuration.configuration_reseau') }}" class="text-decoration-none">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">🌐 Réseau</h5>
+                        <p class="card-text">Paramètres réseau de la caisse</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col">
+            <a href="{{ url_for('configuration.configuration_peripheriques') }}" class="text-decoration-none">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">📟 Périphériques</h5>
+                        <p class="card-text">Gestion des périphériques connectés</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

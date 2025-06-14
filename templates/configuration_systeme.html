@@ -1,0 +1,47 @@
+{% extends 'layout_configuration.html' %}
+
+{% block title %}Configuration - Système{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2 class="mb-4">Paramètres de configuration</h2>
+    <div class="row g-4">
+
+        <div class="col-md-4">
+            <div class="card border-secondary h-100">
+                <div class="card-body text-center">
+                    <i class="bi bi-people display-4 text-secondary mb-3"></i>
+                    <h5 class="card-title">Utilisateurs</h5>
+                    <p class="card-text">Gérez les utilisateurs du système.</p>
+                    <a href="{{ url_for('configuration_utilisateurs') }}" class="btn btn-outline-secondary">Configurer</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card border-primary h-100">
+                <div class="card-body text-center">
+                    <i class="bi bi-person-badge display-4 text-primary mb-3"></i>
+                    <h5 class="card-title">Profils</h5>
+                    <p class="card-text">Définissez les profils et autorisations.</p>
+                    <a href="{{ url_for('configuration_profils') }}" class="btn btn-outline-primary">Configurer</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card border-success h-100">
+                <div class="card-body text-center">
+                    <i class="bi bi-printer display-4 text-success mb-3"></i>
+                    <h5 class="card-title">Imprimantes</h5>
+                    <p class="card-text">Configurez les imprimantes connectées.</p>
+                    <a href="{{ url_for('configuration_imprimantes') }}" class="btn btn-outline-success">Configurer</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tu peux facilement ajouter d’autres blocs ici -->
+
+    </div>
+</div>
+{% endblock %}

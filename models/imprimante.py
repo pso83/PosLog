@@ -5,7 +5,7 @@ class Imprimante(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     nom = db.Column(db.String(100), nullable=False)
-    type = db.Column(db.String(20))
+    type = db.Column(db.String(20))  # Windows ou Série
     nom_windows = db.Column(db.String(200), nullable=True)
     port_com = db.Column(db.Integer)
     vitesse = db.Column(db.String(10), nullable=True)
@@ -14,6 +14,7 @@ class Imprimante(db.Model):
     parite = db.Column(db.String(20), nullable=True)
     controle_flux = db.Column(db.String(20), nullable=True)
 
+    # Relation avec les utilisateurs (une imprimante peut être liée à plusieurs utilisateurs)
     utilisateurs = db.relationship(
         'Utilisateur',
         back_populates='imprimante',

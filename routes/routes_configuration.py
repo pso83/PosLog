@@ -1,51 +1,121 @@
-from flask import request, redirect, render_template, Blueprint, url_for
-from models.fonction import Fonction
-from models.profil import Profil
-from models.ticket_config import TicketConfig
+from flask import Blueprint, render_template, redirect, url_for, request
 from models.utilisateur import Utilisateur
-from models.peripherique import Peripherique
-from models.reseau import Reseau
-from models.ticket import Ticket
-from models.imprimante import Imprimante
+from models.profil import Profil
 from models.clavier import Clavier
+from models.imprimante import Imprimante
+from models.ticket_config import TicketConfig
+from models.reseau import Reseau
+from models.peripherique import Peripherique
 from extensions import db
-import win32print
 
-def register_configuration_routes(app):
-    @app.route('/configuration')
-    def configuration_home():
-        return render_template('configuration_main.html')
+configuration_bp = Blueprint('configuration', __name__)
 
-    @app.route('/configuration/utilisateurs')
-    def configuration_utilisateurs():
-        return render_template("configuration_utilisateurs.html")
+# Page d'accueil de configuration
+@configuration_bp.route('/configuration')
+def configuration_home():
+    return render_template('configuration_home.html')
 
-    @app.route('/configuration/profils', methods=['GET', 'POST'])
-    def configuration_profils():
-        if request.method == 'POST':
-            nom = request.form.get('nom')
-            if nom:
-                db.session.add(Profil(nom=nom))
-                db.session.commit()
-                flash("Profil ajouté avec succès.", "success")
-            return redirect(url_for('configuration_profils'))
+# ---- Utilisateurs ----
+@configuration_bp.route('/configuration/utilisateurs')
+def configuration_utilisateurs():
+    utilisateurs = Utilisateur.query.all()
+    profils = Profil.query.all()
+    claviers = Clavier.query.all()
+    imprimantes = Imprimante.query.all()
 
-        profils = Profil.query.all()
-        return render_template('configuration_profils.html', profils=profils)
+    edit_id = request.args.get('edit_id')
+    edit_utilisateur = Utilisateur.query.get(edit_id) if edit_id else None
 
-    @app.route('/configuration/imprimantes')
-    def configuration_imprimantes():
-        return render_template("configuration_imprimantes.html")
+    return render_template(
+        'configuration_utilisateurs.html',
+        utilisateurs=utilisateurs,
+        profils=profils,
+        claviers=claviers,
+        imprimantes=imprimantes,
+        edit_utilisateur=edit_utilisateur
+    )
 
-    @app.route('/configuration/reseau')
-    def configuration_reseau():
-        return render_template("configuration_reseau.html")
+@configuration_bp.route('/configuration/utilisateurs/edit/<int:id>')
+def edit_utilisateur(id):
+    utilisateur = Utilisateur.query.get_or_404(id)
+    utilisateurs = Utilisateur.query.all()
+    profils = Profil.query.all()
+    claviers = Clavier.query.all()
+    imprimantes = Imprimante.query.all()
+    return render_template('configuration_utilisateurs.html',
+                           utilisateurs=utilisateurs,
+                           profils=profils,
+                           claviers=claviers,
+                           imprimantes=imprimantes,
+                           edit_utilisateur=utilisateur)
 
-    @app.route('/configuration/ticket')
-    def configuration_ticket():
-        return render_template("configuration_ticket.html")
 
-    @app.route('/configuration/peripheriques')
-    def configuration_peripheriques():
-        return render_template("configuration_peripheriques.html")
+@configuration_bp.route('/configuration/utilisateurs/save', methods=['POST'])
+def save_utilisateur():
+    form = request.form
+    id = form.get('id')
+    is_edit = bool(id)
 
+    utilisateur = Utilisateur.query.get(id) if is_edit else Utilisateur()
+
+    utilisateur.nom = form.get('nom')
+    utilisateur.code = form.get('code')
+    utilisateur.profil_id = form.get('profil_id') or None
+    utilisateur.clavier_id = form.get('clavier_id') or None
+    utilisateur.mode_vente = form.get('mode_vente')
+    utilisateur.imprimante_id = form.get('imprimante_id') or None
+
+    db.session.add(utilisateur)
+    db.session.commit()
+
+    if is_edit:
+        return redirect(url_for('configuration.configuration_utilisateurs', edit_id=utilisateur.id))
+    else:
+        return redirect(url_for('configuration.configuration_utilisateurs'))
+
+
+@configuration_bp.route('/configuration/utilisateurs/delete/<int:id>')
+def delete_utilisateur(id):
+    utilisateur = Utilisateur.query.get_or_404(id)
+    db.session.delete(utilisateur)
+    db.session.commit()
+    return redirect(url_for('configuration.configuration_utilisateurs'))
+
+# ---- Profils ----
+@configuration_bp.route('/configuration/profils')
+def configuration_profils():
+    profils = Profil.query.all()
+    return render_template('configuration_profils.html', profils=profils)
+
+# ---- Imprimantes ----
+@configuration_bp.route('/configuration/imprimantes')
+def configuration_imprimantes():
+    imprimantes = Imprimante.query.all()
+    return render_template('configuration_imprimantes.html',
+                           imprimantes=imprimantes,
+                           imprimante=None)  # Ajouté
+
+
+# ---- Claviers ----
+@configuration_bp.route('/configuration/claviers')
+def configuration_claviers():
+    claviers = Clavier.query.all()
+    return render_template('configuration_claviers.html', claviers=claviers)
+
+# ---- Ticket ----
+@configuration_bp.route('/configuration/ticket')
+def configuration_ticket():
+    config = TicketConfig.query.first()
+    return render_template('configuration_ticket.html', config=config)
+
+# ---- Réseau ----
+@configuration_bp.route('/configuration/reseau')
+def configuration_reseau():
+    reseaux = Reseau.query.all()
+    return render_template('configuration_reseau.html', reseaux=reseaux)
+
+# ---- Périphériques ----
+@configuration_bp.route('/configuration/peripheriques')
+def configuration_peripheriques():
+    peripheriques = Peripherique.query.all()
+    return render_template('configuration_peripheriques.html', peripheriques=peripheriques)

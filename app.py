@@ -30,7 +30,7 @@ from models.imprimante import Imprimante
 
 # Routes principales
 from routes.routes_programmation import register_routes, programmation_bp, register_programmation_routes
-from routes.routes_configuration import register_configuration_routes
+from routes.routes_configuration import configuration_bp
 from routes.routes_gestion import register_gestion_routes
 from routes.routes_stock import register_stock_routes
 from routes.routes_dashboard import register_dashboard_routes
@@ -49,7 +49,8 @@ db.init_app(app)
 
 # Enregistrement des routes (uniques)
 register_routes(app)
-register_configuration_routes(app)
+app.register_blueprint(configuration_bp)
+
 register_gestion_routes(app)
 register_stock_routes(app)
 register_dashboard_routes(app)

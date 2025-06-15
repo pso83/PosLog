@@ -16,14 +16,49 @@ def configuration_home():
     return render_template('configuration_home.html')
 
 # ---- Utilisateurs ----
-@configuration_bp.route('/configuration/utilisateurs')
+@configuration_bp.route('/configuration/utilisateurs', methods=['GET', 'POST'])
 def configuration_utilisateurs():
+    # Enregistrement ou mise à jour
+    if request.method == 'POST':
+        user_id = request.form.get('id')
+        nom = request.form.get('nom')
+        code = request.form.get('code')
+        profil_id = request.form.get('profil_id')
+        clavier_id = request.form.get('clavier_id') or None
+        mode_vente = request.form.get('mode_vente') or ''
+        imprimante_id = request.form.get('imprimante_id') or None
+
+        if user_id:
+            utilisateur = Utilisateur.query.get(user_id)
+            if utilisateur:
+                utilisateur.nom = nom
+                utilisateur.code = code
+                utilisateur.profil_id = profil_id
+                utilisateur.clavier_id = clavier_id
+                utilisateur.mode_vente = mode_vente
+                utilisateur.imprimante_id = imprimante_id
+        else:
+            utilisateur = Utilisateur(
+                nom=nom,
+                code=code,
+                profil_id=profil_id,
+                clavier_id=clavier_id,
+                mode_vente=mode_vente,
+                imprimante_id=imprimante_id
+            )
+            db.session.add(utilisateur)
+
+        db.session.commit()
+        return redirect(url_for('configuration.configuration_utilisateurs'))
+
+    # Mode GET
     utilisateurs = Utilisateur.query.all()
     profils = Profil.query.all()
     claviers = Clavier.query.all()
     imprimantes = Imprimante.query.all()
 
-    edit_id = request.args.get('edit_id')
+    # Mode édition
+    edit_id = request.args.get('edit')
     edit_utilisateur = Utilisateur.query.get(edit_id) if edit_id else None
 
     return render_template(
@@ -37,42 +72,7 @@ def configuration_utilisateurs():
 
 @configuration_bp.route('/configuration/utilisateurs/edit/<int:id>')
 def edit_utilisateur(id):
-    utilisateur = Utilisateur.query.get_or_404(id)
-    utilisateurs = Utilisateur.query.all()
-    profils = Profil.query.all()
-    claviers = Clavier.query.all()
-    imprimantes = Imprimante.query.all()
-    return render_template('configuration_utilisateurs.html',
-                           utilisateurs=utilisateurs,
-                           profils=profils,
-                           claviers=claviers,
-                           imprimantes=imprimantes,
-                           edit_utilisateur=utilisateur)
-
-
-@configuration_bp.route('/configuration/utilisateurs/save', methods=['POST'])
-def save_utilisateur():
-    form = request.form
-    id = form.get('id')
-    is_edit = bool(id)
-
-    utilisateur = Utilisateur.query.get(id) if is_edit else Utilisateur()
-
-    utilisateur.nom = form.get('nom')
-    utilisateur.code = form.get('code')
-    utilisateur.profil_id = form.get('profil_id') or None
-    utilisateur.clavier_id = form.get('clavier_id') or None
-    utilisateur.mode_vente = form.get('mode_vente')
-    utilisateur.imprimante_id = form.get('imprimante_id') or None
-
-    db.session.add(utilisateur)
-    db.session.commit()
-
-    if is_edit:
-        return redirect(url_for('configuration.configuration_utilisateurs', edit_id=utilisateur.id))
-    else:
-        return redirect(url_for('configuration.configuration_utilisateurs'))
-
+    return redirect(url_for('configuration.configuration_utilisateurs', edit=id))
 
 @configuration_bp.route('/configuration/utilisateurs/delete/<int:id>')
 def delete_utilisateur(id):

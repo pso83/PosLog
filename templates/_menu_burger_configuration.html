@@ -1,0 +1,41 @@
+
+<div class="d-flex flex-column p-3 h-100">
+  <h4 class="text-white mb-4">Configuration</h4>
+  <ul class="nav nav-pills flex-column">
+    <li class="nav-item mb-2">
+      <a href="/configuration/utilisateurs" class="nav-link {% if request.path.startswith('/configuration/utilisateurs') %}active{% endif %} text-white">
+        <i class="bi bi-person text-success me-2"></i> Utilisateurs
+      </a>
+    </li>
+    <li class="nav-item mb-2">
+      <a href="/configuration/profils" class="nav-link {% if request.path.startswith('/configuration/profils') %}active{% endif %} text-white">
+        <i class="bi bi-shield-lock text-danger me-2"></i> Profils
+      </a>
+    </li>
+    <li class="nav-item mb-2">
+      <a href="/configuration/claviers" class="nav-link {% if request.path.startswith('/configuration/claviers') %}active{% endif %} text-white">
+        <i class="bi bi-keyboard text-warning me-2"></i> Claviers
+      </a>
+    </li>
+    <li class="nav-item mb-2">
+      <a href="/configuration/imprimantes" class="nav-link {% if request.path.startswith('/configuration/imprimantes') %}active{% endif %} text-white">
+        <i class="bi bi-printer text-info me-2"></i> Imprimantes
+      </a>
+    </li>
+    <li class="nav-item mb-2">
+      <a href="/configuration/ticket" class="nav-link {% if request.path.startswith('/configuration/ticket') %}active{% endif %} text-white">
+        <i class="bi bi-receipt text-primary me-2"></i> Ticket de caisse
+      </a>
+    </li>
+    <li class="nav-item mb-2">
+      <a href="/configuration/reseau" class="nav-link {% if request.path.startswith('/configuration/reseau') %}active{% endif %} text-white">
+        <i class="bi bi-wifi text-warning me-2"></i> Réseau
+      </a>
+    </li>
+    <li class="nav-item mb-2">
+      <a href="/configuration/peripheriques" class="nav-link {% if request.path.startswith('/configuration/peripheriques') %}active{% endif %} text-white">
+        <i class="bi bi-usb-symbol text-danger me-2"></i> Périphériques
+      </a>
+    </li>
+  </ul>
+</div>

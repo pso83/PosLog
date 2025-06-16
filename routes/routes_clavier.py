@@ -35,7 +35,7 @@ def register_clavier_routes(app):
                 boutons[b.position] = {
                     'position': b.position,
                     'couleur': b.couleur,
-                    'image': b.image,
+                    'images': b.image,
                     'type': b.element_type,
                     'element_id': b.article_id or b.fonction_id or b.menu_id or b.formule_id or b.utilisateur_id or b.reglement_id or b.commentaire_id or b.sous_clavier_id,
                     'masquer_texte': b.masquer_texte,
@@ -89,7 +89,7 @@ def register_clavier_routes(app):
             position=position,
             element_type=type,  # ✅ Ajouté
             couleur=data.get('couleur'),
-            image=data.get('image'),
+            image=data.get('images'),
             masquer_texte=data.get('masquer_texte', False)
         )
 
@@ -157,7 +157,7 @@ def get_boutons(clavier_id):
             "element_id": element_id,
             "nom": nom,
             "couleur": b.couleur,
-            "image": b.image,
+            "images": b.image,
             "masquer_texte": b.masquer_texte
         })
 
@@ -185,7 +185,7 @@ def import_clavier(id):
                 clavier_id=id,
                 position=b.get('position'),
                 couleur=b.get('couleur'),
-                image=b.get('image'),
+                image=b.get('images'),
                 masquer_texte=b.get('masquer_texte', False),
                 element_type=type_element
             )

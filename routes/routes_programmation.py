@@ -200,7 +200,7 @@ def register_routes(app):
                 'type': bouton_type,
                 'element_id': element_id,
                 'couleur': b.couleur,
-                'image': b.image,
+                'images': b.image,
                 'masquer_texte': b.masquer_texte
             })
 
@@ -237,7 +237,7 @@ def register_routes(app):
                     clavier_id=id,
                     position=b.get('position'),
                     couleur=b.get('couleur'),
-                    image=b.get('image'),
+                    image=b.get('images'),
                     masquer_texte=b.get('masquer_texte', False),
                     element_type=type_element
                 )
@@ -359,7 +359,7 @@ def register_routes(app):
                                                   SELECT b.position,
                                                          b.label,
                                                          b.couleur,
-                                                         b.image,
+                                                         b.images,
                                                          b.masquer_texte,
                                                          b.type,
                                                          b.element_id,
@@ -391,7 +391,7 @@ def register_routes(app):
                             "position": pos,
                             "label": f"Vide {pos}",
                             "couleur": "#e0e0e0",
-                            "image": None,
+                            "images": None,
                             "masquer_texte": False,
                             "type": "vide",
                             "element_id": None
@@ -969,7 +969,7 @@ def register_programmation_routes(app):
     @config_bp.route("/configuration/profils")
     def configuration_profils():
         profils = Profil.query.all()
-        return render_template("configuration_profils.html", profils=profils)
+        return render_template("configuration_profils.html", profils=profils, request=request)
 
     @app.route('/configuration_profil')
     def configuration_profil():
@@ -1109,11 +1109,11 @@ def register_programmation_routes(app):
         imprimantes = Imprimante.query.all()
         imprimantes_windows = get_windows_printers()  # si tu utilises win32print
         return render_template('configuration_imprimantes.html', imprimantes=imprimantes, imprimante=None,
-                               imprimantes_windows=imprimantes_windows)
+                               imprimantes_windows=imprimantes_windows, request=request)
 
     @app.route('/configuration/peripheriques/imprimantes/edit/<int:id>')
     def edit_imprimante(id):
         imprimante = Imprimante.query.get_or_404(id)
         imprimantes = Imprimante.query.all()
-        return render_template('configuration_imprimantes.html', imprimantes=imprimantes, imprimante=imprimante)
+        return render_template('configuration_imprimantes.html', imprimantes=imprimantes, imprimante=imprimante, request=request)
 

@@ -1,6 +1,87 @@
-<!-- templates/configuration_ticket.html -->
-{% extends 'layout_configuration.html' %}
+{% extends "layout_configuration.html" %}
 {% block content %}
-<h2>Configuration du ticket</h2>
-<p>À compléter...</p>
+<div class="container mt-4">
+  <h5>Paramètres du ticket de caisse</h5>
+  <div class="row">
+    <!-- Formulaire -->
+    <div class="col-md-7">
+      <ul class="nav nav-tabs mb-3">
+        <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#entete">Entête</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#pied">Pied</button></li>
+      </ul>
+      <form method="POST" action="{{ url_for('configuration.configuration_ticket') }}" id="configForm" class="card p-3">
+        <div class="tab-content">
+          <!-- Onglet Entête -->
+          <div class="tab-pane fade show active" id="entete">
+            <div class="mb-3"><label>Nom du commerce</label><input type="text" class="form-control" name="nom_commerce" value="{{ config.nom_commerce or '' }}"></div>
+            <div class="mb-3"><label>Adresse</label><textarea class="form-control" name="adresse">{{ config.adresse or '' }}</textarea></div>
+            <div class="mb-3"><label>SIRET</label><input type="text" class="form-control" name="siret" value="{{ config.siret or '' }}"></div>
+            <div class="mb-3"><label>TVA</label><input type="text" class="form-control" name="tva_intra" value="{{ config.tva_intra or '' }}"></div>
+            <div class="mb-3"><label>Ligne libre 1</label><input type="text" class="form-control" name="entete_ligne1" value="{{ config.entete_ligne1 or '' }}"></div>
+            <div class="mb-3"><label>Ligne libre 2</label><input type="text" class="form-control" name="entete_ligne2" value="{{ config.entete_ligne2 or '' }}"></div>
+          </div>
+
+          <!-- Onglet Pied -->
+          <div class="tab-pane fade" id="pied">
+            {% for i in range(1, 5) %}
+            <div class="mb-3"><label>Ligne pied {{ i }}</label><input type="text" class="form-control" name="pied_ligne{{ i }}" value="{{ config['pied_ligne' ~ i] or '' }}"></div>
+            {% endfor %}
+          </div>
+        </div>
+
+        <div class="text-end">
+          <button class="btn btn-primary mt-3">Enregistrer</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Aperçu ticket -->
+    <div class="col-md-5">
+      <h5>Aperçu du ticket</h5>
+      <div id="ticket-preview" class="border p-3 mt-2 bg-white" style="width: 260px; font-family: monospace; font-size: 13px; line-height: 1.4; text-align: center;">
+        <div id="preview-content"></div>
+      </div>
+      <button class="btn btn-outline-secondary btn-sm mt-2" onclick="window.print()">Imprimer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Script de mise à jour de l’aperçu -->
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const form = document.getElementById('configForm');
+  const preview = document.getElementById('preview-content');
+
+  function updatePreview() {
+    const data = new FormData(form);
+    let html = '';
+
+    const nom = data.get('nom_commerce');
+    const adresse = data.get('adresse');
+    const siret = data.get('siret');
+    const tva = data.get('tva_intra');
+    const el1 = data.get('entete_ligne1');
+    const el2 = data.get('entete_ligne2');
+
+    if (nom) html += `<strong>${nom}</strong><br>`;
+    if (adresse) html += adresse.replace(/\n/g, '<br>') + '<br>';
+    if (siret) html += `SIRET : ${siret}<br>`;
+    if (tva) html += `TVA : ${tva}<br>`;
+    if (el1) html += el1 + '<br>';
+    if (el2) html += el2 + '<br>';
+    html += '<hr><div style="font-size:12px;">... contenu du ticket ...</div><hr>';
+    for (let i = 1; i <= 4; i++) {
+      const pied = data.get(`pied_ligne${i}`);
+      if (pied) html += `<div>${pied}</div>`;
+    }
+
+    preview.innerHTML = html;
+  }
+
+  if (form) {
+    form.querySelectorAll('input, textarea').forEach(el => el.addEventListener('input', updatePreview));
+    updatePreview();
+  }
+});
+</script>
 {% endblock %}

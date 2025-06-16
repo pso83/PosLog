@@ -1,101 +1,104 @@
 {% extends "layout_configuration.html" %}
-
 {% block content %}
-<div class="container-fluid mt-4">
-  <div class="row">
-    <!-- Table des utilisateurs -->
-    <div class="col-12 col-lg-7 mb-4">
-      <h4>Utilisateurs</h4>
-      <table class="table table-bordered table-hover table-sm">
-        <thead class="table-light">
-          <tr>
-            <th>Nom</th>
-            <th>Code</th>
-            <th>Profil</th>
-            <th>Clavier</th>
-            <th>Mode</th>
-            <th>Imprimante</th>
-            <th style="width: 80px;">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for utilisateur in utilisateurs %}
-          <tr>
-            <td>{{ utilisateur.nom }}</td>
-            <td>{{ utilisateur.code }}</td>
-            <td>{{ utilisateur.profil.nom if utilisateur.profil }}</td>
-            <td>{{ utilisateur.clavier.nom if utilisateur.clavier }}</td>
-            <td>{{ utilisateur.mode_vente }}</td>
-            <td>{{ utilisateur.imprimante.nom if utilisateur.imprimante }}</td>
-            <td class="text-center">
-              <a href="/configuration/utilisateurs/edit/{{ utilisateur.id }}" class="btn btn-outline-primary btn-sm" title="Modifier">
-                <i class="bi bi-pencil-square fs-5"></i>
-              </a>
-              <a href="/configuration/utilisateurs/delete/{{ utilisateur.id }}" class="btn btn-outline-danger btn-sm ms-1" title="Supprimer"
-                 onclick="return confirm('Confirmer la suppression ?');">
-                <i class="bi bi-trash fs-5"></i>
-              </a>
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
 
-    <!-- Formulaire utilisateur -->
-    <div class="col-12 col-lg-5">
-      <h4>{{ 'Modifier' if edit_utilisateur else 'Ajouter' }} un utilisateur</h4>
-      <form method="POST" action="{{ url_for('configuration.configuration_utilisateurs') }}">
-        {% if edit_utilisateur %}
-          <input type="hidden" name="id" value="{{ edit_utilisateur.id }}">
-        {% endif %}
-        <div class="mb-2">
-          <label for="nom" class="form-label">Nom</label>
-          <input type="text" class="form-control form-control-sm" id="nom" name="nom" value="{{ edit_utilisateur.nom if edit_utilisateur else '' }}" required>
+<div class="container mt-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-10">
+      <div class="row">
+        <!-- Table à gauche -->
+        <div class="col-md-7">
+          <h5>Utilisateurs</h5>
+          <table class="table table-bordered table-sm">
+            <thead class="table-light">
+              <tr>
+                <th>Nom</th>
+                <th>Code</th>
+                <th>Profil</th>
+                <th style="width: 80px;">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for utilisateur in utilisateurs %}
+              <tr>
+                <td>{{ utilisateur.nom }}</td>
+                <td>{{ utilisateur.code }}</td>
+                <td>{{ utilisateur.profil.nom if utilisateur.profil }}</td>
+                <td class="text-center" style="white-space: nowrap;">
+                  <a href="/configuration/utilisateurs/edit/{{ utilisateur.id }}" class="btn btn-outline-primary btn-sm me-2" title="Modifier">
+                    <i class="bi bi-pencil-square"></i>
+                  </a>
+                  <a href="/configuration/utilisateurs/delete/{{ utilisateur.id }}" class="btn btn-outline-danger btn-sm" title="Supprimer"
+                    onclick="return confirm('Confirmer la suppression ?');">
+                    <i class="bi bi-trash"></i>
+                  </a>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
         </div>
-        <div class="mb-2">
-          <label for="code" class="form-label">Code</label>
-          <input type="text" class="form-control form-control-sm" id="code" name="code" value="{{ edit_utilisateur.code if edit_utilisateur else '' }}" required>
+
+        <!-- Formulaire à droite -->
+        <div class="col-md-5">
+          <h5>{{ 'Modifier' if edit_utilisateur else 'Ajouter' }} un utilisateur</h5>
+          <form method="POST" action="{{ url_for('configuration.configuration_utilisateurs') }}">
+            {% if edit_utilisateur %}
+            <input type="hidden" name="id" value="{{ edit_utilisateur.id }}">
+            {% endif %}
+            <div class="mb-2">
+              <label for="nom" class="form-label">Nom</label>
+              <input type="text" class="form-control form-control-sm" id="nom" name="nom"
+                value="{{ edit_utilisateur.nom if edit_utilisateur else '' }}" required>
+            </div>
+            <div class="mb-2">
+              <label for="code" class="form-label">Code</label>
+              <input type="text" class="form-control form-control-sm" id="code" name="code"
+                value="{{ edit_utilisateur.code if edit_utilisateur else '' }}" required>
+            </div>
+            <div class="mb-2">
+              <label for="profil_id" class="form-label">Profil</label>
+              <select class="form-select form-control-sm" id="profil_id" name="profil_id" required>
+                <option value="">-- Choisir --</option>
+                {% for profil in profils %}
+                <option value="{{ profil.id }}" {% if edit_utilisateur and edit_utilisateur.profil_id == profil.id %}selected{% endif %}>
+                  {{ profil.nom }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          <div class="mb-2">
+              <label for="clavier_id" class="form-label">Clavier</label>
+              <select class="form-select form-control-sm" id="clavier_id" name="clavier_id">
+                <option value="">-- Choisir --</option>
+                {% for clavier in claviers %}
+                  <option value="{{ clavier.id }}" {% if edit_utilisateur and edit_utilisateur.clavier_id == clavier.id %}selected{% endif %}>{{ clavier.nom }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="mb-2">
+              <label for="mode_vente" class="form-label">Mode de vente</label>
+              <select class="form-select form-control-sm" id="mode_vente" name="mode_vente">
+                <option value="TICKET" {% if edit_utilisateur and edit_utilisateur.mode_vente == 'TICKET' %}selected{% endif %}>TICKET</option>
+                <option value="TABLE" {% if edit_utilisateur and edit_utilisateur.mode_vente == 'TABLE' %}selected{% endif %}>TABLE</option>
+                <option value="COMPTE" {% if edit_utilisateur and edit_utilisateur.mode_vente == 'COMPTE' %}selected{% endif %}>COMPTE</option>
+              </select>
+            </div>
+
+            <div class="mb-2">
+              <label for="imprimante_id" class="form-label">Imprimante</label>
+              <select class="form-select form-control-sm" id="imprimante_id" name="imprimante_id">
+                <option value="">Aucune</option>
+                {% for imprimante in imprimantes %}
+                  <option value="{{ imprimante.id }}" {% if edit_utilisateur and edit_utilisateur.imprimante_id == imprimante.id %}selected{% endif %}>{{ imprimante.nom }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="mb-3 text-end">
+              <button type="submit" class="btn btn-success">{{ 'Mettre à jour' if edit_utilisateur else 'Ajouter' }}</button>
+            </div>
+          </form>
         </div>
-        <div class="mb-2">
-          <label for="profil_id" class="form-label">Profil</label>
-          <select class="form-select form-control-sm" id="profil_id" name="profil_id" required>
-            <option value="">-- Choisir --</option>
-            {% for profil in profils %}
-              <option value="{{ profil.id }}" {% if edit_utilisateur and edit_utilisateur.profil_id == profil.id %}selected{% endif %}>{{ profil.nom }}</option>
-            {% endfor %}
-          </select>
-        </div>
-        <div class="mb-2">
-          <label for="clavier_id" class="form-label">Clavier</label>
-          <select class="form-select form-control-sm" id="clavier_id" name="clavier_id">
-            <option value="">-- Choisir --</option>
-            {% for clavier in claviers %}
-              <option value="{{ clavier.id }}" {% if edit_utilisateur and edit_utilisateur.clavier_id == clavier.id %}selected{% endif %}>{{ clavier.nom }}</option>
-            {% endfor %}
-          </select>
-        </div>
-        <div class="mb-2">
-          <label for="mode_vente" class="form-label">Mode de vente</label>
-          <select class="form-select form-control-sm" id="mode_vente" name="mode_vente">
-            <option value="">-- Choisir --</option>
-            <option value="Standard" {% if edit_utilisateur and edit_utilisateur.mode_vente == 'Standard' %}selected{% endif %}>Standard</option>
-            <option value="Tactile" {% if edit_utilisateur and edit_utilisateur.mode_vente == 'Tactile' %}selected{% endif %}>Tactile</option>
-          </select>
-        </div>
-        <div class="mb-2">
-          <label for="imprimante_id" class="form-label">Imprimante</label>
-          <select class="form-select form-control-sm" id="imprimante_id" name="imprimante_id">
-            <option value="">Aucune</option>
-            {% for imprimante in imprimantes %}
-              <option value="{{ imprimante.id }}" {% if edit_utilisateur and edit_utilisateur.imprimante_id == imprimante.id %}selected{% endif %}>{{ imprimante.nom }}</option>
-            {% endfor %}
-          </select>
-        </div>
-        <div class="mt-3 text-end">
-          <button type="submit" class="btn btn-success">{{ 'Mettre à jour' if edit_utilisateur else 'Ajouter' }}</button>
-        </div>
-      </form>
+      </div>
     </div>
   </div>
 </div>

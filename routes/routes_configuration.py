@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, redirect, url_for, request
+from flask import Blueprint, render_template, redirect, url_for, request, jsonify
 from models.utilisateur import Utilisateur
 from models.profil import Profil
 from models.clavier import Clavier
@@ -6,6 +6,7 @@ from models.imprimante import Imprimante
 from models.ticket_config import TicketConfig
 from models.reseau import Reseau
 from models.peripherique import Peripherique
+from models.plan_salle import TablePlan
 from extensions import db
 
 configuration_bp = Blueprint('configuration', __name__)
@@ -62,12 +63,13 @@ def configuration_utilisateurs():
     edit_utilisateur = Utilisateur.query.get(edit_id) if edit_id else None
 
     return render_template(
-        'configuration_utilisateurs.html',
+        "configuration_utilisateurs.html",
         utilisateurs=utilisateurs,
         profils=profils,
         claviers=claviers,
         imprimantes=imprimantes,
-        edit_utilisateur=edit_utilisateur
+        edit_utilisateur=edit_utilisateur,
+        request=request  # ✅ ligne indispensable
     )
 
 @configuration_bp.route('/configuration/utilisateurs/edit/<int:id>')
@@ -85,7 +87,7 @@ def delete_utilisateur(id):
 @configuration_bp.route('/configuration/profils')
 def configuration_profils():
     profils = Profil.query.all()
-    return render_template('configuration_profils.html', profils=profils)
+    return render_template('configuration_profils.html', profils=profils, request=request)
 
 # ---- Imprimantes ----
 @configuration_bp.route('/configuration/imprimantes')
@@ -93,29 +95,72 @@ def configuration_imprimantes():
     imprimantes = Imprimante.query.all()
     return render_template('configuration_imprimantes.html',
                            imprimantes=imprimantes,
-                           imprimante=None)  # Ajouté
+                           imprimante=None,
+                           request=request)  # Ajouté
 
+# ---- Plans de salle ----
+@configuration_bp.route('/configuration/plan_salle', methods=['GET', 'POST'])
+def configuration_plan_salle():
+    if request.method == 'POST':
+        data = request.json
+        nom_salle = data.get('nom_salle')
+        type_salle = data.get('type_salle')
+        elements = data.get('elements', [])
 
-# ---- Claviers ----
-@configuration_bp.route('/configuration/claviers')
-def configuration_claviers():
-    claviers = Clavier.query.all()
-    return render_template('configuration_claviers.html', claviers=claviers)
+        # Mettre à jour ou créer les éléments
+        for el in elements:
+            if el.get("id"):
+                item = TablePlan.query.get(el["id"])
+            else:
+                item = TablePlan()
+            item.numero = el["numero"]
+            item.x = el["x"]
+            item.y = el["y"]
+            item.largeur = el["largeur"]
+            item.hauteur = el["hauteur"]
+            item.forme = el["forme"]
+            item.nb_places = el.get("nb_places")  # peut être None
+            item.type_element = el["type_element"]  # table, tabouret, matelas
+            item.nom_salle = nom_salle
+            item.type_salle = type_salle
+            db.session.add(item)
+        db.session.commit()
+        return jsonify({"status": "ok"})
+
+    tables = TablePlan.query.all()
+    return render_template("configuration_plan_salle.html", tables=tables)
 
 # ---- Ticket ----
-@configuration_bp.route('/configuration/ticket')
+@configuration_bp.route('/configuration/ticket', methods=['GET', 'POST'])
 def configuration_ticket():
     config = TicketConfig.query.first()
-    return render_template('configuration_ticket.html', config=config)
+
+    if request.method == 'POST':
+        nom_commerce = request.form.get('nom_commerce')
+        adresse = request.form.get('adresse')
+        footer = request.form.get('footer')
+
+        if config:
+            config.nom_commerce = nom_commerce
+            config.adresse = adresse
+            config.footer = footer
+        else:
+            config = TicketConfig(nom_commerce=nom_commerce, adresse=adresse, footer=footer)
+            db.session.add(config)
+
+        db.session.commit()
+        return redirect(url_for('configuration.configuration_ticket'))
+
+    return render_template("configuration_ticket.html", config=config, request=request)
 
 # ---- Réseau ----
 @configuration_bp.route('/configuration/reseau')
 def configuration_reseau():
     reseaux = Reseau.query.all()
-    return render_template('configuration_reseau.html', reseaux=reseaux)
+    return render_template('configuration_reseau.html', reseaux=reseaux, request=request)
 
 # ---- Périphériques ----
 @configuration_bp.route('/configuration/peripheriques')
 def configuration_peripheriques():
     peripheriques = Peripherique.query.all()
-    return render_template('configuration_peripheriques.html', peripheriques=peripheriques)
+    return render_template('configuration_peripheriques.html', peripheriques=peripheriques, request=request)

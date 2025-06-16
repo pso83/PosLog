@@ -42,15 +42,19 @@
   }
 
   .burger-btn {
-    position: fixed;
-    top: 10px;
-    left: 10px;
-    z-index: 1101;
-    font-size: 1.5rem;
-    background: none;
-    border: none;
-    color: #212529;
-  }
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  z-index: 1101;
+  font-size: 1.5rem;
+  background-color: #212529;   /* ✅ même fond que le menu */
+  border: none;
+  color: white;                /* ✅ même couleur que l'icône */
+  padding: 8px 12px;
+  border-radius: 4px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);  /* ✅ pour mieux ressortir */
+}
+
 
   #sidebar .nav-link {
     color: #ddd;
@@ -78,40 +82,11 @@
 </style>
 </head>
 <body>
-  <button class="burger-btn" onclick="toggleSidebar()">
-    <i class="bi bi-list"></i>
-  </button>
-
-  <div id="sidebar">
-      {% include "_menu_burger_configuration.html" %}
-  </div>
+  {% include "_menu_burger_configuration.html" %}
 
   <div id="content">
     {% block content %}{% endblock %}
   </div>
-
-  <script>
-  function toggleSidebar() {
-    const sidebar = document.getElementById('sidebar');
-    const content = document.getElementById('content');
-    sidebar.classList.toggle('active');
-    content.classList.toggle('shifted');
-  }
-
-  // ➕ Ferme automatiquement le menu au clic sur un lien (si écran < 768px)
-  document.addEventListener("DOMContentLoaded", function () {
-    const sidebar = document.getElementById('sidebar');
-    const content = document.getElementById('content');
-
-    sidebar.querySelectorAll('a.nav-link').forEach(link => {
-      link.addEventListener('click', () => {
-        if (window.innerWidth < 768) {
-          sidebar.classList.remove('active');
-          content.classList.remove('shifted');
-        }
-      });
-    });
-  });
-</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

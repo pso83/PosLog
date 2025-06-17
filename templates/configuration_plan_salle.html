@@ -23,6 +23,10 @@
             {% if salle %}
                 <h4>Éditeur du plan : {{ salle.nom }}</h4>
 
+                <div id="trash-zone" class="mt-3 text-center bg-danger text-white p-2 rounded">
+                    🗑️ Glisser ici pour supprimer un élément
+                </div>
+
                 <!-- Boutons d'ajout d’éléments -->
                 <div class="mb-3">
                     <button class="btn btn-outline-primary me-2" data-add="table-carree">➕ Table carrée</button>
@@ -48,14 +52,169 @@
 {% endblock %}
 
 {% block scripts %}
+    <script>console.log("✅ Block scripts exécuté");</script>
     {{ super() }}
     <script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
     <script src="{{ url_for('static', filename='js/ajout_elements.js') }}"></script>
+
     <script>
-        // Vérifie que le script est bien chargé
-        document.addEventListener('DOMContentLoaded', () => {
-            console.log("JS chargé, fonctions disponibles :", typeof addElement);
+// Ajouter un élément selon le type sélectionné
+function addElement(type) {
+    const container = document.getElementById('plan-container');
+    if (!container) return;
+
+    const element = document.createElement('div');
+    element.classList.add('element', 'draggable');
+    element.style.position = 'absolute';
+    element.style.top = '50px';
+    element.style.left = '50px';
+    element.style.cursor = 'move';
+    element.setAttribute('data-type', type);
+
+    switch (type) {
+        case 'table-carree':
+        case 'table-ronde':
+            element.style.width = '60px';
+            element.style.height = '60px';
+            element.style.background = 'white';
+            element.style.border = '2px solid black';
+            if (type === 'table-ronde') element.style.borderRadius = '50%';
+
+            const numero = prompt("Numéro de table ?");
+            const nbCouverts = parseInt(prompt("Nombre de couverts ?"), 10);
+
+            if (!isNaN(nbCouverts) && nbCouverts > 0) {
+                ajouterChaisesAutour(element, nbCouverts);
+            }
+
+            element.innerText = numero ? `Table ${numero}` : '';
+            break;
+
+        case 'tabouret':
+            element.style.width = '40px';
+            element.style.height = '40px';
+            element.style.background = '#aaa';
+            element.style.border = '1px solid black';
+            element.innerText = '🪑';
+            break;
+
+        case 'matelas':
+            element.style.width = '70px';
+            element.style.height = '30px';
+            element.style.background = '#f5deb3';
+            element.style.border = '1px solid #000';
+            element.innerText = '🛏️';
+            break;
+
+        case 'mur':
+            element.style.width = '150px';
+            element.style.height = '20px';
+            element.style.background = '#888';
+            element.style.border = '1px solid #000';
+            element.innerText = '🧱';
+            break;
+
+        case 'plante':
+            element.style.width = '50px';
+            element.style.height = '50px';
+            element.style.background = '#cfc';
+            element.style.borderRadius = '25px';
+            element.innerText = '🌿';
+            break;
+
+        case 'bar':
+            element.style.width = '120px';
+            element.style.height = '50px';
+            element.style.background = '#993300';
+            element.style.color = 'white';
+            element.style.textAlign = 'center';
+            element.style.lineHeight = '50px';
+            element.innerText = '🍷 Bar';
+            break;
+
+        default:
+            console.warn("Type inconnu :", type);
+            return;
+    }
+
+    container.appendChild(element);
+    makeDraggable(element);
+}
+
+// Ajout de chaises autour d'une table
+function ajouterChaisesAutour(table, nbCouverts) {
+    const rayon = 35;
+    const centerX = 30;
+    const centerY = 30;
+
+    for (let i = 0; i < nbCouverts; i++) {
+        const angle = (2 * Math.PI * i) / nbCouverts;
+        const x = centerX + rayon * Math.cos(angle);
+        const y = centerY + rayon * Math.sin(angle);
+
+        const chaise = document.createElement('div');
+        chaise.innerText = '🪑';
+        chaise.style.position = 'absolute';
+        chaise.style.left = `${x}px`;
+        chaise.style.top = `${y}px`;
+        chaise.style.fontSize = '14px';
+        chaise.style.pointerEvents = 'none';
+
+        table.appendChild(chaise);
+    }
+}
+
+// Active interact.js sur un élément
+function makeDraggable(el) {
+    interact(el).draggable({
+        inertia: true,
+        modifiers: [
+            interact.modifiers.restrictRect({
+                restriction: 'parent',
+                endOnly: true
+            })
+        ],
+        listeners: {
+            move (event) {
+                const target = event.target;
+                const x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx;
+                const y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
+
+                target.style.transform = `translate(${x}px, ${y}px)`;
+                target.setAttribute('data-x', x);
+                target.setAttribute('data-y', y);
+            }
+        }
+    });
+
+    // Rotation des murs uniquement
+    if (el.getAttribute('data-type') === 'mur') {
+        interact(el).gesturable({
+            listeners: {
+                move(event) {
+                    const target = event.target;
+                    const currentRotation = parseFloat(target.getAttribute('data-rotation')) || 0;
+                    const newRotation = currentRotation + event.da;
+
+                    target.style.transform += ` rotate(${event.da}deg)`;
+                    target.setAttribute('data-rotation', newRotation);
+                }
+            }
         });
-    </script>
+    }
+}
+
+// Liaison boutons -> ajout d'élément
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('[data-add]').forEach(button => {
+        button.addEventListener('click', () => {
+            const type = button.getAttribute('data-add');
+            addElement(type);
+        });
+    });
+});
+</script>
+
 {% endblock %}
+
 

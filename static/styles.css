@@ -1,0 +1,10 @@
+#trash-zone {
+    height: 60px;
+    border: 2px dashed white;
+    font-weight: bold;
+}
+#trash-zone.drag-over {
+    background-color: #c82333;
+    border-color: yellow;
+}
+

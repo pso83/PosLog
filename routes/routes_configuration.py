@@ -170,9 +170,6 @@ def configuration_plan_salle(salle_id):
     tables = TablePlan.query.filter_by(salle_id=salle_id).all()
     return render_template('configuration_plan_salle.html', salles=salles, salle=salle, salle_id=salle.id, tables=tables)
 
-
-
-# API pour charger dynamiquement les éléments d’une salle en JSON
 @configuration_bp.route('/api/plan_salle/<int:salle_id>')
 def api_plan_salle(salle_id):
     elements = TablePlan.query.filter_by(salle_id=salle_id).all()
@@ -188,6 +185,22 @@ def api_plan_salle(salle_id):
         "largeur": e.largeur,
         "hauteur": e.hauteur
     } for e in elements])
+
+@configuration_bp.route('/configuration/save_plan_element', methods=['POST'])
+def save_plan_element():
+    data = request.json
+    element = TablePlan(
+        salle_id=data.get('salle_id'),
+        type_element=data.get('type'),
+        numero=data.get('numero'),
+        nb_places=data.get('nb_places'),
+        x=data.get('x'),
+        y=data.get('y'),
+        rotation=data.get('rotation', 0.0)
+    )
+    db.session.add(element)
+    db.session.commit()
+    return jsonify(success=True)
 
 # ---- Ticket ----
 @configuration_bp.route('/configuration/ticket', methods=['GET', 'POST'])

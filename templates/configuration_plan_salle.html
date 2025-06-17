@@ -1,151 +1,61 @@
+{% extends 'layout_configuration.html' %}
 
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-  <meta charset="UTF-8">
-  <title>Plan de salle visuel</title>
-  <script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <style>
-    body { background-color: #f8f9fa; }
-    #plan-container {
-      width: 1024px;
-      height: 600px;
-      margin: auto;
-      background-color: #fff;
-      border: 2px solid #000;
-      position: relative;
-    }
-    .element {
-      position: absolute;
-      cursor: move;
-    }
-    .table-img, .chaise-img, .bar-img, .tabouret-img, .matelas-img, .plante-img {
-      width: 64px;
-      height: 64px;
-      user-select: none;
-      pointer-events: none;
-    }
-    .chaise-wrapper {
-      position: absolute;
-      width: 20px;
-      height: 20px;
-      background-image: url('/static/images/plan/chaise.png');
-      background-size: contain;
-      background-repeat: no-repeat;
-    }
-    .bar-wrapper {
-      width: 100px;
-      height: 60px;
-      background-image: url('/static/images/plan/bar.png');
-      background-size: cover;
-    }
-    #nomSalleAffiche {
-      text-align: center;
-      font-size: 24px;
-      font-weight: bold;
-      margin: 10px;
-    }
-  </style>
-</head>
-<body>
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Liste des salles à gauche -->
+        <div class="col-md-3">
+            <h4 class="mb-3">Plans de salle</h4>
+            <ul class="list-group mb-4">
+                {% for salle_item in salles %}
+                <li class="list-group-item d-flex justify-content-between align-items-center {% if salle and salle_item.id == salle.id %}active{% endif %}">
+                    <a href="{{ url_for('configuration.configuration_plan_salle', salle_id=salle_item.id) }}"
+                       class="{% if salle and salle_item.id == salle.id %}text-white{% else %}text-dark{% endif %}">
+                        {{ salle_item.nom }} ({{ salle_item.plan_type }})
+                    </a>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
 
-<div class="container text-center mt-3">
-  <h2>Configuration du Plan de Salle</h2>
-  <div class="mb-3">
-    <label>Nom de la salle :</label>
-    <input type="text" id="nomSalle" value="Salle principale" class="form-control w-25 d-inline-block"
-           oninput="document.getElementById('nomSalleAffiche').textContent = this.value">
-  </div>
+        <!-- Plan + boutons à droite -->
+        <div class="col-md-9">
+            {% if salle %}
+                <h4>Éditeur du plan : {{ salle.nom }}</h4>
 
-  <div class="mb-2">
-    <button class="btn btn-outline-secondary" onclick="addTable('ronde')">➕ Table Ronde</button>
-    <button class="btn btn-outline-secondary" onclick="addTable('carree')">➕ Table Carrée</button>
-    <button class="btn btn-outline-secondary" onclick="addItem('tabouret')">➕ Tabouret</button>
-    <button class="btn btn-outline-secondary" onclick="addItem('matelas')">➕ Matelas</button>
-    <button class="btn btn-outline-secondary" onclick="addItem('bar')">➕ Bar</button>
-    <button class="btn btn-outline-secondary" onclick="addItem('plante')">➕ Plante</button>
-  </div>
+                <!-- Boutons d'ajout d’éléments -->
+                <div class="mb-3">
+                    <button class="btn btn-outline-primary me-2" data-add="table-carree">➕ Table carrée</button>
+                    <button class="btn btn-outline-primary me-2" data-add="table-ronde">➕ Table ronde</button>
+                    <button class="btn btn-outline-primary me-2" data-add="tabouret">➕ Tabouret</button>
+                    <button class="btn btn-outline-primary me-2" data-add="matelas">➕ Matelas</button>
+                    <button class="btn btn-outline-primary me-2" data-add="mur">🧱 Mur</button>
+                    <button class="btn btn-outline-primary me-2" data-add="plante">🌿 Plante</button>
+                    <button class="btn btn-outline-primary me-2" data-add="bar">🍷 Bar</button>
+                </div>
 
-  <div id="nomSalleAffiche">Salle principale</div>
-  <div id="plan-container"></div>
+                <!-- Conteneur du plan -->
+                <div id="plan-container" class="plan-container border rounded"
+                     style="position: relative; width: 100%; height: 600px; background-color: #f8f9fa;">
+                    <!-- Les éléments seront insérés ici -->
+                </div>
+            {% else %}
+                <h4 class="text-muted">Veuillez sélectionner une salle</h4>
+            {% endif %}
+        </div>
+    </div>
 </div>
+{% endblock %}
 
-<script>
-let elementId = 0;
+{% block scripts %}
+    {{ super() }}
+    <script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
+    <script src="{{ url_for('static', filename='js/ajout_elements.js') }}"></script>
+    <script>
+        // Vérifie que le script est bien chargé
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log("JS chargé, fonctions disponibles :", typeof addElement);
+        });
+    </script>
+{% endblock %}
 
-function addTable(forme) {
-  const container = document.getElementById('plan-container');
-  const numero = prompt("Numéro de la table ?");
-  const couverts = parseInt(prompt("Nombre de couverts ?", "4"));
-  const table = document.createElement('div');
-  table.className = 'element';
-  table.style.left = '100px';
-  table.style.top = '100px';
-  table.id = 'table-' + (++elementId);
-
-  const img = document.createElement('img');
-  img.src = forme === 'ronde' ? '/static/images/plan/table_ronde.png' : '/static/images/plan/table_carree.png';
-  img.className = 'table-img';
-  table.appendChild(img);
-
-  const label = document.createElement('div');
-  label.innerHTML = `<strong>${numero}</strong><br>(${couverts} cv)`;
-  table.appendChild(label);
-
-  const radius = 50;
-  for (let i = 0; i < couverts; i++) {
-    const angle = (2 * Math.PI / couverts) * i;
-    const x = radius * Math.cos(angle);
-    const y = radius * Math.sin(angle);
-    const chaise = document.createElement('div');
-    chaise.className = 'chaise-wrapper';
-    chaise.style.left = `${64 / 2 + x}px`;
-    chaise.style.top = `${64 / 2 + y}px`;
-    table.appendChild(chaise);
-  }
-
-  container.appendChild(table);
-  makeDraggable(table);
-}
-
-function addItem(type) {
-  const container = document.getElementById('plan-container');
-  const wrapper = document.createElement('div');
-  wrapper.className = 'element';
-  wrapper.style.left = '150px';
-  wrapper.style.top = '150px';
-
-  let img = document.createElement('img');
-  img.className = type + '-img';
-  img.src = `/static/images/plan/${type}.png`;
-  wrapper.appendChild(img);
-
-  if (type === 'bar') {
-    const label = document.createElement('div');
-    label.innerText = "BAR";
-    wrapper.appendChild(label);
-  }
-
-  container.appendChild(wrapper);
-  makeDraggable(wrapper);
-}
-
-function makeDraggable(el) {
-  interact(el).draggable({
-    listeners: {
-      move (event) {
-        const target = event.target;
-        const x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx;
-        const y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
-        target.style.transform = `translate(${x}px, ${y}px)`;
-        target.setAttribute('data-x', x);
-        target.setAttribute('data-y', y);
-      }
-    }
-  });
-}
-</script>
-
-</body>
-</html>

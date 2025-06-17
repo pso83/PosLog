@@ -1,0 +1,39 @@
+{% extends 'layout_configuration.html' %}
+
+{% block content %}
+<div class="container">
+    <h3>Gestion des plans de salle</h3>
+
+    <form method="post" action="{{ url_for('configuration.add_salle') }}" class="mb-4">
+        <div class="row">
+            <div class="col">
+                <input type="text" name="nom" class="form-control" placeholder="Nom de la salle" required>
+            </div>
+            <div class="col">
+                <select name="plan_type" class="form-select" required>
+                    <option value="restaurant">Restaurant</option>
+                    <option value="bar">Bar</option>
+                    <option value="plage">Plage</option>
+                </select>
+            </div>
+            <div class="col">
+                <button type="submit" class="btn btn-success">Ajouter</button>
+            </div>
+        </div>
+    </form>
+
+    <ul class="list-group">
+        {% for salle in salles %}
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+            {{ salle.nom }} ({{ salle.plan_type }})
+            <div>
+                <a href="{{ url_for('configuration.configuration_plan_salle', salle_id=salle.id) }}" class="btn btn-primary btn-sm">Configurer</a>
+                <form action="{{ url_for('configuration.delete_salle', salle_id=salle.id) }}" method="post" style="display:inline;">
+                    <button class="btn btn-danger btn-sm" onclick="return confirm('Supprimer cette salle ?')">Supprimer</button>
+                </form>
+            </div>
+        </li>
+        {% endfor %}
+    </ul>
+</div>
+{% endblock %}

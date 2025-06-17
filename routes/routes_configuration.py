@@ -8,13 +8,16 @@ from models.reseau import Reseau
 from models.peripherique import Peripherique
 from models.plan_salle import TablePlan
 from extensions import db
+from models.Salle import Salle
 
 configuration_bp = Blueprint('configuration', __name__)
 
 # Page d'accueil de configuration
 @configuration_bp.route('/configuration')
 def configuration_home():
-    return render_template('configuration_home.html')
+    salles = Salle.query.all()
+    salle_id = salles[0].id if salles else None
+    return render_template('configuration_home.html', salles=salles, salle_id=salle_id)
 
 # ---- Utilisateurs ----
 @configuration_bp.route('/configuration/utilisateurs', methods=['GET', 'POST'])
@@ -99,36 +102,92 @@ def configuration_imprimantes():
                            request=request)  # Ajouté
 
 # ---- Plans de salle ----
-@configuration_bp.route('/configuration/plan_salle', methods=['GET', 'POST'])
-def configuration_plan_salle():
-    if request.method == 'POST':
-        data = request.json
-        nom_salle = data.get('nom_salle')
-        type_salle = data.get('type_salle')
-        elements = data.get('elements', [])
 
-        # Mettre à jour ou créer les éléments
-        for el in elements:
-            if el.get("id"):
-                item = TablePlan.query.get(el["id"])
-            else:
-                item = TablePlan()
-            item.numero = el["numero"]
-            item.x = el["x"]
-            item.y = el["y"]
-            item.largeur = el["largeur"]
-            item.hauteur = el["hauteur"]
-            item.forme = el["forme"]
-            item.nb_places = el.get("nb_places")  # peut être None
-            item.type_element = el["type_element"]  # table, tabouret, matelas
-            item.nom_salle = nom_salle
-            item.type_salle = type_salle
-            db.session.add(item)
+# Affiche la liste des salles (page avec la liste à gauche)
+@configuration_bp.route('/configuration/salles', methods=['GET', 'POST'])
+def configuration_salles():
+    salles = Salle.query.all()
+    return render_template('configuration_salles.html', salles=salles)
+
+# Ajout d'une nouvelle salle
+@configuration_bp.route('/configuration/salles/add', methods=['POST'])
+def add_salle():
+    nom = request.form.get('nom')
+    plan_type = request.form.get('plan_type')
+    if nom and plan_type:
+        salle = Salle(nom=nom, plan_type=plan_type)
+        db.session.add(salle)
         db.session.commit()
-        return jsonify({"status": "ok"})
+    return redirect(url_for('configuration.configuration_salles'))
 
-    tables = TablePlan.query.all()
-    return render_template("configuration_plan_salle.html", tables=tables)
+
+# Modification d'une salle existante
+@configuration_bp.route('/configuration/salles/edit/<int:salle_id>', methods=['POST'])
+def edit_salle(salle_id):
+    salle = Salle.query.get_or_404(salle_id)
+    salle.nom = request.form.get('nom')
+    salle.plan_type = request.form.get('plan_type')
+    db.session.commit()
+    return redirect(url_for('configuration.configuration_salles'))
+
+
+# Suppression d'une salle
+@configuration_bp.route('/configuration/salles/delete/<int:salle_id>', methods=['POST'])
+def delete_salle(salle_id):
+    salle = Salle.query.get_or_404(salle_id)
+    db.session.delete(salle)
+    db.session.commit()
+    return redirect(url_for('configuration.configuration_salles'))
+
+
+# Affichage du plan d'une salle et enregistrement des éléments via POST (AJAX)
+@configuration_bp.route('/configuration/plan_salle/<int:salle_id>', methods=['GET', 'POST'], endpoint='configuration_plan_salle')
+def configuration_plan_salle(salle_id):
+    salle = Salle.query.get_or_404(salle_id)
+    salles = Salle.query.all()  # ✅ Ajoute cette ligne pour alimenter la liste des salles
+
+    if request.method == 'POST':
+        data = request.get_json()
+        TablePlan.query.filter_by(salle_id=salle_id).delete()
+        for table in data.get('tables', []):
+            t = TablePlan(
+                plan_type=salle.plan_type,
+                type_element=table['type_element'],
+                nom_element=table.get('nom_element'),
+                numero=table['numero'],
+                nb_places=table.get('nb_places'),
+                forme=table.get('forme'),
+                x=table['x'],
+                y=table['y'],
+                largeur=table['largeur'],
+                hauteur=table['hauteur'],
+                salle_id=salle_id
+            )
+            db.session.add(t)
+        db.session.commit()
+        return jsonify({'status': 'ok'})
+
+    tables = TablePlan.query.filter_by(salle_id=salle_id).all()
+    return render_template('configuration_plan_salle.html', salles=salles, salle=salle, salle_id=salle.id, tables=tables)
+
+
+
+# API pour charger dynamiquement les éléments d’une salle en JSON
+@configuration_bp.route('/api/plan_salle/<int:salle_id>')
+def api_plan_salle(salle_id):
+    elements = TablePlan.query.filter_by(salle_id=salle_id).all()
+    return jsonify([{
+        "id": e.id,
+        "type_element": e.type_element,
+        "nom_element": e.nom_element,
+        "numero": e.numero,
+        "nb_places": e.nb_places,
+        "forme": e.forme,
+        "x": e.x,
+        "y": e.y,
+        "largeur": e.largeur,
+        "hauteur": e.hauteur
+    } for e in elements])
 
 # ---- Ticket ----
 @configuration_bp.route('/configuration/ticket', methods=['GET', 'POST'])

@@ -10,23 +10,31 @@ function ajouterElement(type) {
   element.style.top = "100px";
   element.dataset.type = type;
 
-  if (type === 'table') {
-    const numero = prompt("Numéro de table ?");
-    const forme = document.getElementById("planType").value === 'restaurant'
-      ? prompt("Forme ? ronde / carree", "ronde") : 'ronde';
-    const cv = parseInt(prompt("Nombre de couverts ?", "4"));
-    element.dataset.numero = numero;
-    element.dataset.forme = forme;
-    element.dataset.couverts = cv;
+  const planType = document.getElementById("planType")?.value || 'restaurant';
 
+  // Gestion des éléments avec numéro et couverts
+  if (["tables", "plage"].includes(type)) {
+    const numero = prompt("Numéro ?");
+    if (!numero) return;
+
+    const nbPlaces = (type !== "tabouret" && type !== "plage")
+      ? parseInt(prompt("Nombre de couverts ?", "2")) : null;
+
+    element.dataset.numero = numero;
+    element.dataset.nb_places = nbPlaces;
+
+    // Image selon l'élément
     const img = document.createElement("img");
-    img.src = "/static/images/plan/table_" + forme + ".png";
-    img.style.width = forme === 'ronde' ? '100px' : '50px';
-    img.style.height = forme === 'ronde' ? '100px' : '50px';
+    img.src = `/static/images/elements/${type}/${type === "tables" ? "table_2cv.png" : "objet.png"}`;
+    img.style.width = "auto";
+    img.style.height = "auto";
+    img.style.maxWidth = "100px";
+    img.style.maxHeight = "100px";
     element.appendChild(img);
 
+    // Label
     const label = document.createElement("div");
-    label.innerHTML = `<strong>${numero}</strong><br/>(${cv} cv)`;
+    label.innerHTML = `<strong>${numero}</strong>${nbPlaces ? `<br/>(${nbPlaces} cv)` : ""}`;
     label.style.position = "absolute";
     label.style.top = "35%";
     label.style.left = "0";
@@ -35,32 +43,20 @@ function ajouterElement(type) {
     label.style.fontWeight = "bold";
     element.appendChild(label);
 
-    for (let i = 0; i < cv; i++) {
-      const angle = (2 * Math.PI / cv) * i;
-      const rayon = forme === 'ronde' ? 60 : 40;
-      const x = 30 + rayon * Math.cos(angle);
-      const y = 30 + rayon * Math.sin(angle);
-      const chaise = document.createElement("img");
-      chaise.src = "/static/images/plan/chaise.png";
-      chaise.className = "chaise";
-      chaise.style.position = "absolute";
-      chaise.style.left = x + "px";
-      chaise.style.top = y + "px";
-      chaise.style.width = "20px";
-      chaise.style.height = "20px";
-      element.appendChild(chaise);
-    }
-
   } else {
+    // Éléments sans numéro
     const img = document.createElement("img");
-    img.src = "/static/images/plan/" + type + ".png";
-    img.style.width = type === "bar" ? "100px" : "60px";
-    img.style.height = type === "bar" ? "40px" : "60px";
+    img.src = `/static/images/elements/${type}/${type}.png`;
+    img.style.width = "auto";
+    img.style.height = "auto";
+    img.style.maxWidth = "100px";
+    img.style.maxHeight = "100px";
     element.appendChild(img);
   }
 
   container.appendChild(element);
 
+  // Activation du drag
   interact(element).draggable({
     listeners: {
       move (event) {
@@ -78,24 +74,60 @@ function ajouterElement(type) {
 function sauvegarderPlan() {
   const elements = Array.from(document.querySelectorAll('#plan-container .element')).map(el => {
     return {
-      type: el.dataset.type,
+      type_element: el.dataset.type,
       numero: el.dataset.numero || null,
-      forme: el.dataset.forme || null,
-      nb_places: el.dataset.couverts ? parseInt(el.dataset.couverts) : null,
+      nb_places: el.dataset.nb_places ? parseInt(el.dataset.nb_places) : null,
       x: parseFloat(el.getAttribute('data-x')) || 0,
-      y: parseFloat(el.getAttribute('data-y')) || 0
+      y: parseFloat(el.getAttribute('data-y')) || 0,
+      rotation: 0,  // Tu peux gérer cela dynamiquement si tu le souhaites
+      image: el.querySelector('img')?.getAttribute('src') || ''
     };
   });
 
-  fetch("/configuration/plan_salle", {
+  fetch("/configuration/plan/save", {
     method: "POST",
     headers: {
       "Content-Type": "application/json"
     },
-    body: JSON.stringify({ tables: elements })
+    body: JSON.stringify({ elements: elements, salle_id: selectedSalleId })
   })
-  .then(res => res.json())
+  .then(res => {
+    if (!res.ok) throw new Error("Erreur API");
+    return res.json();
+  })
   .then(data => alert("Plan sauvegardé avec succès."))
   .catch(err => alert("Erreur sauvegarde: " + err));
 }
+
+function getNextNumeroDisponible() {
+  const usedNumbers = Array.from(document.querySelectorAll('#plan-container .element'))
+    .map(el => parseInt(el.dataset.numero))
+    .filter(n => !isNaN(n));
+  let numero = 1;
+  while (usedNumbers.includes(numero)) {
+    numero++;
+  }
+  return numero;
+}
+
+function onElementTypeSelect(type) {
+  const numeroInput = document.getElementById("element-numero");
+  const cvInput = document.getElementById("element-couverts");
+
+  if (type === 'objets') {
+    numeroInput.disabled = true;
+    cvInput.disabled = true;
+  } else if (type === 'tabouret') {
+    numeroInput.disabled = false;
+    cvInput.disabled = true;
+    numeroInput.value = getNextNumeroDisponible();
+    cvInput.value = '';
+  } else {
+    numeroInput.disabled = false;
+    cvInput.disabled = false;
+    numeroInput.value = getNextNumeroDisponible();
+    cvInput.value = 4;
+  }
+}
+
 </script>

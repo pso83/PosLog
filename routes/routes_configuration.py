@@ -188,22 +188,32 @@ def api_plan_salle(salle_id):
     } for e in elements])
 
 @configuration_bp.route('/configuration/plan/save', methods=['POST'])
-def save_plan_element():
-    data = request.get_json()
-    element = TablePlan(
-        salle_id=data['salle_id'],
-        type_element=data['type'],
-        image=data['image'],
-        numero=data.get('numero'),
-        nb_places=data.get('nb_places'),
-        x=data['x'],
-        y=data['y'],
-        rotation=data.get('rotation', 0)
-    )
-    db.session.add(element)
-    db.session.commit()
-    return jsonify(success=True, id=element.id)
+def save_plan_elements():
+    from models.plan_salle import TablePlan
 
+    data = request.get_json()
+    salle_id = data.get('salle_id')
+    elements = data.get('elements', [])
+
+    try:
+        TablePlan.query.filter_by(salle_id=salle_id).delete()
+
+        for el in elements:
+            db.session.add(TablePlan(
+                salle_id=salle_id,
+                type_element=el.get('type_element'),
+                image=el.get('image'),
+                numero=el.get('numero'),
+                nb_places=el.get('nb_places'),
+                x=el.get('x'),
+                y=el.get('y'),
+                rotation=el.get('rotation')
+            ))
+        db.session.commit()
+        return jsonify({'status': 'success'})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'status': 'error', 'message': str(e)}), 500
 
 @configuration_bp.route('/configuration/elements/<categorie>')
 def get_element_images(categorie):

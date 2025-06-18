@@ -8,3 +8,6 @@ class Salle(db.Model):
     plan_type = db.Column(db.Enum('restaurant', 'bar', 'plage'), nullable=False)
 
     tables = db.relationship('TablePlan', back_populates='salle', cascade='all, delete-orphan')
+
+    elements = db.relationship('TablePlan', back_populates='salle', cascade='all, delete-orphan')
+

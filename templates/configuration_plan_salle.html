@@ -59,20 +59,13 @@
       {% if salle %}
       <h4>Éditeur du plan : {{ salle.nom }}</h4>
       <div id="plan-container" class="border rounded"
-           style="position: relative; width: 100%; height: 600px; background-color: #f8f9fa;">
-
-        {% for el in elements %}
-        <img src="{{ el.image }}" class="draggable-element"
-             style="position: absolute; width: 60px; height: 60px;
-                    transform: translate({{ el.x }}px, {{ el.y }}px) rotate({{ el.rotation or 0 }}deg);"
-             data-x="{{ el.x }}" data-y="{{ el.y }}" data-rotation="{{ el.rotation or 0 }}"
-             data-type="{{ el.type_element }}">
-        {% endfor %}
-
-      </div>
+           style="position: relative; width: 100%; height: 600px; background-color: #f8f9fa;"></div>
       {% else %}
       <h4 class="text-muted">Veuillez sélectionner une salle</h4>
       {% endif %}
+    </div>
+    <div class="mt-3 text-end">
+      <button class="btn btn-success" onclick="sauvegarderPlan()">💾 Sauvegarder le plan</button>
     </div>
   </div>
 </div>
@@ -102,6 +95,15 @@
 let selectedElement = null;
 
 document.addEventListener("DOMContentLoaded", () => {
+  function getNextNumeroDisponible() {
+    const usedNumbers = Array.from(document.querySelectorAll('.draggable-element'))
+      .map(el => parseInt(el.dataset.numero))
+      .filter(n => !isNaN(n));
+    let num = 1;
+    while (usedNumbers.includes(num)) num++;
+    return num;
+  }
+
   function loadElements(categorie) {
     const container = document.getElementById('elements-container');
     const loader = document.getElementById('elements-loader');
@@ -127,35 +129,55 @@ document.addEventListener("DOMContentLoaded", () => {
             clone.style.position = 'absolute';
             clone.style.top = '100px';
             clone.style.left = '100px';
-            clone.style.width = '60px';
-            clone.style.height = '60px';
+            clone.style.width = 'auto';
+            clone.style.height = 'auto';
+            clone.style.maxWidth = '100px';
+            clone.style.maxHeight = '100px';
             clone.dataset.type = categorie;
             clone.dataset.x = 100;
             clone.dataset.y = 100;
             clone.dataset.rotation = 0;
+            if (!['objets'].includes(categorie)) {
+              clone.dataset.numero = prompt("Numéro ?", getNextNumeroDisponible());
+            }
+            if (!['objets', 'tabouret'].includes(categorie)) {
+              clone.dataset.nb_places = prompt("Nombre de couverts ?", "4");
+            }
             clone.style.transform = `translate(100px, 100px) rotate(0deg)`;
             document.getElementById('plan-container').appendChild(clone);
             makeDraggable(clone);
-
-            // Enregistrer en base
-            fetch('/configuration/plan/save', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                salle_id: {{ salle.id }},
-                type: categorie,
-                image: src,
-                x: 100,
-                y: 100,
-                rotation: 0
-              })
-            });
           });
         });
       });
   }
 
   loadElements('tables');
+
+// Chargement des éléments enregistrés pour cette salle
+fetch(`/api/plan_salle/{{ salle.id }}`)
+  .then(res => res.json())
+  .then(data => {
+    data.forEach(el => {
+      const img = document.createElement('img');
+      img.src = el.image;
+      img.className = 'draggable-element';
+      img.style.position = 'absolute';
+      img.style.width = 'auto';
+      img.style.height = 'auto';
+      img.style.maxWidth = '100px';
+      img.style.maxHeight = '100px';
+      img.dataset.type = el.type_element;
+      img.dataset.numero = el.numero || '';
+      img.dataset.nb_places = el.nb_places || '';
+      img.dataset.x = el.x;
+      img.dataset.y = el.y;
+      img.dataset.rotation = el.rotation || 0;
+      img.style.transform = `translate(${el.x}px, ${el.y}px) rotate(${el.rotation || 0}deg)`;
+      document.getElementById('plan-container').appendChild(img);
+      makeDraggable(img);
+    });
+  });
+
 
   document.querySelectorAll('[data-bs-toggle="tab"]').forEach(tab => {
     tab.addEventListener('shown.bs.tab', event => {
@@ -170,18 +192,30 @@ document.addEventListener("DOMContentLoaded", () => {
       selectedElement = e.target;
       selectedElement.style.outline = '2px dashed red';
       const type = selectedElement.dataset.type;
-      document.getElementById('numero-table').disabled = ['objet', 'plante'].includes(type);
-      document.getElementById('nb-couverts').disabled = ['objet', 'plante', 'tabouret'].includes(type);
+      document.getElementById('numero-table').disabled = ['objets'].includes(type);
+      document.getElementById('nb-couverts').disabled = ['objets', 'tabouret'].includes(type);
+      document.getElementById('numero-table').value = selectedElement.dataset.numero || '';
+      document.getElementById('nb-couverts').value = selectedElement.dataset.nb_places || '';
     }
   });
 
   document.getElementById('btn-rotation-gauche').onclick = () => {
     if (selectedElement) {
-      const rotation = (parseFloat(selectedElement.dataset.rotation) || 0) - 15;
+      let rotation = parseFloat(selectedElement.dataset.rotation) || 0;
+      rotation = (rotation - 15) % 360;
       const x = parseFloat(selectedElement.dataset.x) || 0;
       const y = parseFloat(selectedElement.dataset.y) || 0;
-      selectedElement.style.transform = `translate(${x}px, ${y}px) rotate(${rotation}deg)`;
       selectedElement.dataset.rotation = rotation;
+      selectedElement.style.transform = `translate(${x}px, ${y}px) rotate(${rotation}deg)`;
+    }
+  };
+
+  document.getElementById('btn-modifier').onclick = () => {
+    if (selectedElement) {
+      const numero = document.getElementById('numero-table').value;
+      const couverts = document.getElementById('nb-couverts').value;
+      selectedElement.dataset.numero = numero;
+      selectedElement.dataset.nb_places = couverts;
     }
   };
 
@@ -189,27 +223,62 @@ document.addEventListener("DOMContentLoaded", () => {
     if (selectedElement) {
       selectedElement.remove();
       selectedElement = null;
+      document.getElementById('numero-table').value = '';
+      document.getElementById('nb-couverts').value = '';
     }
   };
+
+  function makeDraggable(el) {
+    interact(el).draggable({
+      inertia: true,
+      modifiers: [
+        interact.modifiers.restrictRect({ restriction: 'parent', endOnly: true })
+      ],
+      listeners: {
+        move(event) {
+          const target = event.target;
+          const x = (parseFloat(target.dataset.x) || 0) + event.dx;
+          const y = (parseFloat(target.dataset.y) || 0) + event.dy;
+          const rotation = parseFloat(target.dataset.rotation) || 0;
+          target.style.transform = `translate(${x}px, ${y}px) rotate(${rotation}deg)`;
+          target.dataset.x = x;
+          target.dataset.y = y;
+        }
+      }
+    });
+  }
 });
 
-function makeDraggable(el) {
-  interact(el).draggable({
-    inertia: true,
-    modifiers: [
-      interact.modifiers.restrictRect({ restriction: 'parent', endOnly: true })
-    ],
-    listeners: {
-      move(event) {
-        const target = event.target;
-        const x = (parseFloat(target.dataset.x) || 0) + event.dx;
-        const y = (parseFloat(target.dataset.y) || 0) + event.dy;
-        const rotation = parseFloat(target.dataset.rotation) || 0;
-        target.style.transform = `translate(${x}px, ${y}px) rotate(${rotation}deg)`;
-        target.dataset.x = x;
-        target.dataset.y = y;
-      }
-    }
+function sauvegarderPlan() {
+  const salleId = {{ salle.id }};
+  const elements = Array.from(document.querySelectorAll('#plan-container .draggable-element')).map(el => {
+    return {
+      type_element: el.dataset.type,
+      numero: el.dataset.numero || null,
+      nb_places: el.dataset.nb_places ? parseInt(el.dataset.nb_places) : null,
+      x: parseFloat(el.dataset.x) || 0,
+      y: parseFloat(el.dataset.y) || 0,
+      rotation: parseFloat(el.dataset.rotation) || 0,
+      image: el.getAttribute('src')
+    };
+  });
+
+  fetch('/configuration/plan/save', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ salle_id: salleId, elements: elements })
+  })
+  .then(res => {
+    if (!res.ok) throw new Error("Erreur serveur");
+    return res.json();
+  })
+  .then(data => {
+    alert("✅ Plan sauvegardé avec succès !");
+  })
+  .catch(err => {
+    alert("❌ Erreur lors de la sauvegarde : " + err.message);
   });
 }
 </script>

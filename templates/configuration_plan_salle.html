@@ -2,219 +2,215 @@
 
 {% block content %}
 <div class="container-fluid">
-    <div class="row">
-        <!-- Liste des salles à gauche -->
-        <div class="col-md-3">
-            <h4 class="mb-3">Plans de salle</h4>
-            <ul class="list-group mb-4">
-                {% for salle_item in salles %}
-                <li class="list-group-item d-flex justify-content-between align-items-center {% if salle and salle_item.id == salle.id %}active{% endif %}">
-                    <a href="{{ url_for('configuration.configuration_plan_salle', salle_id=salle_item.id) }}"
-                       class="{% if salle and salle_item.id == salle.id %}text-white{% else %}text-dark{% endif %}">
-                        {{ salle_item.nom }} ({{ salle_item.plan_type }})
-                    </a>
-                </li>
-                {% endfor %}
-            </ul>
+  <div class="row">
+    <!-- Colonne gauche -->
+    <div class="col-md-3">
+      <h4 class="mb-3">Plans de salle</h4>
+      <ul class="list-group mb-4">
+        {% for salle_item in salles %}
+        <li class="list-group-item {% if salle and salle_item.id == salle.id %}active{% endif %}">
+          <a href="{{ url_for('configuration.configuration_plan_salle', salle_id=salle_item.id) }}"
+             class="{% if salle and salle_item.id == salle.id %}text-white{% else %}text-dark{% endif %}">
+            {{ salle_item.nom }} ({{ salle_item.plan_type }})
+          </a>
+        </li>
+        {% endfor %}
+      </ul>
+
+      <!-- Onglets éléments -->
+      <div class="card mb-3">
+        <div class="card-header bg-secondary text-white">Éléments</div>
+        <div class="card-body p-0">
+          <ul class="nav nav-tabs" id="elementTabs" role="tablist">
+            <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tables">Tables</button></li>
+            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#plage">Plage</button></li>
+            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#objets">Objets</button></li>
+          </ul>
+          <div class="tab-content p-2" style="max-height: 500px; overflow-y: auto;">
+            <div id="elements-loader" class="text-center py-3" style="display:none;">Chargement...</div>
+            <div id="elements-container" class="grid-images"></div>
+          </div>
         </div>
+      </div>
 
-        <!-- Plan + boutons à droite -->
-        <div class="col-md-9">
-            {% if salle %}
-                <h4>Éditeur du plan : {{ salle.nom }}</h4>
-
-                <div id="trash-zone" class="mt-3 text-center bg-danger text-white p-2 rounded">
-                    🗑️ Glisser ici pour supprimer un élément
-                </div>
-
-                <!-- Boutons d'ajout d’éléments -->
-                <div class="mb-3">
-                    <button class="btn btn-outline-primary me-2" data-add="table-carree">➕ Table carrée</button>
-                    <button class="btn btn-outline-primary me-2" data-add="table-ronde">➕ Table ronde</button>
-                    <button class="btn btn-outline-primary me-2" data-add="tabouret">➕ Tabouret</button>
-                    <button class="btn btn-outline-primary me-2" data-add="matelas">➕ Matelas</button>
-                    <button class="btn btn-outline-primary me-2" data-add="mur">🧱 Mur</button>
-                    <button class="btn btn-outline-primary me-2" data-add="plante">🌿 Plante</button>
-                    <button class="btn btn-outline-primary me-2" data-add="bar">🍷 Bar</button>
-                </div>
-
-                <!-- Conteneur du plan -->
-                <div id="plan-container" class="plan-container border rounded"
-                     style="position: relative; width: 100%; height: 600px; background-color: #f8f9fa;">
-                    <!-- Les éléments seront insérés ici -->
-                </div>
-            {% else %}
-                <h4 class="text-muted">Veuillez sélectionner une salle</h4>
-            {% endif %}
+      <!-- Édition -->
+      <div class="card">
+        <div class="card-header bg-secondary text-white">Édition</div>
+        <div class="card-body">
+          <div class="row g-2 mb-2">
+            <div class="col-6">
+              <input type="text" id="numero-table" class="form-control form-control-sm" placeholder="N° table" disabled>
+            </div>
+            <div class="col-6">
+              <input type="number" id="nb-couverts" class="form-control form-control-sm" placeholder="Couverts" min="1" disabled>
+            </div>
+          </div>
+          <div class="d-flex gap-2">
+            <button class="btn btn-warning btn-sm w-100" id="btn-rotation-gauche">Tourner</button>
+            <button class="btn btn-info btn-sm w-100" id="btn-modifier">Modifier</button>
+            <button class="btn btn-danger btn-sm w-100" id="btn-supprimer">Supprimer</button>
+          </div>
         </div>
+      </div>
     </div>
+
+    <!-- Colonne droite : plan -->
+    <div class="col-md-9">
+      {% if salle %}
+      <h4>Éditeur du plan : {{ salle.nom }}</h4>
+      <div id="plan-container" class="border rounded"
+           style="position: relative; width: 100%; height: 600px; background-color: #f8f9fa;">
+
+        {% for el in elements %}
+        <img src="{{ el.image }}" class="draggable-element"
+             style="position: absolute; width: 60px; height: 60px;
+                    transform: translate({{ el.x }}px, {{ el.y }}px) rotate({{ el.rotation or 0 }}deg);"
+             data-x="{{ el.x }}" data-y="{{ el.y }}" data-rotation="{{ el.rotation or 0 }}"
+             data-type="{{ el.type_element }}">
+        {% endfor %}
+
+      </div>
+      {% else %}
+      <h4 class="text-muted">Veuillez sélectionner une salle</h4>
+      {% endif %}
+    </div>
+  </div>
 </div>
 {% endblock %}
 
 {% block scripts %}
-    <script>console.log("✅ Block scripts exécuté");</script>
-    {{ super() }}
-    <script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
-    <script src="{{ url_for('static', filename='js/ajout_elements.js') }}"></script>
-
-    <script>
-// Ajouter un élément selon le type sélectionné
-function addElement(type) {
-    const container = document.getElementById('plan-container');
-    if (!container) return;
-
-    const element = document.createElement('div');
-    element.classList.add('element', 'draggable');
-    element.style.position = 'absolute';
-    element.style.top = '50px';
-    element.style.left = '50px';
-    element.style.cursor = 'move';
-    element.setAttribute('data-type', type);
-
-    switch (type) {
-        case 'table-carree':
-        case 'table-ronde':
-            element.style.width = '60px';
-            element.style.height = '60px';
-            element.style.background = 'white';
-            element.style.border = '2px solid black';
-            if (type === 'table-ronde') element.style.borderRadius = '50%';
-
-            const numero = prompt("Numéro de table ?");
-            const nbCouverts = parseInt(prompt("Nombre de couverts ?"), 10);
-
-            if (!isNaN(nbCouverts) && nbCouverts > 0) {
-                ajouterChaisesAutour(element, nbCouverts);
-            }
-
-            element.innerText = numero ? `Table ${numero}` : '';
-            break;
-
-        case 'tabouret':
-            element.style.width = '40px';
-            element.style.height = '40px';
-            element.style.background = '#aaa';
-            element.style.border = '1px solid black';
-            element.innerText = '🪑';
-            break;
-
-        case 'matelas':
-            element.style.width = '70px';
-            element.style.height = '30px';
-            element.style.background = '#f5deb3';
-            element.style.border = '1px solid #000';
-            element.innerText = '🛏️';
-            break;
-
-        case 'mur':
-            element.style.width = '150px';
-            element.style.height = '20px';
-            element.style.background = '#888';
-            element.style.border = '1px solid #000';
-            element.innerText = '🧱';
-            break;
-
-        case 'plante':
-            element.style.width = '50px';
-            element.style.height = '50px';
-            element.style.background = '#cfc';
-            element.style.borderRadius = '25px';
-            element.innerText = '🌿';
-            break;
-
-        case 'bar':
-            element.style.width = '120px';
-            element.style.height = '50px';
-            element.style.background = '#993300';
-            element.style.color = 'white';
-            element.style.textAlign = 'center';
-            element.style.lineHeight = '50px';
-            element.innerText = '🍷 Bar';
-            break;
-
-        default:
-            console.warn("Type inconnu :", type);
-            return;
-    }
-
-    container.appendChild(element);
-    makeDraggable(element);
+{{ super() }}
+<script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
+<style>
+.grid-images {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(48px, 1fr));
+  gap: 8px;
 }
-
-// Ajout de chaises autour d'une table
-function ajouterChaisesAutour(table, nbCouverts) {
-    const rayon = 35;
-    const centerX = 30;
-    const centerY = 30;
-
-    for (let i = 0; i < nbCouverts; i++) {
-        const angle = (2 * Math.PI * i) / nbCouverts;
-        const x = centerX + rayon * Math.cos(angle);
-        const y = centerY + rayon * Math.sin(angle);
-
-        const chaise = document.createElement('div');
-        chaise.innerText = '🪑';
-        chaise.style.position = 'absolute';
-        chaise.style.left = `${x}px`;
-        chaise.style.top = `${y}px`;
-        chaise.style.fontSize = '14px';
-        chaise.style.pointerEvents = 'none';
-
-        table.appendChild(chaise);
-    }
+.element-image {
+  width: 48px;
+  height: 48px;
+  cursor: pointer;
+  border: 2px solid transparent;
 }
+.element-image:hover {
+  border: 2px solid #0d6efd;
+  border-radius: 4px;
+}
+</style>
+<script>
+let selectedElement = null;
 
-// Active interact.js sur un élément
-function makeDraggable(el) {
-    interact(el).draggable({
-        inertia: true,
-        modifiers: [
-            interact.modifiers.restrictRect({
-                restriction: 'parent',
-                endOnly: true
-            })
-        ],
-        listeners: {
-            move (event) {
-                const target = event.target;
-                const x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx;
-                const y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
+document.addEventListener("DOMContentLoaded", () => {
+  function loadElements(categorie) {
+    const container = document.getElementById('elements-container');
+    const loader = document.getElementById('elements-loader');
+    container.innerHTML = '';
+    loader.style.display = 'block';
 
-                target.style.transform = `translate(${x}px, ${y}px)`;
-                target.setAttribute('data-x', x);
-                target.setAttribute('data-y', y);
-            }
-        }
-    });
+    fetch(`/configuration/elements/${categorie}`)
+      .then(res => res.json())
+      .then(data => {
+        loader.style.display = 'none';
+        container.innerHTML = '';
+        data.images.forEach(src => {
+          const img = document.createElement('img');
+          img.src = src;
+          img.className = 'element-image';
+          img.dataset.type = categorie;
+          container.appendChild(img);
 
-    // Rotation des murs uniquement
-    if (el.getAttribute('data-type') === 'mur') {
-        interact(el).gesturable({
-            listeners: {
-                move(event) {
-                    const target = event.target;
-                    const currentRotation = parseFloat(target.getAttribute('data-rotation')) || 0;
-                    const newRotation = currentRotation + event.da;
+          img.addEventListener('click', () => {
+            const clone = document.createElement('img');
+            clone.src = src;
+            clone.className = 'draggable-element';
+            clone.style.position = 'absolute';
+            clone.style.top = '100px';
+            clone.style.left = '100px';
+            clone.style.width = '60px';
+            clone.style.height = '60px';
+            clone.dataset.type = categorie;
+            clone.dataset.x = 100;
+            clone.dataset.y = 100;
+            clone.dataset.rotation = 0;
+            clone.style.transform = `translate(100px, 100px) rotate(0deg)`;
+            document.getElementById('plan-container').appendChild(clone);
+            makeDraggable(clone);
 
-                    target.style.transform += ` rotate(${event.da}deg)`;
-                    target.setAttribute('data-rotation', newRotation);
-                }
-            }
+            // Enregistrer en base
+            fetch('/configuration/plan/save', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                salle_id: {{ salle.id }},
+                type: categorie,
+                image: src,
+                x: 100,
+                y: 100,
+                rotation: 0
+              })
+            });
+          });
         });
-    }
-}
+      });
+  }
 
-// Liaison boutons -> ajout d'élément
-document.addEventListener('DOMContentLoaded', () => {
-    document.querySelectorAll('[data-add]').forEach(button => {
-        button.addEventListener('click', () => {
-            const type = button.getAttribute('data-add');
-            addElement(type);
-        });
+  loadElements('tables');
+
+  document.querySelectorAll('[data-bs-toggle="tab"]').forEach(tab => {
+    tab.addEventListener('shown.bs.tab', event => {
+      const categorie = event.target.dataset.bsTarget.replace('#', '');
+      loadElements(categorie);
     });
+  });
+
+  document.getElementById('plan-container').addEventListener('click', e => {
+    if (e.target.classList.contains('draggable-element')) {
+      if (selectedElement) selectedElement.style.outline = 'none';
+      selectedElement = e.target;
+      selectedElement.style.outline = '2px dashed red';
+      const type = selectedElement.dataset.type;
+      document.getElementById('numero-table').disabled = ['objet', 'plante'].includes(type);
+      document.getElementById('nb-couverts').disabled = ['objet', 'plante', 'tabouret'].includes(type);
+    }
+  });
+
+  document.getElementById('btn-rotation-gauche').onclick = () => {
+    if (selectedElement) {
+      const rotation = (parseFloat(selectedElement.dataset.rotation) || 0) - 15;
+      const x = parseFloat(selectedElement.dataset.x) || 0;
+      const y = parseFloat(selectedElement.dataset.y) || 0;
+      selectedElement.style.transform = `translate(${x}px, ${y}px) rotate(${rotation}deg)`;
+      selectedElement.dataset.rotation = rotation;
+    }
+  };
+
+  document.getElementById('btn-supprimer').onclick = () => {
+    if (selectedElement) {
+      selectedElement.remove();
+      selectedElement = null;
+    }
+  };
 });
+
+function makeDraggable(el) {
+  interact(el).draggable({
+    inertia: true,
+    modifiers: [
+      interact.modifiers.restrictRect({ restriction: 'parent', endOnly: true })
+    ],
+    listeners: {
+      move(event) {
+        const target = event.target;
+        const x = (parseFloat(target.dataset.x) || 0) + event.dx;
+        const y = (parseFloat(target.dataset.y) || 0) + event.dy;
+        const rotation = parseFloat(target.dataset.rotation) || 0;
+        target.style.transform = `translate(${x}px, ${y}px) rotate(${rotation}deg)`;
+        target.dataset.x = x;
+        target.dataset.y = y;
+      }
+    }
+  });
+}
 </script>
-
 {% endblock %}
-
-

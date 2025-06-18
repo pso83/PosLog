@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, redirect, url_for, request, jsonify
+from flask import Blueprint, render_template, redirect, url_for, request, jsonify, current_app
 from models.utilisateur import Utilisateur
 from models.profil import Profil
 from models.clavier import Clavier
@@ -9,6 +9,7 @@ from models.peripherique import Peripherique
 from models.plan_salle import TablePlan
 from extensions import db
 from models.Salle import Salle
+import os
 
 configuration_bp = Blueprint('configuration', __name__)
 
@@ -167,8 +168,8 @@ def configuration_plan_salle(salle_id):
         db.session.commit()
         return jsonify({'status': 'ok'})
 
-    tables = TablePlan.query.filter_by(salle_id=salle_id).all()
-    return render_template('configuration_plan_salle.html', salles=salles, salle=salle, salle_id=salle.id, tables=tables)
+    elements = TablePlan.query.filter_by(salle_id=salle_id).all()
+    return render_template('configuration_plan_salle.html', salle=salle, salles=salles, elements=elements)
 
 @configuration_bp.route('/api/plan_salle/<int:salle_id>')
 def api_plan_salle(salle_id):
@@ -186,21 +187,35 @@ def api_plan_salle(salle_id):
         "hauteur": e.hauteur
     } for e in elements])
 
-@configuration_bp.route('/configuration/save_plan_element', methods=['POST'])
+@configuration_bp.route('/configuration/plan/save', methods=['POST'])
 def save_plan_element():
-    data = request.json
+    data = request.get_json()
     element = TablePlan(
-        salle_id=data.get('salle_id'),
-        type_element=data.get('type'),
+        salle_id=data['salle_id'],
+        type_element=data['type'],
+        image=data['image'],
         numero=data.get('numero'),
         nb_places=data.get('nb_places'),
-        x=data.get('x'),
-        y=data.get('y'),
-        rotation=data.get('rotation', 0.0)
+        x=data['x'],
+        y=data['y'],
+        rotation=data.get('rotation', 0)
     )
     db.session.add(element)
     db.session.commit()
-    return jsonify(success=True)
+    return jsonify(success=True, id=element.id)
+
+
+@configuration_bp.route('/configuration/elements/<categorie>')
+def get_element_images(categorie):
+    base_dir = os.path.join(current_app.static_folder, 'images', 'elements', categorie)
+    if not os.path.isdir(base_dir):
+        return jsonify(images=[])
+
+    images = []
+    for file in os.listdir(base_dir):
+        if file.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.webp')):
+            images.append(f'/static/images/elements/{categorie}/{file}')
+    return jsonify(images=images)
 
 # ---- Ticket ----
 @configuration_bp.route('/configuration/ticket', methods=['GET', 'POST'])

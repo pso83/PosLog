@@ -1,3 +1,4 @@
+
 from extensions import db
 
 class Profil(db.Model):

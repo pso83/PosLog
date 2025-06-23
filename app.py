@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, render_template, redirect, url_for, request, session
 from config import Config
 from extensions import db
 from routes_static_pages import register_static_pages
@@ -27,6 +27,8 @@ from models.vente import Vente
 from models.vente_detail import VenteDetail
 from models.bouton_clavier import BoutonClavier
 from models.imprimante import Imprimante
+from routes.routes_auth import auth_bp
+
 
 # Routes principales
 from routes.routes_programmation import register_routes, programmation_bp, register_programmation_routes
@@ -65,10 +67,12 @@ app.register_blueprint(clavier_bp, url_prefix="/clavier")
 app.register_blueprint(familles_bp)
 #app.register_blueprint(configuration_bp)
 
+app.register_blueprint(auth_bp)
+
 # Route racine
 @app.route('/')
-def index():
-    return '<h3>Bienvenue sur le système d’encaissement</h3><a href="/dashboard">Accéder au tableau de bord</a>'
+def loading():
+    return render_template('loading.html')
 
 # Lancement
 if __name__ == '__main__':

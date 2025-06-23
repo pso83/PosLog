@@ -7,8 +7,9 @@
 </head>
 <body class="p-4 bg-light">
   <div class="container">
+    <a href="{{ url_for('auth.logout') }}" class="btn btn-danger">Déconnexion</a>
     <h2 class="mb-4">Tableau de bord</h2>
-
+    <h4>Bienvenue, {{ utilisateur }}</h4>
     <div class="row mb-4">
       <div class="col-md-3">
         <div class="card text-white bg-success">
@@ -105,4 +106,21 @@
     </div>
   </div>
 </body>
+<script>
+let inactivityDelay = {{ timeout_minutes * 60 * 1000 }} || 15 * 60 * 1000;
+let inactivityTimer;
+
+function resetTimer() {
+  clearTimeout(inactivityTimer);
+  inactivityTimer = setTimeout(() => {
+    window.location.href = "{{ url_for('auth.logout') }}";
+  }, inactivityDelay);
+}
+
+['click', 'mousemove', 'keydown', 'scroll'].forEach(evt => {
+  window.addEventListener(evt, resetTimer);
+});
+
+resetTimer();
+</script>
 </html>

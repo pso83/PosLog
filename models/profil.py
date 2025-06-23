@@ -43,4 +43,6 @@ class Profil(db.Model):
     supprimer_carte_cadeau = db.Column(db.Boolean, default=False)
     supprimer_avoir = db.Column(db.Boolean, default=False)
 
+    timeout = db.Column(db.Integer, default=5)
+
     utilisateurs = db.relationship('Utilisateur', back_populates='profil')

@@ -1,4 +1,3 @@
-
 from flask import Flask, render_template, redirect, url_for, request, session
 from config import Config
 from extensions import db
@@ -29,7 +28,6 @@ from models.vente_detail import VenteDetail
 from models.bouton_clavier import BoutonClavier
 from models.imprimante import Imprimante
 from routes.routes_auth import auth_bp
-
 
 # Routes principales
 from routes.routes_programmation import register_routes, programmation_bp, register_programmation_routes

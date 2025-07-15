@@ -7,6 +7,7 @@ from models.ticket_config import TicketConfig
 from models.reseau import Reseau
 from models.peripherique import Peripherique
 from models.plan_salle import TablePlan
+from utils.auth import login_required
 from extensions import db
 from models.Salle import Salle
 import os
@@ -105,7 +106,8 @@ def configuration_imprimantes():
 # ---- Plans de salle ----
 
 # Affiche la liste des salles (page avec la liste à gauche)
-@configuration_bp.route('/configuration/salles', methods=['GET', 'POST'])
+@configuration_bp.route('/configuration/salles', methods=['GET'])
+@login_required
 def configuration_salles():
     salles = Salle.query.all()
     return render_template('configuration_salles.html', salles=salles)
@@ -142,75 +144,117 @@ def delete_salle(salle_id):
 
 
 # Affichage du plan d'une salle et enregistrement des éléments via POST (AJAX)
-@configuration_bp.route('/configuration/plan_salle/<int:salle_id>', methods=['GET', 'POST'], endpoint='configuration_plan_salle')
+@configuration_bp.route('/configuration/plan_salle/<int:salle_id>', methods=['GET', 'POST'])
+@login_required
 def configuration_plan_salle(salle_id):
     salle = Salle.query.get_or_404(salle_id)
-    salles = Salle.query.all()  # ✅ Ajoute cette ligne pour alimenter la liste des salles
 
     if request.method == 'POST':
-        data = request.get_json()
-        TablePlan.query.filter_by(salle_id=salle_id).delete()
-        for table in data.get('tables', []):
-            t = TablePlan(
-                plan_type=salle.plan_type,
-                type_element=table['type_element'],
-                nom_element=table.get('nom_element'),
-                numero=table['numero'],
-                nb_places=table.get('nb_places'),
-                forme=table.get('forme'),
-                x=table['x'],
-                y=table['y'],
-                largeur=table['largeur'],
-                hauteur=table['hauteur'],
-                salle_id=salle_id
-            )
-            db.session.add(t)
-        db.session.commit()
-        return jsonify({'status': 'ok'})
+        data = request.get_json() or {}
+        # On suppose que le payload est { "tables": [ {...}, {...} ] }
+        tables_data = data.get('tables', [])
 
-    elements = TablePlan.query.filter_by(salle_id=salle_id).all()
-    return render_template('configuration_plan_salle.html', salle=salle, salles=salles, elements=elements)
+        # On supprime l'ancien plan
+        TablePlan.query.filter_by(salle_id=salle_id).delete()
+
+        for tab in tables_data:
+            # on accepte soit 'type' soit 'type_element'
+            type_element = tab.get('type') or tab.get('type_element')
+            filename     = tab.get('filename')
+            x            = tab.get('x', 0)
+            y            = tab.get('y', 0)
+            rotation     = tab.get('rotation', 0)
+            numero       = tab.get('numero')
+            nb_places    = tab.get('nb_places')
+
+            tp = TablePlan(
+                type_element = type_element,
+                filename     = filename,
+                x            = x,
+                y            = y,
+                rotation     = rotation,
+                numero       = numero,
+                nb_places    = nb_places,
+                salle_id     = salle_id
+            )
+            db.session.add(tp)
+
+        db.session.commit()
+        return jsonify(status='ok')
+
+    # en GET, on renvoie la page + les items existants
+    items = [{
+        'type': tp.type_element,
+        'filename': tp.image,  # ← on récupère maintenant tp.image
+        'x': tp.x,
+        'y': tp.y,
+        'rotation': tp.rotation,
+        'numero': tp.numero,
+        'nb_places': tp.nb_places
+    } for tp in TablePlan.query.filter_by(salle_id=salle_id).all()]
+
+    salles = Salle.query.all()
+    return render_template(
+        'configuration_plan_salle.html',
+        salles      = salles,
+        salle       = salle,
+        items       = items
+    )
+
 
 @configuration_bp.route('/api/plan_salle/<int:salle_id>')
+@login_required
 def api_plan_salle(salle_id):
+    """
+    Renvoie le plan enregistré au format JSON.
+    """
     elements = TablePlan.query.filter_by(salle_id=salle_id).all()
-    return jsonify([{
-        "id": e.id,
-        "type_element": e.type_element,
-        "nom_element": e.nom_element,
-        "numero": e.numero,
-        "nb_places": e.nb_places,
-        "forme": e.forme,
-        "x": e.x,
-        "y": e.y,
-        "largeur": e.largeur,
-        "hauteur": e.hauteur
-    } for e in elements])
+    return jsonify([
+        {
+            'id':            e.id,
+            'type_element':  e.type_element,
+            # on renvoie le chemin complet pour l'affichage côté client
+            'image':         url_for('static',
+                                    filename=f'images/elements/{e.type_element}/{e.image}'),
+            'numero':        e.numero,
+            'nb_places':     e.nb_places,
+            'rotation':      e.rotation,
+            'x':             e.x,
+            'y':             e.y
+        }
+        for e in elements
+    ])
 
 @configuration_bp.route('/configuration/plan/save', methods=['POST'])
 def save_plan_elements():
-    from models.plan_salle import TablePlan
-
-    data = request.get_json()
+    """
+    Reçoit JSON { salle_id, elements: [...] } et remplace en base.
+    """
+    data     = request.get_json() or {}
     salle_id = data.get('salle_id')
     elements = data.get('elements', [])
 
     try:
+        # On supprime l’ancien
         TablePlan.query.filter_by(salle_id=salle_id).delete()
 
+        # On ré-insère chaque élément
         for el in elements:
-            db.session.add(TablePlan(
-                salle_id=salle_id,
-                type_element=el.get('type_element'),
-                image=el.get('image'),
-                numero=el.get('numero'),
-                nb_places=el.get('nb_places'),
-                x=el.get('x'),
-                y=el.get('y'),
-                rotation=el.get('rotation')
-            ))
+            tp = TablePlan(
+                salle_id     = salle_id,
+                type_element = el.get('type_element'),
+                image        = el.get('image').rsplit('/', 1)[-1],  # n’en garder que le nom de fichier
+                numero       = el.get('numero'),
+                nb_places    = el.get('nb_places'),
+                rotation     = el.get('rotation', 0),
+                x            = el.get('x'),
+                y            = el.get('y')
+            )
+            db.session.add(tp)
+
         db.session.commit()
         return jsonify({'status': 'success'})
+
     except Exception as e:
         db.session.rollback()
         return jsonify({'status': 'error', 'message': str(e)}), 500

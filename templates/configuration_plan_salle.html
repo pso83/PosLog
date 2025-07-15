@@ -7,279 +7,314 @@
     <div class="col-md-3">
       <h4 class="mb-3">Plans de salle</h4>
       <ul class="list-group mb-4">
-        {% for salle_item in salles %}
-        <li class="list-group-item {% if salle and salle_item.id == salle.id %}active{% endif %}">
-          <a href="{{ url_for('configuration.configuration_plan_salle', salle_id=salle_item.id) }}"
-             class="{% if salle and salle_item.id == salle.id %}text-white{% else %}text-dark{% endif %}">
-            {{ salle_item.nom }} ({{ salle_item.plan_type }})
-          </a>
-        </li>
-        {% endfor %}
-      </ul>
+  {% for salle_item in salles %}
+  <li class="list-group-item d-flex justify-content-between align-items-center
+             {% if salle and salle_item.id == salle.id %}active{% endif %}">
+    <a href="{{ url_for('configuration.configuration_plan_salle', salle_id=salle_item.id) }}"
+       class="flex-grow-1 {% if salle and salle_item.id == salle.id %}text-white{% else %}text-dark{% endif %}">
+      {{ salle_item.nom }} ({{ salle_item.plan_type }})
+    </a>
+    <form method="POST"
+          action="{{ url_for('configuration.delete_salle', salle_id=salle_item.id) }}"
+          onsubmit="return confirm('Supprimer la salle « {{ salle_item.nom }} » ?');">
+      <button type="submit" class="btn btn-sm btn-danger ms-2">
+        🗑️
+      </button>
+    </form>
+  </li>
+  {% endfor %}
+</ul>
 
-      <!-- Onglets éléments -->
+
+      <!-- Palette d'éléments -->
       <div class="card mb-3">
         <div class="card-header bg-secondary text-white">Éléments</div>
         <div class="card-body p-0">
           <ul class="nav nav-tabs" id="elementTabs" role="tablist">
-            <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tables">Tables</button></li>
-            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#plage">Plage</button></li>
-            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#objets">Objets</button></li>
+            <li class="nav-item">
+              <button class="nav-link active" data-categorie="tables">Tables</button>
+            </li>
+            <li class="nav-item">
+              <button class="nav-link" data-categorie="plage">Plage</button>
+            </li>
+            <li class="nav-item">
+              <button class="nav-link" data-categorie="objets">Objets</button>
+            </li>
           </ul>
-          <div class="tab-content p-2" style="max-height: 500px; overflow-y: auto;">
+          <div class="tab-content p-2" style="max-height: 400px; overflow-y: auto;">
             <div id="elements-loader" class="text-center py-3" style="display:none;">Chargement...</div>
             <div id="elements-container" class="grid-images"></div>
           </div>
         </div>
       </div>
 
-      <!-- Édition -->
+      <!-- Outils d'édition -->
       <div class="card">
         <div class="card-header bg-secondary text-white">Édition</div>
         <div class="card-body">
           <div class="row g-2 mb-2">
             <div class="col-6">
-              <input type="text" id="numero-table" class="form-control form-control-sm" placeholder="N° table" disabled>
+              <input type="text" id="numero-table" class="form-control form-control-sm"
+                     placeholder="N° table" disabled>
             </div>
             <div class="col-6">
-              <input type="number" id="nb-couverts" class="form-control form-control-sm" placeholder="Couverts" min="1" disabled>
+              <input type="number" id="nb-couverts" class="form-control form-control-sm"
+                     placeholder="Couverts" min="1" disabled>
             </div>
           </div>
           <div class="d-flex gap-2">
-            <button class="btn btn-warning btn-sm w-100" id="btn-rotation-gauche">Tourner</button>
-            <button class="btn btn-info btn-sm w-100" id="btn-modifier">Modifier</button>
-            <button class="btn btn-danger btn-sm w-100" id="btn-supprimer">Supprimer</button>
+            <button id="btn-rotation-gauche" class="btn btn-warning btn-sm w-100">Tourner</button>
+            <button id="btn-modifier"        class="btn btn-info    btn-sm w-100">Modifier</button>
+            <button id="btn-supprimer"       class="btn btn-danger  btn-sm w-100">Supprimer</button>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Colonne droite : plan -->
+    <!-- Colonne droite : éditeur de plan -->
     <div class="col-md-9">
       {% if salle %}
-      <h4>Éditeur du plan : {{ salle.nom }}</h4>
-      <div id="plan-container" class="border rounded"
-           style="position: relative; width: 100%; height: 600px; background-color: #f8f9fa;"></div>
+        <h4>Éditeur du plan : {{ salle.nom }}</h4>
+        <div id="plan-container" class="border rounded"
+             style="position: relative; width: 100%; height: 600px; background-color: #f8f9fa;">
+        </div>
+        <div class="mt-3 text-end">
+          <button id="save-btn" class="btn btn-success">💾 Sauvegarder le plan</button>
+        </div>
       {% else %}
-      <h4 class="text-muted">Veuillez sélectionner une salle</h4>
+        <h4 class="text-muted">Veuillez sélectionner une salle</h4>
       {% endif %}
-    </div>
-    <div class="mt-3 text-end">
-      <button class="btn btn-success" onclick="sauvegarderPlan()">💾 Sauvegarder le plan</button>
     </div>
   </div>
 </div>
 {% endblock %}
 
 {% block scripts %}
-{{ super() }}
-<script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
-<style>
-.grid-images {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(48px, 1fr));
-  gap: 8px;
+  {{ super() }}
+  <script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
+  <script>
+  document.addEventListener("DOMContentLoaded", () => {
+    if (!{{ 'true' if salle else 'false' }}) return;
+
+    const STATIC_ROOT = "{{ url_for('static', filename='') }}";
+    const planImage   = "{{ salle.plan_image }}";
+    const salleId     = {{ salle.id }};
+    const container   = document.getElementById('plan-container');
+    let scaleX = 1, scaleY = 1, selectedElement = null;
+
+    // 1) Afficher immédiatement tout ce qui vient de la base
+    function renderExistingItems() {
+  const items = {{ items|tojson }};
+  // On vide d’abord le conteneur
+  container.innerHTML = '';
+
+  items.forEach(e => {
+    const img = new Image();
+    img.src       = STATIC_ROOT + "images/elements/" + e.type + "/" + e.filename;
+    img.className = 'draggable-element';
+
+    // **ABSOLUTE** pour que left/top soient pris en compte
+    img.style.position = 'absolute';
+
+    // on calcule x,y avec le scale
+    const px = e.x * scaleX,
+          py = e.y * scaleY;
+    img.style.left   = px + 'px';
+    img.style.top    = py + 'px';
+    img.style.transformOrigin = 'center center';
+    img.style.transform       = `rotate(${e.rotation||0}deg)`;
+
+    // data-attributes
+    img.dataset.x         = px;
+    img.dataset.y         = py;
+    img.dataset.type      = e.type;
+    img.dataset.filename  = e.filename;
+    img.dataset.rotation  = e.rotation || 0;
+    img.dataset.numero    = e.numero   || '';
+    img.dataset.nb_places = e.nb_places|| '';
+
+    container.appendChild(img);
+    makeDraggable(img);  // ← on rend chaque image drag-able
+  });
 }
-.element-image {
-  width: 48px;
-  height: 48px;
-  cursor: pointer;
-  border: 2px solid transparent;
-}
-.element-image:hover {
-  border: 2px solid #0d6efd;
-  border-radius: 4px;
-}
-</style>
-<script>
-let selectedElement = null;
 
-document.addEventListener("DOMContentLoaded", () => {
-  function getNextNumeroDisponible() {
-    const usedNumbers = Array.from(document.querySelectorAll('.draggable-element'))
-      .map(el => parseInt(el.dataset.numero))
-      .filter(n => !isNaN(n));
-    let num = 1;
-    while (usedNumbers.includes(num)) num++;
-    return num;
-  }
+    // 2) Charger la palette
+    function loadElements(categorie) {
+      const cont   = document.getElementById('elements-container');
+      const loader = document.getElementById('elements-loader');
+      cont.innerHTML = '';
+      loader.style.display = 'block';
+      fetch(`/configuration/elements/${categorie}`)
+        .then(r => r.json())
+        .then(json => {
+          loader.style.display = 'none';
+          cont.innerHTML = '';
+          json.images.forEach(src => {
+            const ico = document.createElement('img');
+            ico.src = src;
+            ico.className = 'element-image';
+            ico.dataset.type = categorie;
+            cont.append(ico);
+            ico.onclick = () => {
+              const clone = new Image();
+              clone.src = src;
+              clone.className = 'draggable-element';
 
-  function loadElements(categorie) {
-    const container = document.getElementById('elements-container');
-    const loader = document.getElementById('elements-loader');
-    container.innerHTML = '';
-    loader.style.display = 'block';
+              // **IMPORTANT** : idem, dataset un par un
+              clone.dataset.type      = categorie;
+              clone.dataset.filename  = src.split('/').pop();
+              clone.dataset.x         = 50;
+              clone.dataset.y         = 50;
+              clone.dataset.rotation  = 0;
+              clone.dataset.numero    = categorie!=='objets'
+                                        ? prompt("Numéro ?", "")
+                                        : '';
+              clone.dataset.nb_places = categorie!=='objets'
+                                        ? prompt("Couverts ?", "4")
+                                        : '';
 
-    fetch(`/configuration/elements/${categorie}`)
-      .then(res => res.json())
-      .then(data => {
-        loader.style.display = 'none';
-        container.innerHTML = '';
-        data.images.forEach(src => {
-          const img = document.createElement('img');
-          img.src = src;
-          img.className = 'element-image';
-          img.dataset.type = categorie;
-          container.appendChild(img);
-
-          img.addEventListener('click', () => {
-            const clone = document.createElement('img');
-            clone.src = src;
-            clone.className = 'draggable-element';
-            clone.style.position = 'absolute';
-            clone.style.top = '100px';
-            clone.style.left = '100px';
-            clone.style.width = 'auto';
-            clone.style.height = 'auto';
-            clone.style.maxWidth = '100px';
-            clone.style.maxHeight = '100px';
-            clone.dataset.type = categorie;
-            clone.dataset.x = 100;
-            clone.dataset.y = 100;
-            clone.dataset.rotation = 0;
-            if (!['objets'].includes(categorie)) {
-              clone.dataset.numero = prompt("Numéro ?", getNextNumeroDisponible());
-            }
-            if (!['objets', 'tabouret'].includes(categorie)) {
-              clone.dataset.nb_places = prompt("Nombre de couverts ?", "4");
-            }
-            clone.style.transform = `translate(100px, 100px) rotate(0deg)`;
-            document.getElementById('plan-container').appendChild(clone);
-            makeDraggable(clone);
+              clone.style.position = 'absolute';
+              clone.style.left = '50px';
+              clone.style.top  = '50px';
+              container.appendChild(clone);
+              makeDraggable(clone);
+            };
           });
         });
-      });
-  }
+    }
 
-  loadElements('tables');
+    // 3) On affiche d’abord
+    renderExistingItems();
+    loadElements('tables');
 
-// Chargement des éléments enregistrés pour cette salle
-fetch(`/api/plan_salle/{{ salle.id }}`)
-  .then(res => res.json())
-  .then(data => {
-    data.forEach(el => {
-      const img = document.createElement('img');
-      img.src = el.image;
-      img.className = 'draggable-element';
-      img.style.position = 'absolute';
-      img.style.width = 'auto';
-      img.style.height = 'auto';
-      img.style.maxWidth = '100px';
-      img.style.maxHeight = '100px';
-      img.dataset.type = el.type_element;
-      img.dataset.numero = el.numero || '';
-      img.dataset.nb_places = el.nb_places || '';
-      img.dataset.x = el.x;
-      img.dataset.y = el.y;
-      img.dataset.rotation = el.rotation || 0;
-      img.style.transform = `translate(${el.x}px, ${el.y}px) rotate(${el.rotation || 0}deg)`;
-      document.getElementById('plan-container').appendChild(img);
-      makeDraggable(img);
-    });
+    // 2) On branche les onglets en s’appuyant sur data-categorie
+document.querySelectorAll('#elementTabs button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    // bascule l’onglet actif
+    document
+      .querySelectorAll('#elementTabs .nav-link')
+      .forEach(n => n.classList.remove('active'));
+    btn.classList.add('active');
+
+    // récupère la catégorie depuis data-categorie
+    const categorie = btn.dataset.categorie;
+    loadElements(categorie);
   });
+});
 
 
-  document.querySelectorAll('[data-bs-toggle="tab"]').forEach(tab => {
-    tab.addEventListener('shown.bs.tab', event => {
-      const categorie = event.target.dataset.bsTarget.replace('#', '');
-      loadElements(categorie);
-    });
-  });
+    // 4) Ensuite on ajuste le plan de fond pour le scale
+    const bg = new Image();
+    bg.src = "{{ url_for('static', filename='images/plans/' + salle.plan_image) }}";
+    bg.onload = () => {
+      container.style.backgroundImage  = `url('${bg.src}')`;
+      container.style.backgroundSize   = '100% 100%';
+      container.style.backgroundRepeat = 'no-repeat';
 
-  document.getElementById('plan-container').addEventListener('click', e => {
-    if (e.target.classList.contains('draggable-element')) {
+      const natW = bg.naturalWidth, natH = bg.naturalHeight;
+      const cW   = container.clientWidth;
+      const cH   = Math.round(cW * natH / natW);
+      container.style.height = cH + 'px';
+      scaleX = cW / natW;
+      scaleY = cH / natH;
+
+      // on ré-affiche avec le scale correct
+      container.innerHTML = '';
+      renderExistingItems();
+    };
+    bg.onerror = () => console.warn("Plan introuvable :", bg.src);
+
+    // 5) Sélection / édition
+    container.addEventListener('click', ev => {
+      if (!ev.target.classList.contains('draggable-element')) return;
       if (selectedElement) selectedElement.style.outline = 'none';
-      selectedElement = e.target;
+      selectedElement = ev.target;
       selectedElement.style.outline = '2px dashed red';
-      const type = selectedElement.dataset.type;
-      document.getElementById('numero-table').disabled = ['objets'].includes(type);
-      document.getElementById('nb-couverts').disabled = ['objets', 'tabouret'].includes(type);
-      document.getElementById('numero-table').value = selectedElement.dataset.numero || '';
-      document.getElementById('nb-couverts').value = selectedElement.dataset.nb_places || '';
-    }
-  });
 
-  document.getElementById('btn-rotation-gauche').onclick = () => {
-    if (selectedElement) {
-      let rotation = parseFloat(selectedElement.dataset.rotation) || 0;
-      rotation = (rotation - 15) % 360;
-      const x = parseFloat(selectedElement.dataset.x) || 0;
-      const y = parseFloat(selectedElement.dataset.y) || 0;
-      selectedElement.dataset.rotation = rotation;
-      selectedElement.style.transform = `translate(${x}px, ${y}px) rotate(${rotation}deg)`;
-    }
-  };
+      document.getElementById('numero-table').disabled  = false;
+      document.getElementById('nb-couverts').disabled  = false;
+      document.getElementById('numero-table').value     = selectedElement.dataset.numero;
+      document.getElementById('nb-couverts').value     = selectedElement.dataset.nb_places;
+    });
 
-  document.getElementById('btn-modifier').onclick = () => {
-    if (selectedElement) {
-      const numero = document.getElementById('numero-table').value;
-      const couverts = document.getElementById('nb-couverts').value;
-      selectedElement.dataset.numero = numero;
-      selectedElement.dataset.nb_places = couverts;
+    // 6) Drag & Drop puis boutons (makeDraggable + rotation, modif, suppression)
+    function makeDraggable(el) {
+      interact(el).draggable({
+        inertia: true,
+        modifiers: [ interact.modifiers.restrictRect({ restriction: 'parent', endOnly: true }) ],
+        listeners: {
+          move(event) {
+            const t  = event.target;
+            const nx = (parseFloat(t.dataset.x)||0) + event.dx;
+            const ny = (parseFloat(t.dataset.y)||0) + event.dy;
+            t.style.left = nx + 'px';
+            t.style.top  = ny + 'px';
+            t.dataset.x  = nx;
+            t.dataset.y  = ny;
+          }
+        }
+      });
     }
-  };
 
-  document.getElementById('btn-supprimer').onclick = () => {
-    if (selectedElement) {
+    // applique le drag à tous les éléments déjà rendus
+    // document.querySelectorAll('.draggable-element').forEach(makeDraggable);
+
+    document.getElementById('btn-rotation-gauche').onclick = () => {
+      if (!selectedElement) return;
+      let r = (parseFloat(selectedElement.dataset.rotation)||0) - 15;
+      selectedElement.dataset.rotation = r;
+      selectedElement.style.transform = `rotate(${r}deg)`;
+    };
+    document.getElementById('btn-modifier').onclick = () => {
+      if (!selectedElement) return;
+      selectedElement.dataset.numero    = document.getElementById('numero-table').value;
+      selectedElement.dataset.nb_places = document.getElementById('nb-couverts').value;
+    };
+    document.getElementById('btn-supprimer').onclick = () => {
+      if (!selectedElement) return;
       selectedElement.remove();
       selectedElement = null;
       document.getElementById('numero-table').value = '';
       document.getElementById('nb-couverts').value = '';
-    }
-  };
+    };
 
-  function makeDraggable(el) {
-    interact(el).draggable({
-      inertia: true,
-      modifiers: [
-        interact.modifiers.restrictRect({ restriction: 'parent', endOnly: true })
-      ],
-      listeners: {
-        move(event) {
-          const target = event.target;
-          const x = (parseFloat(target.dataset.x) || 0) + event.dx;
-          const y = (parseFloat(target.dataset.y) || 0) + event.dy;
-          const rotation = parseFloat(target.dataset.rotation) || 0;
-          target.style.transform = `translate(${x}px, ${y}px) rotate(${rotation}deg)`;
-          target.dataset.x = x;
-          target.dataset.y = y;
-        }
-      }
-    });
-  }
-});
+    // 7) Sauvegarde
+    document.getElementById('save-btn').onclick = () => {
+      console.log(JSON.stringify({
+        salle_id: salleId,
+        elements: Array.from(container.querySelectorAll('.draggable-element')).map(el => ({
+          type_element: el.dataset.type,
+          image:        el.src,
+          numero:       el.dataset.numero || null,
+          nb_places:    el.dataset.nb_places ? parseInt(el.dataset.nb_places) : null,
+          rotation:     parseFloat(el.dataset.rotation) || 0,
+          x:            parseFloat(el.dataset.x),
+          y:            parseFloat(el.dataset.y)
+        }))
+      }, null, 2));
 
-function sauvegarderPlan() {
-  const salleId = {{ salle.id }};
-  const elements = Array.from(document.querySelectorAll('#plan-container .draggable-element')).map(el => {
-    return {
-      type_element: el.dataset.type,
-      numero: el.dataset.numero || null,
-      nb_places: el.dataset.nb_places ? parseInt(el.dataset.nb_places) : null,
-      x: parseFloat(el.dataset.x) || 0,
-      y: parseFloat(el.dataset.y) || 0,
-      rotation: parseFloat(el.dataset.rotation) || 0,
-      image: el.getAttribute('src')
+      fetch('/configuration/plan/save', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({
+          salle_id: salleId,
+          elements: Array.from(container.querySelectorAll('.draggable-element')).map(el => ({
+            type_element: el.dataset.type,
+            image:        el.src,
+            numero:       el.dataset.numero || null,
+            nb_places:    el.dataset.nb_places ? parseInt(el.dataset.nb_places) : null,
+            rotation:     parseFloat(el.dataset.rotation) || 0,
+            x:            parseFloat(el.dataset.x),
+            y:            parseFloat(el.dataset.y)
+          }))
+        })
+      })
+      .then(r => r.json())
+      .then(j => j.status==='success'
+          ? alert("✅ Plan enregistré !")
+          : alert("❌ Erreur : "+j.message))
+      .catch(e => { console.error(e); alert("❌ Impossible de sauvegarder"); });
     };
   });
-
-  fetch('/configuration/plan/save', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({ salle_id: salleId, elements: elements })
-  })
-  .then(res => {
-    if (!res.ok) throw new Error("Erreur serveur");
-    return res.json();
-  })
-  .then(data => {
-    alert("✅ Plan sauvegardé avec succès !");
-  })
-  .catch(err => {
-    alert("❌ Erreur lors de la sauvegarde : " + err.message);
-  });
-}
-</script>
+  </script>
 {% endblock %}

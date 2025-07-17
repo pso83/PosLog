@@ -7,6 +7,11 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <!-- Clavier CSS -->
   <link rel="stylesheet" href="/static/css/keyboard.css">
+  <!-- Injection de l'ID clavier utilisateur -->
+  <script>
+  // côté JS, USER_KEYBOARD_ID vaut bien l’ID de l’utilisateur
+  const USER_KEYBOARD_ID = {{ user_keyboard_id }};
+</script>
   <style>
     body { width: 1024px; height: 768px; overflow: hidden; }
     .container-fluid { height: 100vh; display: flex; }
@@ -42,7 +47,6 @@
     </div>
     <div class="right-panel">
       <h5>Clavier</h5>
-      <!-- Chargement dynamique du clavier configuré pour l'utilisateur -->
       <div id="keyboard-container"></div>
     </div>
   </div>
@@ -50,15 +54,40 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      fetch('/clavier/programmation/claviers')
-  .then(response => {
-    if (!response.ok) throw new Error(response.statusText);
-    return response.text();
-  })
-  .then(html => {
-    document.getElementById('keyboard-container').innerHTML = html;
-  })
-  .catch(err => console.error('Erreur chargement clavier :', err));
+      const container = document.getElementById('keyboard-container');
+
+      // Récupération de l'ID du clavier vente
+      const clavierId = window.USER_KEYBOARD_ID;
+      if (!clavierId) {
+        console.error('Aucun clavier_id utilisateur défini.');
+        container.innerHTML = '<p class="text-danger">Clavier introuvable.</p>';
+        return;
+      }
+
+      // Chargement du template clavier de vente
+      fetch(`/clavier/vente?clavier_id=${clavierId}`)
+        .then(response => {
+          if (!response.ok) throw new Error(`Erreur ${response.status} : ${response.statusText}`);
+          return response.text();
+        })
+        .then(html => {
+          container.innerHTML = html;
+          // Masquer les boutons non programmés (data-programmed="false")
+          container.querySelectorAll('button').forEach(btn => {
+            if (btn.dataset.programmed !== 'true') {
+              btn.style.display = 'none';
+            }
+          });
+          // Liaison des événements du clavier en mode vente
+          if (typeof bindSaleKeyboard === 'function') {
+            bindSaleKeyboard(container);
+          }
+        })
+        .catch(err => {
+          console.error('Échec du chargement du clavier :', err);
+          container.innerHTML = '<p class="text-danger">Impossible de charger le clavier.</p>';
+        });
+    });
 
     function addToTicket(itemName) {
       const ul = document.getElementById('ticket-list');

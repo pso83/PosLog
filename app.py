@@ -2,6 +2,7 @@ from flask import Flask, render_template, redirect, url_for, request, session
 from config import Config
 from extensions import db
 from routes_static_pages import register_static_pages
+from flask_login import current_user
 
 # Import obligatoire pour db.create_all()
 from models.article import Article
@@ -72,6 +73,10 @@ app.register_blueprint(auth_bp)
 @app.route('/')
 def loading():
     return render_template('loading.html')
+
+@app.context_processor
+def inject_user():
+    return dict(current_user=current_user)
 
 # Lancement
 if __name__ == '__main__':

@@ -1,4 +1,7 @@
-from flask import render_template
+from flask import render_template, Blueprint
+from flask_login import login_required, current_user
+
+static_bp = Blueprint('static_pages', __name__)
 
 def register_static_pages(app):
     @app.route('/vente')
@@ -16,3 +19,11 @@ def register_static_pages(app):
     @app.route('/stocks')
     def stocks():
         return render_template('stocks.html')
+
+    @static_bp.route('/vente')
+    @login_required
+    def vente():
+        return render_template(
+            'vente.html',
+            user_keyboard_id=current_user.clavier_id
+        )

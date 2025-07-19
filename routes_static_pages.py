@@ -1,12 +1,28 @@
-from flask import render_template, Blueprint
-from flask_login import login_required, current_user
+# routes_static_pages.py
+from flask import Blueprint, render_template, session, redirect, url_for
+from models.utilisateur import Utilisateur
 
 static_bp = Blueprint('static_pages', __name__)
 
 def register_static_pages(app):
     @app.route('/vente')
     def vente():
-        return render_template('vente.html')
+        # 1) Redirection vers le login si pas de session
+        if 'user' not in session:
+            return redirect(url_for('auth.login'))
+
+        # 2) Récupère l'utilisateur en base via son nom
+        user = Utilisateur.query.filter_by(nom=session['user']).first()
+        if not user:
+            # Session corrompue ou utilisateur supprimé : on efface et on redirige
+            session.pop('user', None)
+            return redirect(url_for('auth.login'))
+
+        # 3) Passe son clavier_id à Jinja
+        return render_template(
+            'vente.html',
+            user_keyboard_id=user.clavier_id
+        )
 
     @app.route('/programmer')
     def programmer():
@@ -20,10 +36,4 @@ def register_static_pages(app):
     def stocks():
         return render_template('stocks.html')
 
-    @static_bp.route('/vente')
-    @login_required
-    def vente():
-        return render_template(
-            'vente.html',
-            user_keyboard_id=current_user.clavier_id
-        )
+    # … autres routes statiques …

@@ -3,28 +3,103 @@
 <head>
   <meta charset="UTF-8">
   <title>Encaissement Glacier</title>
-  <meta name="viewport" content="width=1024, height=768">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <!-- Clavier CSS -->
-  <link rel="stylesheet" href="/static/css/keyboard.css">
-  <!-- Injection de l'ID clavier utilisateur -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Bootstrap CSS pour les .btn -->
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+  >
+
   <script>
-  // côté JS, USER_KEYBOARD_ID vaut bien l’ID de l’utilisateur
-  const USER_KEYBOARD_ID = {{ user_keyboard_id }};
-</script>
+    const USER_KEYBOARD_ID = {{ user_keyboard_id|tojson }};
+    console.log('USER_KEYBOARD_ID =', USER_KEYBOARD_ID);
+  </script>
+
   <style>
-    body { width: 1024px; height: 768px; overflow: hidden; }
-    .container-fluid { height: 100vh; display: flex; }
-    .left-panel { width: 624px; display: flex; flex-direction: column; }
-    .ticket { height: 300px; background: #f8f9fa; overflow-y: auto; padding: 10px; border: 1px solid #ccc; }
-    .bottom-panels { display: flex; flex-grow: 1; }
-    .payment-pad, .function-pad { width: 50%; padding: 10px; }
-    .right-panel { width: 400px; border-left: 2px solid #dee2e6; padding: 10px; overflow-y: auto; }
-    .btn-action { width: 113px; height: 55px; margin-bottom: 10px; font-size: calc(10px + 0.3vw); white-space: normal; word-wrap: break-word; text-align: center; line-height: 1.2; }
+    /* 1) Reset / mise en page pleine fenêtre */
+    html, body {
+      margin: 0; padding: 0;
+      width: 100%; height: 100%;
+      overflow: hidden;
+      display: flex;
+    }
+    #app {
+      display: flex;
+      width: 100%; height: 100vh;
+    }
+
+    /* 2) Colonne gauche : 30% */
+    .left-panel {
+      flex: 0 0 30%;
+      display: flex;
+      flex-direction: column;
+      box-sizing: border-box;
+    }
+    .ticket {
+      flex: 0 0 40%;            /* 40% de la hauteur du left-panel */
+      background: #f8f9fa;
+      border: 1px solid #ccc;
+      padding: 1%;
+      overflow-y: auto;
+      box-sizing: border-box;
+    }
+    .bottom-panels {
+      flex: 1;                  /* occupe le reste */
+      display: flex;
+    }
+    .payment-pad, .function-pad {
+      flex: 1;
+      padding: 1%;
+      box-sizing: border-box;
+    }
+
+    /* 3) Colonne droite : 70% */
+    .right-panel {
+      flex: 1;               /* prend tout l’espace restant */
+      padding: 1%;           /* un petit padding autour */
+      display: flex;
+      box-sizing: border-box;
+    }
+
+    /* 4) Grille responsive 5×11 */
+    #keyboard-container {
+      display: grid;
+      /* 5 colonnes de même taille (fractionnelle) */
+      grid-template-columns: repeat(5, 1fr);
+      /* 11 lignes qui se partagent tout l’espace vertical */
+      grid-auto-rows: 1fr;
+      /* espacement : 10px verticalement, 4px horizontalement */
+      row-gap: 4px;
+      column-gap: 4px;
+      /* occupe tout l’espace disponible de son conteneur */
+      width: 100%;
+      height: 100%;
+      box-sizing: border-box;
+    }
+
+    /* 5) Boutons produits à plein case, texte auto-shrinking */
+    .btn-product {
+      width: 100%; height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      white-space: normal;
+      word-wrap: break-word;
+      font-size: clamp(10px, 1.2vw, 16px);
+      border: none;
+      cursor: pointer;
+      box-sizing: border-box;
+    }
+    .invisible {
+      visibility: hidden;  /* conserve la place */
+    }
   </style>
 </head>
 <body>
-  <div class="container-fluid">
+  <div id="app">
+    <!-- GAUCHE -->
     <div class="left-panel">
       <div class="ticket" id="ticket">
         <h5>Ticket</h5>
@@ -45,54 +120,53 @@
         </div>
       </div>
     </div>
+
+    <!-- DROITE : clavier -->
     <div class="right-panel">
-      <h5>Clavier</h5>
-      <div id="keyboard-container"></div>
+      <div id="keyboard-container">
+        <!-- les 55 <button class="btn-product"> seront injectés ici -->
+      </div>
     </div>
   </div>
 
+  <!-- Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- reconstruction du clavier via JSON /clavier/boutons/:id -->
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      const container = document.getElementById('keyboard-container');
-
-      // Récupération de l'ID du clavier vente
-      const clavierId = window.USER_KEYBOARD_ID;
-      if (!clavierId) {
-        console.error('Aucun clavier_id utilisateur défini.');
-        container.innerHTML = '<p class="text-danger">Clavier introuvable.</p>';
+      const cont = document.getElementById('keyboard-container');
+      if (!USER_KEYBOARD_ID) {
+        cont.innerHTML = '<p class="text-danger">Clavier introuvable.</p>';
         return;
       }
-
-      // Chargement du template clavier de vente
-      fetch(`/clavier/vente?clavier_id=${clavierId}`)
-        .then(response => {
-          if (!response.ok) throw new Error(`Erreur ${response.status} : ${response.statusText}`);
-          return response.text();
-        })
-        .then(html => {
-          container.innerHTML = html;
-          // Masquer les boutons non programmés (data-programmed="false")
-          container.querySelectorAll('button').forEach(btn => {
-            if (btn.dataset.programmed !== 'true') {
-              btn.style.display = 'none';
+      fetch(`/clavier/boutons/${USER_KEYBOARD_ID}`)
+        .then(r => r.ok ? r.json() : Promise.reject(r.status))
+        .then(data => {
+          const map = {};
+          data.forEach(b => map[b.position] = b);
+          cont.innerHTML = '';
+          for (let pos = 1; pos <= 55; pos++) {
+            const b = map[pos];
+            const btn = document.createElement('button');
+            btn.className = 'btn-product' + (!b ? ' invisible' : '');
+            if (b) {
+              btn.style.backgroundColor = b.couleur;
+              btn.style.color = b.text_color || '#fff';
+              if (!b.masquer_texte) btn.textContent = b.nom;
+              btn.onclick = () => addToTicket(b.nom);
             }
-          });
-          // Liaison des événements du clavier en mode vente
-          if (typeof bindSaleKeyboard === 'function') {
-            bindSaleKeyboard(container);
+            cont.appendChild(btn);
           }
         })
-        .catch(err => {
-          console.error('Échec du chargement du clavier :', err);
-          container.innerHTML = '<p class="text-danger">Impossible de charger le clavier.</p>';
+        .catch(() => {
+          cont.innerHTML = '<p class="text-danger">Impossible de charger le clavier.</p>';
         });
     });
-
-    function addToTicket(itemName) {
+    function addToTicket(n) {
       const ul = document.getElementById('ticket-list');
       const li = document.createElement('li');
-      li.textContent = itemName;
+      li.textContent = n;
       ul.appendChild(li);
     }
   </script>

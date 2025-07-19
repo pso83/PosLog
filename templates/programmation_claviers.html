@@ -2,6 +2,20 @@
 {% block content %}
 {% include '_menu_burger.html' %}
 
+
+<style>
+.color-palette {
+  display: flex;
+  gap: 4px;
+  margin-top: 4px;
+}
+.color-swatch {
+  width: 20px; height: 20px;
+  border: 1px solid #ccc;
+  cursor: pointer;
+}
+</style>
+
 <div class="container py-4">
   <div class="row">
     <div class="col-md-9">
@@ -122,8 +136,22 @@
             <select name="element_id" id="elementInput" class="form-select"></select>
           </div>
           <div class="mb-2">
-            <label for="couleurInput">Couleur</label>
-            <input type="color" name="couleur" id="couleurInput" class="form-control form-control-color">
+            <!-- Couleur de fond existante -->
+            <label for="bg-color-picker">Couleur de fond :</label>
+            <input type="color" id="bg-color-picker" name="couleur" value="#e0e0e0">
+
+            <!-- NOUVEAU : Couleur du texte -->
+            <label for="text-color-picker">Couleur du texte :</label>
+            <input type="color" id="text-color-picker" name="text_color" value="#000000">
+
+              <div>
+              <p>Dernières couleurs de fond :</p>
+              <div id="recent-bg-colors" class="color-palette"></div>
+            </div>
+            <div>
+              <p>Dernières couleurs de texte :</p>
+              <div id="recent-text-colors" class="color-palette"></div>
+            </div>
           </div>
           <div class="mb-2">
             <label for="imageInput">Image (facultatif)</label>
@@ -148,7 +176,8 @@ function openButtonModal(pos, bouton) {
   const positionInput = document.getElementById('positionInput');
   const typeInput = document.getElementById('typeInput');
   const elementInput = document.getElementById('elementInput');
-  const couleurInput = document.getElementById('couleurInput');
+  const bgColorPicker      = document.getElementById('bg-color-picker');
+  const textColorPicker    = document.getElementById('text-color-picker');
   const imageInput = document.getElementById('imageInput');
   const masquerTexteInput = document.getElementById('masquerTexteInput');
 
@@ -159,9 +188,12 @@ function openButtonModal(pos, bouton) {
 
   positionInput.value = pos;
   typeInput.value = bouton.type || 'article';
-  couleurInput.value = bouton.couleur || '#e0e0e0';
+  bgColorPicker.value     = bouton.couleur     || '#e0e0e0';
+  textColorPicker.value   = bouton.text_color  || '#000000';
   imageInput.value = bouton.image || '';
   masquerTexteInput.checked = bouton.masquer_texte || false;
+
+  console.log('🖍️ Couleur texte du bouton #', pos, ' =', bouton.text_color);
 
   function chargerElements(type, selectedId = null) {
     fetch(`/clavier/elements?type=${type}`)
@@ -189,6 +221,8 @@ function openButtonModal(pos, bouton) {
 }
 
 function saveButtonConfig() {
+  const bgColor   = document.getElementById('bg-color-picker').value;
+  const textColor = document.getElementById('text-color-picker').value;
   const form = document.getElementById('buttonForm');
   const data = Object.fromEntries(new FormData(form).entries());
   data.masquer_texte = document.getElementById('masquerTexteInput').checked;
@@ -274,5 +308,64 @@ window.addEventListener('DOMContentLoaded', () => {
   });
 
 </script>
+
+<script>
+// 1) Clés pour stocker dans localStorage
+const BG_KEY = 'programmation_recent_bg';
+const TXT_KEY = 'programmation_recent_text';
+const MAX_SWATCHES = 8;
+
+// 2) Helpers pour lire/écrire un tableau de couleurs
+function loadRecent(key) {
+  try {
+    return JSON.parse(localStorage.getItem(key)) || [];
+  } catch {
+    return [];
+  }
+}
+function saveRecent(key, arr) {
+  localStorage.setItem(key, JSON.stringify(arr.slice(0, MAX_SWATCHES)));
+}
+
+// 3) Mettre à jour les swatches d’un type (bg ou text)
+function renderPalette(key, containerId, pickerId) {
+  const arr = loadRecent(key);
+  const container = document.getElementById(containerId);
+  container.innerHTML = '';
+  arr.forEach(color => {
+    const sw = document.createElement('div');
+    sw.className = 'color-swatch';
+    sw.style.background = color;
+    sw.addEventListener('click', () => {
+      document.getElementById(pickerId).value = color;
+    });
+    container.appendChild(sw);
+  });
+}
+
+// 4) Au changement d’un picker, on mémorise et on réaffiche
+function hookPicker(pickerId, key, containerId) {
+  const picker = document.getElementById(pickerId);
+  picker.addEventListener('input', () => {
+    let arr = loadRecent(key);
+    // place la nouvelle couleur en première position
+    arr = [picker.value, ...arr.filter(c => c !== picker.value)];
+    saveRecent(key, arr);
+    renderPalette(key, containerId, pickerId);
+  });
+}
+
+// 5) Initialisation au chargement
+document.addEventListener('DOMContentLoaded', () => {
+  // Affiche palettes existantes
+  renderPalette(BG_KEY, 'recent-bg-colors', 'bg-color-picker');
+  renderPalette(TXT_KEY, 'recent-text-colors', 'text-color-picker');
+
+  // Branche les pickers pour mémoriser les choix
+  hookPicker('bg-color-picker', BG_KEY, 'recent-bg-colors');
+  hookPicker('text-color-picker', TXT_KEY, 'recent-text-colors');
+});
+</script>
+
 
 {% endblock %}

@@ -22,6 +22,7 @@ class BoutonClavier(db.Model):
 
     # champs visuels
     couleur = db.Column(db.String(20))
+    text_color = db.Column(db.String(20), nullable=True)
     image = db.Column(db.String(255))
     masquer_texte = db.Column(db.Boolean, default=False)
 

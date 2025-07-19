@@ -1,0 +1,38 @@
+{# templates/_keyboard_vente.html #}
+{% for pos in range(1, 56) %}
+  {%- set b = boutons | selectattr('position', 'equalto', pos) | first -%}
+  {# Détermine label & couleur selon le type #}
+  {% if b %}
+    {% if b.article %}
+      {%- set label = b.article.libelle -%}
+      {%- set bg = b.article.couleur or '#e0e0e0' -%}
+      {%- set txt = b.article.text_color or '#000' -%}
+    {% elif b.fonction %}
+      {%- set label = b.fonction.nom -%}
+      {%- set bg = b.fonction.couleur or '#e0e0e0' -%}
+      {%- set txt = b.fonction.text_color or '#000' -%}
+    {% elif b.menu %}
+      {%- set label = b.menu.nom -%}
+      {%- set bg = b.menu.couleur or '#e0e0e0' -%}
+      {%- set txt = b.menu.text_color or '#000' -%}
+    {% else %}
+      {# autre cas… #}
+      {%- set label = '' -%}
+      {%- set bg = '#e0e0e0' -%}
+      {%- set txt = '#000' -%}
+    {% endif %}
+  {% endif %}
+
+  <button
+    class="btn-product{% if not b %} invisible{% endif %}"
+    style="
+      background: {{ bg }};
+      color: {{ txt }};
+    "
+    {% if b %}
+      onclick="addToTicket('{{ b.article and b.article.libelle
+                               or b.fonction and b.fonction.nom
+                               or b.menu and b.menu.nom }}')"
+    {% endif %}
+  >{{ b and label or '' }}</button>
+{% endfor %}

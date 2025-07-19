@@ -1,8 +1,9 @@
-
+from models.utilisateur import Utilisateur
 from flask import Blueprint, render_template, request, redirect, session, url_for
 from models.utilisateur import Utilisateur
 from functools import wraps
 from datetime import datetime, timedelta
+from extensions import login_manager
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -48,3 +49,7 @@ def login_required(f):
         session['last_active'] = datetime.utcnow().isoformat()
         return f(*args, **kwargs)
     return decorated_function
+
+@login_manager.user_loader
+def load_user(user_id):
+    return Utilisateur.query.get(int(user_id))

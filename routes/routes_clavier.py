@@ -78,41 +78,39 @@ def register_clavier_routes(app):
 
         clavier_id = int(data.get('clavier_id'))
         position = int(data.get('position'))
-        type = data.get('type')
+        element_type = data.get('type')
         element_id = int(data.get('element_id'))
 
-        # Supprimer bouton existant à cette position
-        BoutonClavier.query.filter_by(clavier_id=clavier_id, position=position).delete()
+        # Suppression de l’éventuel bouton existant
+        BoutonClavier.query.filter_by(
+            clavier_id=clavier_id,
+            position=position
+        ).delete()
 
+        # Création du nouveau bouton
         bouton = BoutonClavier(
             clavier_id=clavier_id,
             position=position,
-            element_type=type,  # ✅ Ajouté
+            element_type=element_type,
             couleur=data.get('couleur'),
-            image=data.get('images'),
+            text_color=data.get('text_color'),  # ← on récupère bien text_color
+            image=data.get('image'),  # ← c’était 'images', on corrige en 'image'
             masquer_texte=data.get('masquer_texte', False)
         )
 
-        if type == 'article':
+        # Association de l’élément selon le type
+        if element_type == 'article':
             bouton.article_id = element_id
-        elif type == 'fonction':
+        elif element_type == 'fonction':
             bouton.fonction_id = element_id
-        elif type == 'menu':
-            bouton.menu_id = element_id
-        elif type == 'formule':
-            bouton.formule_id = element_id
-        elif type == 'utilisateur':
-            bouton.utilisateur_id = element_id
-        elif type == 'reglement':
-            bouton.reglement_id = element_id
-        elif type == 'commentaire':
-            bouton.commentaire_id = element_id
-        elif type == 'clavier':
-            bouton.sous_clavier_id = element_id
+        # … le reste de tes elif …
+
+        # Debug : vérifie que Python a bien pris en compte text_color
+        print(f"🔧 bouton.couleur    = {bouton.couleur!r}")
+        print(f"🔧 bouton.text_color = {bouton.text_color!r}")
 
         db.session.add(bouton)
         db.session.commit()
-
         return jsonify({'status': 'ok'})
 
 
@@ -157,6 +155,7 @@ def get_boutons(clavier_id):
             "element_id": element_id,
             "nom": nom,
             "couleur": b.couleur,
+            "text_color": b.text_color,
             "images": b.image,
             "masquer_texte": b.masquer_texte
         })
@@ -230,4 +229,28 @@ def supprimer_clavier(id):
 
     return redirect(url_for('clavier_bp.programmation_claviers', message="Clavier supprimé", message_type="success"))
 
+@clavier_bp.route('/vente')
+def clavier_vente():
+    cid = request.args.get('clavier_id', type=int)
+    # Récupère tous les boutons du clavier (via votre modèle)
+    boutons = BoutonClavier.query.filter_by(clavier_id=cid).all()
+    # Sérialise au format {label, value, programmed}
+    data = [
+      {
+        'label': btn.label,
+        'value': btn.action_value,
+        'programmed': btn.is_programmed
+      }
+      for btn in boutons
+    ]
+    return jsonify(data)
+
+@clavier_bp.route('/vente_fragment')
+def clavier_vente_fragment():
+    cid = request.args.get('clavier_id', type=int)
+    boutons = (BoutonClavier.query
+               .filter_by(clavier_id=cid)
+               .order_by(BoutonClavier.position)
+               .all())
+    return render_template('_keyboard_vente.html', boutons=boutons)
 

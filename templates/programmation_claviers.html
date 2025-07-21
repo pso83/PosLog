@@ -173,50 +173,48 @@
 
 <script>
 function openButtonModal(pos, bouton) {
-  const positionInput = document.getElementById('positionInput');
-  const typeInput = document.getElementById('typeInput');
-  const elementInput = document.getElementById('elementInput');
-  const bgColorPicker      = document.getElementById('bg-color-picker');
-  const textColorPicker    = document.getElementById('text-color-picker');
-  const imageInput = document.getElementById('imageInput');
-  const masquerTexteInput = document.getElementById('masquerTexteInput');
+  // récupère les inputs
+  const positionInput   = document.getElementById('positionInput');
+  const typeInput       = document.getElementById('typeInput');
+  const elementInput    = document.getElementById('elementInput');
+  const bgPicker        = document.getElementById('bg-color-picker');
+  const textPicker      = document.getElementById('text-color-picker');
+  const imageInput      = document.getElementById('imageInput');
+  const masquerInput    = document.getElementById('masquerTexteInput');
 
-  if (!positionInput || !typeInput || !elementInput) {
-    alert("Erreur : la modale n'est pas chargée dans le DOM.");
-    return;
-  }
+  // Définit les valeurs fixes
+  positionInput.value  = pos;
+  typeInput.value      = bouton.type          || 'article';
+  imageInput.value     = bouton.image         || '';
+  masquerInput.checked = bouton.masquer_texte || false;
 
-  positionInput.value = pos;
-  typeInput.value = bouton.type || 'article';
-  bgColorPicker.value     = bouton.couleur     || '#e0e0e0';
-  textColorPicker.value   = bouton.text_color  || '#000000';
-  imageInput.value = bouton.image || '';
-  masquerTexteInput.checked = bouton.masquer_texte || false;
-
+  // **Le plus important** : on log et on assigne text_color
   console.log('🖍️ Couleur texte du bouton #', pos, ' =', bouton.text_color);
+  bgPicker.value   = bouton.couleur    || '#e0e0e0';
+  textPicker.value = bouton.text_color || '#000000';
 
-  function chargerElements(type, selectedId = null) {
-    fetch(`/clavier/elements?type=${type}`)
-      .then(res => res.json())
-      .then(data => {
-        elementInput.innerHTML = '';
-        data.forEach(e => {
-          const opt = document.createElement('option');
-          opt.value = e.id;
-          opt.textContent = e.nom;
-          if (e.id == selectedId) opt.selected = true;
-          elementInput.appendChild(opt);
-        });
-      })
-      .catch(error => {
-        console.error('Erreur lors du chargement des éléments :', error);
-        alert("Erreur lors du chargement des éléments.");
+  // charge la liste déroulante selon le type sélectionné
+  fetch(`/clavier/elements?type=${typeInput.value}`)
+    .then(r => r.json())
+    .then(data => {
+      elementInput.innerHTML = '';
+      data.forEach(e => {
+        const opt = document.createElement('option');
+        opt.value = e.id;
+        opt.text  = e.nom;
+        if (e.id == bouton.element_id) opt.selected = true;
+        elementInput.appendChild(opt);
       });
-  }
+    })
+    .catch(err => {
+      console.error('Erreur lors du chargement des éléments :', err);
+      alert("Erreur lors du chargement des éléments.");
+    });
 
-  chargerElements(typeInput.value, bouton.element_id);
-  typeInput.onchange = () => chargerElements(typeInput.value);
+  // à chaque changement de type, on recharge aussi
+  typeInput.onchange = () => openButtonModal(pos, bouton);
 
+  // enfin, on affiche la modale
   new bootstrap.Modal(document.getElementById('buttonModal')).show();
 }
 
@@ -234,6 +232,7 @@ function saveButtonConfig() {
   })
   .then(res => res.json())
   .then(resp => {
+      console.log('⇨ boutons JSON:', data);
     if (resp.status === 'ok') {
       window.location.reload();
     } else {
@@ -252,42 +251,47 @@ window.addEventListener('DOMContentLoaded', () => {
   const container = document.getElementById('clavier-container');
 
   fetch(`/clavier/boutons/${clavierId}`)
-    .then(res => res.json())
-    .then(data => {
-      container.innerHTML = '';
-      for (let row = 0; row < 11; row++) {
-        const rowDiv = document.createElement('div');
-        rowDiv.className = 'd-flex';
-        rowDiv.style.width = '100%';
+  .then(res => res.json())
+  .then(data => {
+    container.innerHTML = '';
+    for (let row = 0; row < 11; row++) {
+      const rowDiv = document.createElement('div');
+      rowDiv.className = 'd-flex';
+      rowDiv.style.width = '100%';
 
-        for (let col = 0; col < 5; col++) {
-          const pos = row * 5 + col + 1;
-          const b = data.find(btn => btn.position === pos) || {};
+      for (let col = 0; col < 5; col++) {
+        const pos = row * 5 + col + 1;
+        const b = data.find(btn => btn.position === pos) || {};
 
-          const btn = document.createElement('button');
-          btn.className = 'btn me-1 mb-1';
-          btn.style.width = '124px';
-          btn.style.height = '65px';
-          btn.style.backgroundColor = b.couleur || '#e0e0e0';
-          btn.onclick = () => openButtonModal(pos, b);
+        const btn = document.createElement('button');
+        btn.className = 'btn me-1 mb-1';
+        btn.style.width  = '124px';
+        btn.style.height = '65px';
 
-          if (b.image) {
-            const img = document.createElement('img');
-            img.src = `/static/${b.image}`;
-            img.alt = '';
-            img.style.width = '100%';
-            img.style.height = '100%';
-            btn.appendChild(img);
-          } else {
-            btn.textContent = b.nom || `Vide ${pos}`;
-          }
-
-          rowDiv.appendChild(btn);
+        // Fond et texte
+        btn.style.backgroundColor = b.couleur || '#e0e0e0';
+        if (b.text_color) {
+          btn.style.color = b.text_color;
         }
 
-        container.appendChild(rowDiv);
+        btn.onclick = () => openButtonModal(pos, b);
+
+        if (b.image) {
+          const img = document.createElement('img');
+          img.src    = `/static/${b.image}`;
+          img.alt    = '';
+          img.style.width  = '100%';
+          img.style.height = '100%';
+          btn.appendChild(img);
+        } else {
+          btn.textContent = b.nom || `Vide ${pos}`;
+        }
+
+        rowDiv.appendChild(btn);
       }
-    })
+      container.appendChild(rowDiv);
+    }
+  })
     .catch(err => {
       console.error("Erreur lors du chargement des boutons :", err);
       container.innerHTML = '<p class="text-danger">Erreur de chargement des boutons.</p>';
@@ -366,6 +370,5 @@ document.addEventListener('DOMContentLoaded', () => {
   hookPicker('text-color-picker', TXT_KEY, 'recent-text-colors');
 });
 </script>
-
 
 {% endblock %}

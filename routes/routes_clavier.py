@@ -149,6 +149,15 @@ def get_boutons(clavier_id):
             nom = b.reglement.nom
             element_id = b.reglement_id
 
+        # --- Nouveau : calcul du prix unitaire et flag prix manuel ---
+        prix_cents = 0
+        price_manual = False
+        if type_element == 'article' and b.article:
+            # on prend prix_1 par défaut# on prend prix_1 par défaut
+            prix_cents = int(round((b.article.prix_1 or 0) * 100))
+            price_manual = bool(b.article.prix_manuel)
+        # (idem éventuellement pour d'autres types…)
+
         data.append({
             "position": b.position,
             "type": type_element,
@@ -157,7 +166,9 @@ def get_boutons(clavier_id):
             "couleur": b.couleur,
             "text_color": b.text_color,
             "images": b.image,
-            "masquer_texte": b.masquer_texte
+            "masquer_texte": b.masquer_texte,
+            "prix_unitaire": prix_cents,
+            "price_manuel": price_manual
         })
 
     return jsonify(data)

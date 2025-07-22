@@ -4,107 +4,94 @@
   <meta charset="UTF-8">
   <title>Encaissement Glacier</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <!-- Bootstrap CSS pour les .btn -->
-  <link
-    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
-    rel="stylesheet"
-  >
-
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <script>
     const USER_KEYBOARD_ID = {{ user_keyboard_id|tojson }};
-    console.log('USER_KEYBOARD_ID =', USER_KEYBOARD_ID);
   </script>
-
   <style>
-    /* 1) Reset / mise en page pleine fenêtre */
-    html, body {
-      margin: 0; padding: 0;
-      width: 100%; height: 100%;
-      overflow: hidden;
-      display: flex;
-    }
-    #app {
-      display: flex;
-      width: 100%; height: 100vh;
-    }
+    /* Reset & layout */
+    html,body { margin:0; padding:0; width:100%; height:100%; overflow:hidden; box-sizing:border-box; }
+    #app { display:flex; width:100%; height:100vh; }
 
-    /* 2) Colonne gauche : 30% */
-    .left-panel {
-      flex: 0 0 30%;
-      display: flex;
-      flex-direction: column;
-      box-sizing: border-box;
-    }
+    /* Colonne gauche */
+    .left-panel { flex:0 0 30%; display:flex; flex-direction:column; padding:10px; box-sizing:border-box; }
+    #sale-mode { margin:0 0.5rem; font-size:1.25rem; font-weight:bold; }
     .ticket {
-      flex: 0 0 40%;            /* 40% de la hauteur du left-panel */
-      background: #f8f9fa;
-      border: 1px solid #ccc;
-      padding: 1%;
-      overflow-y: auto;
-      box-sizing: border-box;
+      background:#f8f9fa; border:1px solid #ccc;
+      height:32rem; overflow-y:auto; padding:5px; box-sizing:border-box;
     }
-    .bottom-panels {
-      flex: 1;                  /* occupe le reste */
-      display: flex;
-    }
-    .payment-pad, .function-pad {
-      flex: 1;
-      padding: 1%;
-      box-sizing: border-box;
+    #ticket-info { font-size:.9rem; margin:5px 0; }
+
+    /* Sélection de ligne */
+    .ticket table tbody tr { cursor:pointer; transition: background-color .2s; }
+    .ticket table tbody tr:hover { background-color:#f1f1f1; }
+    /* surlignage sélectionné */
+    #ticket-table tbody tr.selected,
+    #ticket-table tbody tr.selected td {
+      background-color: #e9ecef !important;
     }
 
-    /* 3) Colonne droite : 70% */
-    .right-panel {
-      flex: 1;               /* prend tout l’espace restant */
-      padding: 1%;           /* un petit padding autour */
-      display: flex;
-      box-sizing: border-box;
+    /* Boutons de fonction du ticket */
+    #ticket-buttons { display:flex; flex-wrap:wrap; gap:4px; margin-bottom:10px; }
+    .btn-action {
+      width:113px; height:55px; margin-bottom:10px;
+      font-size:calc(10px + 0.3vw); white-space:normal;
+      word-wrap:break-word; text-align:center; line-height:1.2;
+      box-sizing:border-box;
     }
 
-    /* 4) Grille responsive 5×11 */
+    /* Bottom-panel simplifié */
+    .bottom-panels { flex:1; display:flex; }
+    .payment-pad, .function-pad { flex:1; padding:5px; box-sizing:border-box; }
+    .function-pad .btn-action { margin-bottom:10px; }
+
+    /* Colonne droite */
+    .right-panel { flex:1; padding:10px; box-sizing:border-box; }
     #keyboard-container {
-      display: grid;
-      /* 5 colonnes de même taille (fractionnelle) */
-      grid-template-columns: repeat(5, 1fr);
-      /* 11 lignes qui se partagent tout l’espace vertical */
-      grid-auto-rows: 1fr;
-      /* espacement : 10px verticalement, 4px horizontalement */
-      row-gap: 4px;
-      column-gap: 4px;
-      /* occupe tout l’espace disponible de son conteneur */
-      width: 100%;
-      height: 100%;
-      box-sizing: border-box;
+      display:grid; grid-template-columns:repeat(5,1fr);
+      grid-auto-rows:1fr; row-gap:4px; column-gap:4px;
+      width:100%; height:100%; box-sizing:border-box;
     }
-
-    /* 5) Boutons produits à plein case, texte auto-shrinking */
     .btn-product {
-      width: 100%; height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      white-space: normal;
-      word-wrap: break-word;
-      font-size: clamp(10px, 1.2vw, 16px);
-      border: none;
-      cursor: pointer;
-      box-sizing: border-box;
-      border-radius: 0.30rem;
+      width:100%; height:100%; display:flex;
+      align-items:center; justify-content:center; text-align:center;
+      white-space:normal; word-wrap:break-word;
+      font-size:clamp(12px,1.5vw,18px); font-weight:bold;
+      border:none; border-radius:.3rem; cursor:pointer;
+      box-sizing:border-box;
     }
-    .invisible {
-      visibility: hidden;  /* conserve la place */
-    }
+    .invisible { visibility:hidden; }
+
+    /* Tableau ticket */
+    .ticket table { width:100%; }
+    .ticket th, .ticket td { padding:.25rem .5rem; font-size:.9rem; }
   </style>
 </head>
 <body>
   <div id="app">
     <!-- GAUCHE -->
     <div class="left-panel">
-      <div class="ticket" id="ticket">
-        <h5>Ticket</h5>
-        <ul id="ticket-list" class="list-unstyled mb-0"></ul>
+      <h5 id="sale-mode">TICKET</h5>
+      <div class="ticket">
+        <table id="ticket-table" class="table table-sm mb-0">
+          <thead>
+            <tr><th>Qté</th><th>Produit</th><th>PU</th><th>Total</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div id="ticket-info"></div>
+      <div id="ticket-buttons">
+        <button id="btnCancelLine"   class="btn btn-warning btn-action">Annulation ligne</button>
+        <button id="btnCancelTicket" class="btn btn-danger  btn-action">Annulation ticket</button>
+        <button id="btnOffert"       class="btn btn-primary btn-action">Offert</button>
+        <button id="btnSaleMode"     class="btn btn-secondary btn-action">Mode de vente</button>
+        <button id="btnTransfer"     class="btn btn-secondary btn-action">Transfert vers</button>
+        <button id="btnHold"         class="btn btn-secondary btn-action">Mettre en attente</button>
+        <button id="btnFlash"        class="btn btn-secondary btn-action">Flash écran</button>
+        <button id="btnResume"       class="btn btn-secondary btn-action">Reprise attente</button>
+        <button id="btnClose"        class="btn btn-secondary btn-action">X</button>
       </div>
       <div class="bottom-panels">
         <div class="payment-pad">
@@ -114,62 +101,218 @@
           <button class="btn btn-dark btn-action">Total</button>
         </div>
         <div class="function-pad">
-          <button class="btn btn-danger btn-action">Annuler Ligne</button>
-          <button class="btn btn-warning btn-action">Annuler Ticket</button>
           <button class="btn btn-info btn-action">Remise</button>
           <button class="btn btn-light btn-action">Réduction promo</button>
         </div>
       </div>
     </div>
-
-    <!-- DROITE : clavier -->
+    <!-- DROITE -->
     <div class="right-panel">
-      <div id="keyboard-container">
-        <!-- les 55 <button class="btn-product"> seront injectés ici -->
-      </div>
+      <div id="keyboard-container"></div>
     </div>
   </div>
 
   <!-- Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
-  <!-- reconstruction du clavier via JSON /clavier/boutons/:id -->
   <script>
+    // données
+    const ticketLines = [];
+    let selectedLine = null;
+    let currentTicketNumber = null;
+
+    // met à jour date/ticket/total
+    function updateTicketInfo() {
+      const now   = new Date();
+      const days  = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
+      const months= ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+      const d     = days[now.getDay()],
+            day   = now.getDate(),
+            m     = months[now.getMonth()],
+            y     = now.getFullYear(),
+            hh    = String(now.getHours()).padStart(2,'0'),
+            mm    = String(now.getMinutes()).padStart(2,'0'),
+            ss    = String(now.getSeconds()).padStart(2,'0');
+
+      if (currentTicketNumber === null) {
+        let n = parseInt(localStorage.getItem('lastTicketNumber')||'0') + 1;
+        localStorage.setItem('lastTicketNumber', n);
+        currentTicketNumber = n;
+      }
+
+      // On ne somme QUE les lignes non-offertes
+      const totalCents = ticketLines
+        .filter(l => !l.offered)
+        .reduce((sum, l) => sum + l.pu * l.qty, 0);
+
+      document.getElementById('ticket-info').textContent =
+        `${d} ${day} ${m} ${y} - ${hh}:${mm}:${ss}` +
+        ` - Ticket n° ${currentTicketNumber}` +
+        ` - total : ${(totalCents/100).toFixed(2)} €`;
+    }
+
+    // rend le ticket + gestion sélection
+    function renderTicket() {
+      const tbody = document.querySelector('#ticket-table tbody');
+      tbody.innerHTML = '';
+      ticketLines.forEach((line, idx) => {
+        const tr = document.createElement('tr');
+        // affichage
+        const label = line.offered
+          ? `${line.label} (Offert)`
+          : line.label;
+        const puStr = (line.pu/100).toFixed(2);
+        const totalStr = line.offered
+          ? '0.00'
+          : ((line.pu*line.qty)/100).toFixed(2);
+        tr.innerHTML = `
+          <td>${line.qty}</td>
+          <td>${label}</td>
+          <td>${puStr} €</td>
+          <td>${totalStr} €</td>
+        `;
+        // clic = sélection
+        tr.addEventListener('click', () => {
+          selectedLine = (selectedLine === idx ? null : idx);
+          renderTicket();
+        });
+        if (selectedLine === idx) tr.classList.add('selected');
+        tbody.appendChild(tr);
+      });
+      updateTicketInfo();
+    }
+
+    // ajoute au ticket
+    function addToTicket(item) {
+      if (!item.price_manual) {
+        const last = ticketLines[ticketLines.length-1];
+        if (last && last.id === item.id && !last.offered) {
+          last.qty++;
+        } else {
+          ticketLines.push({ ...item, qty:1, offered:false });
+        }
+        selectedLine = null;
+        renderTicket();
+      } else {
+        // prompt stub
+        const price = prompt(`Prix unitaire pour "${item.label}" (€) :`);
+        const cents = Math.round(parseFloat(price)*100);
+        if (!isNaN(cents)) addToTicket({ ...item, pu:cents, price_manual:false });
+      }
+    }
+
+    // annulation ligne
+    function cancelLine() {
+      if (ticketLines.length === 0) return;
+      if (selectedLine !== null && selectedLine < ticketLines.length) {
+        const l = ticketLines[selectedLine];
+        if (l.qty > 1) {
+          l.qty--;
+        } else {
+          ticketLines.splice(selectedLine, 1);
+          selectedLine = null;
+        }
+      } else {
+        const idx = ticketLines.length - 1;
+        const l = ticketLines[idx];
+        if (l.qty > 1) {
+          l.qty--;
+          selectedLine = idx;
+        } else {
+          ticketLines.pop();
+          selectedLine = null;
+        }
+      }
+      renderTicket();
+    }
+
+    // annulation ticket
+    function cancelTicket() {
+      ticketLines.length = 0;
+      selectedLine = null;
+      renderTicket();
+    }
+
+    // offert
+    function offerLine() {
+      if (ticketLines.length === 0) return;
+      let idx = selectedLine !== null ? selectedLine : ticketLines.length -1;
+      let l = ticketLines[idx];
+      if (l.qty > 1) {
+        // décrémente la ligne normale
+        l.qty--;
+        // trouve/ajoute ligne offered
+        const offIdx = ticketLines.findIndex(
+          x => x.id===l.id && x.offered
+        );
+        if (offIdx > -1) {
+          ticketLines[offIdx].qty++;
+        } else {
+          ticketLines.push({
+            id: l.id,
+            label: l.label,
+            pu: l.pu,
+            qty: 1,
+            offered: true,
+            price_manual: false
+          });
+        }
+      } else {
+        // qty === 1, on bascule cette ligne en offered
+        l.offered = true;
+      }
+      selectedLine = null;
+      renderTicket();
+    }
+
+    const stub = name => alert(`${name} — à implémenter`);
+
     document.addEventListener('DOMContentLoaded', () => {
+      updateTicketInfo();
+      setInterval(updateTicketInfo, 1000);
+
+      // boutons ticket
+      document.getElementById('btnCancelLine').onclick   = cancelLine;
+      document.getElementById('btnCancelTicket').onclick = cancelTicket;
+      document.getElementById('btnOffert').onclick       = offerLine;
+      document.getElementById('btnSaleMode').onclick     = ()=>stub('Mode de vente');
+      document.getElementById('btnTransfer').onclick     = ()=>stub('Transfert vers');
+      document.getElementById('btnHold').onclick         = ()=>stub('Mettre en attente');
+      document.getElementById('btnFlash').onclick        = ()=>stub('Flash écran');
+      document.getElementById('btnResume').onclick       = ()=>stub('Reprise attente');
+      document.getElementById('btnClose').onclick        = ()=>stub('X');
+
+      // génération clavier
       const cont = document.getElementById('keyboard-container');
       if (!USER_KEYBOARD_ID) {
         cont.innerHTML = '<p class="text-danger">Clavier introuvable.</p>';
-        return;
-      }
-      fetch(`/clavier/boutons/${USER_KEYBOARD_ID}`)
-        .then(r => r.ok ? r.json() : Promise.reject(r.status))
-        .then(data => {
-          const map = {};
-          data.forEach(b => map[b.position] = b);
-          cont.innerHTML = '';
-          for (let pos = 1; pos <= 55; pos++) {
-            const b = map[pos];
-            const btn = document.createElement('button');
-            btn.className = 'btn-product' + (!b ? ' invisible' : '');
-            if (b) {
-              btn.style.backgroundColor = b.couleur;
-              btn.style.color = b.text_color || '#fff';
-              if (!b.masquer_texte) btn.textContent = b.nom;
-              btn.onclick = () => addToTicket(b.nom);
+      } else {
+        fetch(`/clavier/boutons/${USER_KEYBOARD_ID}`)
+          .then(r => r.json())
+          .then(data => {
+            const map = {};
+            data.forEach(b => map[b.position] = b);
+            cont.innerHTML = '';
+            for (let pos=1; pos<=55; pos++){
+              const b = map[pos];
+              const btn = document.createElement('button');
+              btn.className = 'btn-product' + (!b?' invisible':'');
+              if (b) {
+                btn.style.backgroundColor = b.couleur;
+                if (b.text_color) btn.style.color = b.text_color;
+                if (!b.masquer_texte) btn.textContent = b.nom;
+                btn.onclick = () => addToTicket({
+                  id: b.element_id,
+                  label: b.nom,
+                  pu: b.prix_unitaire,
+                  price_manual: b.price_manuel
+                });
+              }
+              cont.appendChild(btn);
             }
-            cont.appendChild(btn);
-          }
-        })
-        .catch(() => {
-          cont.innerHTML = '<p class="text-danger">Impossible de charger le clavier.</p>';
-        });
+          })
+          .catch(_=> cont.innerHTML = '<p class="text-danger">Impossible de charger le clavier.</p>');
+      }
     });
-    function addToTicket(n) {
-      const ul = document.getElementById('ticket-list');
-      const li = document.createElement('li');
-      li.textContent = n;
-      ul.appendChild(li);
-    }
   </script>
 </body>
 </html>

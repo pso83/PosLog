@@ -11,7 +11,7 @@
   </script>
   <style>
     /* Reset & layout */
-    html,body { margin:0; padding:0; width:100%; height:100%; overflow:hidden; box-sizing:border-box; }
+    html, body { margin:0; padding:0; width:100%; height:100%; overflow:hidden; box-sizing:border-box; }
     #app { display:flex; width:100%; height:100vh; }
 
     /* Colonne gauche */
@@ -23,16 +23,15 @@
     }
     #ticket-info { font-size:.9rem; margin:5px 0; }
 
-    /* Sélection de ligne */
+    /* Sélection / hover */
     .ticket table tbody tr { cursor:pointer; transition: background-color .2s; }
     .ticket table tbody tr:hover { background-color:#f1f1f1; }
-    /* surlignage sélectionné */
     #ticket-table tbody tr.selected,
     #ticket-table tbody tr.selected td {
       background-color: #e9ecef !important;
     }
 
-    /* Boutons de fonction du ticket */
+    /* Boutons */
     #ticket-buttons { display:flex; flex-wrap:wrap; gap:4px; margin-bottom:10px; }
     .btn-action {
       width:113px; height:55px; margin-bottom:10px;
@@ -40,8 +39,6 @@
       word-wrap:break-word; text-align:center; line-height:1.2;
       box-sizing:border-box;
     }
-
-    /* Bottom-panel simplifié */
     .bottom-panels { flex:1; display:flex; }
     .payment-pad, .function-pad { flex:1; padding:5px; box-sizing:border-box; }
     .function-pad .btn-action { margin-bottom:10px; }
@@ -66,6 +63,41 @@
     /* Tableau ticket */
     .ticket table { width:100%; }
     .ticket th, .ticket td { padding:.25rem .5rem; font-size:.9rem; }
+
+    /* ---- Modal Prix Manuel ---- */
+    #manualPriceModal {
+      position: fixed; top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+      display: none;
+      align-items: center; justify-content: center;
+      z-index: 2000;
+    }
+    #manualPriceModal .modal-content {
+      background: #fff; padding: 1rem;
+      border-radius: 0.5rem;
+      width: 90%; max-width: 400px;
+      box-sizing: border-box;
+    }
+    #manualPriceModal .display {
+      width: 100%; height: 2.5rem;
+      margin-bottom: .5rem;
+      font-size: 1.5rem; text-align: right;
+      padding: .25rem; border: 1px solid #ccc;
+      border-radius: .25rem;
+    }
+    .keypad {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: .5rem;
+    }
+    .keypad button {
+      font-size: 1.25rem; padding: .75rem;
+      border: none; border-radius: .25rem; background: #f0f0f0;
+    }
+    .keypad .wide { grid-column: span 2; }
+    .keypad .action { background: #007bff; color: #fff; }
+    .keypad .cancel { background: #dc3545; color: #fff; }
   </style>
 </head>
 <body>
@@ -106,32 +138,73 @@
         </div>
       </div>
     </div>
-    <!-- DROITE -->
+
+    <!-- DROITE : Clavier -->
     <div class="right-panel">
       <div id="keyboard-container"></div>
+    </div>
+  </div>
+
+  <!-- Modal Prix Manuel -->
+  <div id="manualPriceModal">
+    <div class="modal-content">
+      <div class="display" id="manualDisplay">0.00</div>
+      <div class="keypad">
+        <button data-key="7">7</button>
+        <button data-key="8">8</button>
+        <button data-key="9">9</button>
+        <button data-key="4">4</button>
+        <button data-key="5">5</button>
+        <button data-key="6">6</button>
+        <button data-key="1">1</button>
+        <button data-key="2">2</button>
+        <button data-key="3">3</button>
+        <button data-key="0">0</button>
+        <button data-key="00" class="wide">00</button>
+        <button data-key="C" class="cancel">C</button>
+        <button class="action wide" id="validatePrice">Valider</button>
+        <button class="cancel wide" id="cancelPrice">Fermer</button>
+      </div>
     </div>
   </div>
 
   <!-- Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-    // données
+    // — Variables globales —
     const ticketLines = [];
     let selectedLine = null;
     let currentTicketNumber = null;
+    let manualItem = null;
+    let manualValue = '';
 
-    // met à jour date/ticket/total
+    // — Modal numérique —
+    function openManualModal(item) {
+      manualItem = item;
+      manualValue = '';
+      document.getElementById('manualDisplay').textContent = '0.00';
+      document.getElementById('manualPriceModal').style.display = 'flex';
+    }
+    function closeManualModal() {
+      document.getElementById('manualPriceModal').style.display = 'none';
+      manualItem = null;
+      manualValue = '';
+    }
+    function formatDisplay(val) {
+      if (!val) return '0.00';
+      return (parseFloat(val) / 100).toFixed(2);
+    }
+
+    // — Ticket & clavier —
     function updateTicketInfo() {
-      const now   = new Date();
+      const now = new Date();
       const days  = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
       const months= ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
-      const d     = days[now.getDay()],
-            day   = now.getDate(),
-            m     = months[now.getMonth()],
-            y     = now.getFullYear(),
-            hh    = String(now.getHours()).padStart(2,'0'),
-            mm    = String(now.getMinutes()).padStart(2,'0'),
-            ss    = String(now.getSeconds()).padStart(2,'0');
+      const d = days[now.getDay()], day = now.getDate(),
+            m = months[now.getMonth()], y = now.getFullYear(),
+            hh = String(now.getHours()).padStart(2,'0'),
+            mm = String(now.getMinutes()).padStart(2,'0'),
+            ss = String(now.getSeconds()).padStart(2,'0');
 
       if (currentTicketNumber === null) {
         let n = parseInt(localStorage.getItem('lastTicketNumber')||'0') + 1;
@@ -139,7 +212,6 @@
         currentTicketNumber = n;
       }
 
-      // On ne somme QUE les lignes non-offertes
       const totalCents = ticketLines
         .filter(l => !l.offered)
         .reduce((sum, l) => sum + l.pu * l.qty, 0);
@@ -150,127 +222,97 @@
         ` - total : ${(totalCents/100).toFixed(2)} €`;
     }
 
-    // rend le ticket + gestion sélection
     function renderTicket() {
       const tbody = document.querySelector('#ticket-table tbody');
       tbody.innerHTML = '';
       ticketLines.forEach((line, idx) => {
         const tr = document.createElement('tr');
-        // affichage
-        const label = line.offered
-          ? `${line.label} (Offert)`
-          : line.label;
+        const label = line.offered ? `${line.label} (Offert)` : line.label;
         const puStr = (line.pu/100).toFixed(2);
-        const totalStr = line.offered
-          ? '0.00'
-          : ((line.pu*line.qty)/100).toFixed(2);
+        const totalStr = line.offered ? '0.00' : ((line.pu*line.qty)/100).toFixed(2);
         tr.innerHTML = `
           <td>${line.qty}</td>
           <td>${label}</td>
           <td>${puStr} €</td>
           <td>${totalStr} €</td>
         `;
-        // clic = sélection
         tr.addEventListener('click', () => {
-          selectedLine = (selectedLine === idx ? null : idx);
+          selectedLine = (selectedLine===idx ? null : idx);
           renderTicket();
         });
-        if (selectedLine === idx) tr.classList.add('selected');
+        if (selectedLine===idx) tr.classList.add('selected');
         tbody.appendChild(tr);
       });
       updateTicketInfo();
     }
 
-    // ajoute au ticket
     function addToTicket(item) {
-      if (!item.price_manual) {
-        const last = ticketLines[ticketLines.length-1];
-        if (last && last.id === item.id && !last.offered) {
-          last.qty++;
-        } else {
-          ticketLines.push({ ...item, qty:1, offered:false });
-        }
-        selectedLine = null;
-        renderTicket();
-      } else {
-        // prompt stub
-        const price = prompt(`Prix unitaire pour "${item.label}" (€) :`);
-        const cents = Math.round(parseFloat(price)*100);
-        if (!isNaN(cents)) addToTicket({ ...item, pu:cents, price_manual:false });
+      if (item.price_manual) {
+        openManualModal(item);
+        return;
       }
-    }
-
-    // annulation ligne
-    function cancelLine() {
-      if (ticketLines.length === 0) return;
-      if (selectedLine !== null && selectedLine < ticketLines.length) {
-        const l = ticketLines[selectedLine];
-        if (l.qty > 1) {
-          l.qty--;
-        } else {
-          ticketLines.splice(selectedLine, 1);
-          selectedLine = null;
-        }
+      const last = ticketLines[ticketLines.length-1];
+      if (last && last.id===item.id && !last.offered) {
+        last.qty++;
       } else {
-        const idx = ticketLines.length - 1;
-        const l = ticketLines[idx];
-        if (l.qty > 1) {
-          l.qty--;
-          selectedLine = idx;
-        } else {
-          ticketLines.pop();
-          selectedLine = null;
-        }
+        ticketLines.push({ ...item, qty:1, offered:false });
       }
-      renderTicket();
-    }
-
-    // annulation ticket
-    function cancelTicket() {
-      ticketLines.length = 0;
       selectedLine = null;
       renderTicket();
     }
 
-    // offert
-    function offerLine() {
-      if (ticketLines.length === 0) return;
-      let idx = selectedLine !== null ? selectedLine : ticketLines.length -1;
-      let l = ticketLines[idx];
-      if (l.qty > 1) {
-        // décrémente la ligne normale
-        l.qty--;
-        // trouve/ajoute ligne offered
-        const offIdx = ticketLines.findIndex(
-          x => x.id===l.id && x.offered
-        );
-        if (offIdx > -1) {
-          ticketLines[offIdx].qty++;
-        } else {
-          ticketLines.push({
-            id: l.id,
-            label: l.label,
-            pu: l.pu,
-            qty: 1,
-            offered: true,
-            price_manual: false
-          });
-        }
+    function cancelLine() {
+      if (!ticketLines.length) return;
+      if (selectedLine !== null && selectedLine < ticketLines.length) {
+        const l = ticketLines[selectedLine];
+        if (l.qty>1) l.qty--;
+        else { ticketLines.splice(selectedLine,1); selectedLine=null; }
       } else {
-        // qty === 1, on bascule cette ligne en offered
+        const idx = ticketLines.length-1;
+        const l = ticketLines[idx];
+        if (l.qty>1) { l.qty--; selectedLine=idx; }
+        else { ticketLines.pop(); selectedLine=null; }
+      }
+      renderTicket();
+    }
+    function cancelTicket() {
+      ticketLines.length=0; selectedLine=null; renderTicket();
+    }
+    function offerLine() {
+      if (!ticketLines.length) return;
+      let idx = selectedLine!==null ? selectedLine : ticketLines.length-1;
+      let l = ticketLines[idx];
+      if (l.qty>1) {
+        l.qty--;
+        const offIdx = ticketLines.findIndex(x=>x.id===l.id && x.offered);
+        if (offIdx>-1) ticketLines[offIdx].qty++;
+        else ticketLines.push({ id:l.id, label:l.label, pu:l.pu, qty:1, offered:true, price_manual:false });
+      } else {
         l.offered = true;
       }
       selectedLine = null;
       renderTicket();
     }
-
-    const stub = name => alert(`${name} — à implémenter`);
+    const stub = name=>alert(`${name} — à implémenter`);
 
     document.addEventListener('DOMContentLoaded', () => {
-      updateTicketInfo();
-      setInterval(updateTicketInfo, 1000);
+      // 1) Clavier numérique
+      const modal = document.getElementById('manualPriceModal');
+      const display = document.getElementById('manualDisplay');
+      modal.querySelector('.keypad').addEventListener('click', e => {
+        const key = e.target.dataset.key;
+        if (!key) return;
+        manualValue = (key==='C') ? manualValue.slice(0,-1) : manualValue + key;
+        display.textContent = formatDisplay(manualValue);
+      });
+      document.getElementById('validatePrice').addEventListener('click', () => {
+        const cents = parseInt(manualValue,10)||0;
+        if (manualItem) addToTicket({ ...manualItem, pu:cents, price_manual:false });
+        closeManualModal();
+      });
+      document.getElementById('cancelPrice').addEventListener('click', closeManualModal);
 
-      // boutons ticket
+      // 2) Boutons du ticket
       document.getElementById('btnCancelLine').onclick   = cancelLine;
       document.getElementById('btnCancelTicket').onclick = cancelTicket;
       document.getElementById('btnOffert').onclick       = offerLine;
@@ -281,21 +323,24 @@
       document.getElementById('btnResume').onclick       = ()=>stub('Reprise attente');
       document.getElementById('btnClose').onclick        = ()=>stub('X');
 
-      // génération clavier
+      // 3) Initialisation ticket & horloge
+      updateTicketInfo();
+      setInterval(updateTicketInfo,1000);
+
+      // 4) Génération du clavier
       const cont = document.getElementById('keyboard-container');
       if (!USER_KEYBOARD_ID) {
         cont.innerHTML = '<p class="text-danger">Clavier introuvable.</p>';
       } else {
         fetch(`/clavier/boutons/${USER_KEYBOARD_ID}`)
-          .then(r => r.json())
+          .then(r=> r.ok ? r.json() : Promise.reject(r.status))
           .then(data => {
-            const map = {};
-            data.forEach(b => map[b.position] = b);
+            const map = {}; data.forEach(b=> map[b.position] = b);
             cont.innerHTML = '';
-            for (let pos=1; pos<=55; pos++){
+            for (let pos=1; pos<=55; pos++) {
               const b = map[pos];
               const btn = document.createElement('button');
-              btn.className = 'btn-product' + (!b?' invisible':'');
+              btn.className = 'btn-product' + (!b ? ' invisible' : '');
               if (b) {
                 btn.style.backgroundColor = b.couleur;
                 if (b.text_color) btn.style.color = b.text_color;

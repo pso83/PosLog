@@ -32,7 +32,7 @@ from routes.routes_auth import auth_bp
 from routes_static_pages import static_bp
 
 # Routes principales
-from routes.routes_programmation import register_routes, programmation_bp, register_programmation_routes
+from routes.routes_programmation import prod_bp, register_routes, programmation_bp, register_programmation_routes
 from routes.routes_configuration import configuration_bp
 from routes.routes_gestion import register_gestion_routes
 from routes.routes_stock import register_stock_routes
@@ -41,6 +41,8 @@ from routes.routes_reporting import register_reporting_routes
 from routes.routes_ticket import register_ticket_routes
 from routes.routes_clavier import register_clavier_routes, clavier_bp
 from routes.routes_familles import familles_bp
+
+
 
 # Initialisation app Flask
 app = Flask(__name__)
@@ -58,6 +60,8 @@ db.init_app(app)
 # Enregistrement des routes (uniques)
 register_routes(app)
 app.register_blueprint(configuration_bp)
+
+app.register_blueprint(prod_bp)
 
 register_gestion_routes(app)
 register_stock_routes(app)
@@ -83,8 +87,19 @@ def loading():
     return render_template('loading.html')
 
 @app.context_processor
-def inject_user():
-    return dict(current_user=current_user)
+def inject_user_and_keyboards():
+    ctx = { 'current_user': current_user }
+    if current_user.is_authenticated:
+        ctx.update({
+            'MAIN_KEYBOARD_ID'     : current_user.clavier_id,
+            'FUNCTION_KEYBOARD_ID' : current_user.function_clavier_id
+        })
+    else:
+        ctx.update({
+            'MAIN_KEYBOARD_ID'     : None,
+            'FUNCTION_KEYBOARD_ID' : None
+        })
+    return ctx
 
 # Lancement
 if __name__ == '__main__':

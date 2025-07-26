@@ -1,6 +1,9 @@
 from app import app
+from routes.routes_programmation import register_routes
 import webbrowser
 import threading
+
+register_routes(app)
 
 def open_browser():
     webbrowser.open_new("http://127.0.0.1:5500")

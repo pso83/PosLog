@@ -26,6 +26,7 @@ def register_clavier_routes(app):
     def programmation_claviers():
         claviers = Clavier.query.all()
         clavier_id = request.args.get('clavier_id', type=int)
+        side = request.args.get('side', 'main')
         clavier = Clavier.query.get(clavier_id) if clavier_id else (claviers[0] if claviers else None)
         boutons = {}
 

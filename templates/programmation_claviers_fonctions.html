@@ -1,0 +1,160 @@
+{% extends 'base.html' %}
+{% block content %}
+{% include '_menu_burger.html' %}
+
+<style>
+  /* grille 5×4 pour fonctions */
+  .kb-function {
+    display: grid;
+    grid-template-columns: repeat(4, 124px);
+    grid-template-rows: repeat(5, 65px);
+    gap: 6px;
+  }
+</style>
+
+<div class="container py-4">
+  <div class="row">
+    <!-- preview -->
+    <div class="col-md-9">
+      <h4>Programmation des claviers Fonctions : {{ clavier.nom if clavier else '—' }}</h4>
+      <div id="clavier-container" class="kb-function"></div>
+    </div>
+
+    <!-- sidebar -->
+    <div class="col-md-3">
+      <!-- création -->
+      <div class="card mb-3">
+        <div class="card-header">Créer un clavier fonction</div>
+        <div class="card-body">
+          <div class="card mb-3">
+              <div class="card-header">
+                Créer un clavier {{ 'fonction' if is_fonction else 'produit' }}
+              </div>
+              <div class="card-body">
+                {% if not is_fonction %}
+                <form method="post" action="{{ url_for('programmation_produit.claviers_produits') }}">
+                {% else %}
+                <form method="post" action="{{ url_for('programmation_fonction.claviers_fonctions') }}">
+                {% endif %}
+                  <input type="text"
+                         name="nom"
+                         class="form-control mb-2"
+                         placeholder="Nom du clavier"
+                         required>
+                  <button type="submit" class="btn btn-primary btn-sm w-100">
+                    Créer
+                  </button>
+                </form>
+              </div>
+            </div>
+        </div>
+      </div>
+
+      <!-- liste des claviers fonctions -->
+      <div class="card mb-3">
+        <div class="card-header">Claviers Fonctions disponibles</div>
+        <div class="card-body" style="max-height:250px;overflow-y:auto">
+          <ul class="list-group">
+            {% for c in claviers %}
+            <li class="list-group-item d-flex justify-content-between align-items-center
+                       {% if clavier and c.id==clavier.id %}active{% endif %}">
+              <a href="{{ url_for('programmation_fonction.claviers_fonctions', clavier_id=c.id) }}"
+                 class="{% if clavier and c.id==clavier.id %}text-white{% else %}text-dark{% endif %} text-decoration-none">
+                {{ c.nom }}
+              </a>
+              <form method="post"
+                    action="{{ url_for('programmation_fonction.supprimer_clavier_fonction', id=c.id) }}"
+                    onsubmit="return confirm('Confirmer la suppression ?');">
+                <button type="submit" class="btn btn-sm btn-danger">🗑️</button>
+              </form>
+            </li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+
+      {% if clavier %}
+      <!-- effacer bouton / ligne -->
+      <div class="card mb-3">
+        <div class="card-header">Effacer bouton / ligne</div>
+        <div class="card-body">
+          <form class="mb-2"
+                method="post"
+                action="{{ url_for('programmation_fonction.effacer_bouton_fonction') }}?clavier_id={{ clavier.id }}">
+            <div class="input-group">
+              <span class="input-group-text">Pos</span>
+              <input type="number"
+                     name="effacerPosition"
+                     min="1" max="20"
+                     class="form-control"
+                     placeholder="1-20">
+              <button type="submit" class="btn btn-danger">❌</button>
+            </div>
+          </form>
+          <form method="post"
+                action="{{ url_for('programmation_fonction.effacer_ligne_fonction') }}?clavier_id={{ clavier.id }}">
+            <div class="input-group">
+              <span class="input-group-text">Ligne</span>
+              <input type="number"
+                     name="effacerLigne"
+                     min="1" max="5"
+                     class="form-control"
+                     placeholder="1-5">
+              <button type="submit" class="btn btn-danger">🧹</button>
+            </div>
+          </form>
+        </div>
+      </div>
+      {% endif %}
+
+    </div>
+  </div>
+</div>
+
+<!-- Modal de configuration des boutons -->
+<div class="modal fade" id="buttonModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Configurer le bouton</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+          </div>
+          <div class="modal-body">
+            <!-- Vos champs de formulaire pour nom, couleur, élément, etc. -->
+            <form id="buttonConfigForm">
+              <!-- Ex : type, élément à lier, couleur BG/TXT, image… -->
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+            <button type="button" class="btn btn-primary" onclick="saveButtonConfig()">Enregistrer</button>
+          </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  // On récupère la variable Jinja is_fonction
+  const isFonction = {{ 'true' if is_fonction else 'false' }};
+  const prefix     = isFonction
+    ? '/programmer/fonctions'
+    : '/programmer/produits';
+
+  const clavierId  = {{ clavier.id if clavier else 0 }};
+  const container  = document.getElementById('clavier-container');
+
+  fetch(`${prefix}/boutons/${clavierId}`)
+    .then(res => res.json())
+    .then(data => {
+      container.innerHTML = '';
+      // … votre boucle de création de boutons …
+    })
+    .catch(err => {
+      console.error("Erreur de chargement :", err);
+      container.innerHTML = '<p class="text-danger">Erreur de chargement des boutons.</p>';
+    });
+});
+</script>
+
+{% endblock %}

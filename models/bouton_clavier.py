@@ -8,7 +8,11 @@ class BoutonClavier(db.Model):
     clavier_id = db.Column(db.Integer, db.ForeignKey('claviers.id'), nullable=False)
 
     # back_populates avec Clavier
-    clavier = db.relationship("Clavier", back_populates="boutons", foreign_keys=[clavier_id])
+    clavier = db.relationship(
+        'Clavier',
+        back_populates='boutons',
+        foreign_keys=[clavier_id]
+    )
 
     # les clés étrangères selon les types de bouton :
     article_id = db.Column(db.Integer, db.ForeignKey('articles.id'))
@@ -34,6 +38,11 @@ class BoutonClavier(db.Model):
     utilisateur = db.relationship("Utilisateur")
     reglement = db.relationship("Reglement")
     commentaire = db.relationship("Commentaire")
-    sous_clavier = db.relationship("Clavier", foreign_keys=[sous_clavier_id])
+
+    sous_clavier = db.relationship(
+        'Clavier',
+        foreign_keys=[sous_clavier_id]
+    )
+
     element_type = db.Column(db.String(50))
 
